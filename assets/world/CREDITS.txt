@@ -1,0 +1,6 @@
+Pixel world + character art: "Zelda-like Tilesets and Sprites" by ArMM1998
+Source: https://opengameart.org/content/zelda-like-tilesets-and-sprites
+License: CC0 1.0 (Public Domain) — no attribution required (credited voluntarily)
+
+Also evaluated (not shipped): Kenney "Tiny Town" (CC0, kenney.nl),
+Pixel-Boy "Ninja Adventure" (CC0, itch.io).

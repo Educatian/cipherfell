@@ -1,7 +1,10 @@
 _raw/
+_packs/
 node_modules/
 _*.py
 _shot_*.png
-_live_*.png
+_v2_*.png
+_live*.png
 dist/
 .wrangler/
+index_v1_simple.html
