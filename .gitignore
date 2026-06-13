@@ -1,0 +1,5 @@
+_raw/
+node_modules/
+_*.py
+_shot_*.png
+.wrangler/

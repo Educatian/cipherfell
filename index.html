@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Cipherfell — The Warden's Eye</title>
+<style>
+  :root{
+    --parch:#f3e7c9; --ink:#3a2c1a; --moss:#6b7f4e; --terra:#b5663b;
+    --dusk:#2f3b54; --gold:#d8a43e; --panel:#f7eed5; --shadow:rgba(30,22,12,.55);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;background:#1a1712;overflow:hidden;
+    font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;color:var(--ink);}
+  #game{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;}
+  canvas{display:block;background:#262019;image-rendering:auto;max-width:100%;max-height:100%;}
+
+  /* overlays */
+  .layer{position:fixed;inset:0;display:none;align-items:center;justify-content:center;
+    z-index:20;padding:18px;}
+  .layer.show{display:flex;}
+  .card{background:var(--panel);border:3px solid var(--ink);border-radius:14px;
+    box-shadow:0 14px 40px var(--shadow);max-width:680px;width:100%;max-height:92vh;
+    overflow:auto;padding:22px 24px;position:relative;}
+  .card h2{margin:.1em 0 .4em;font-size:1.5em;color:#5a3d1c;letter-spacing:.3px;}
+  .card h3{margin:.8em 0 .3em;color:#6b4a22;}
+  .card p{line-height:1.5;margin:.5em 0;}
+  .small{font-size:.86em;color:#6a5a40;}
+  .btn{font-family:inherit;cursor:pointer;background:var(--terra);color:#fff7e6;
+    border:2px solid #7d3f1d;border-radius:9px;padding:10px 16px;font-size:1em;
+    margin:6px 6px 0 0;box-shadow:0 3px 0 #7d3f1d;transition:transform .05s;}
+  .btn:hover{filter:brightness(1.06);}
+  .btn:active{transform:translateY(2px);box-shadow:0 1px 0 #7d3f1d;}
+  .btn.ghost{background:#e7d9b4;color:#4a3a1e;border-color:#a98f5c;box-shadow:0 3px 0 #a98f5c;}
+  .btn.good{background:var(--moss);border-color:#46562f;box-shadow:0 3px 0 #46562f;}
+  .btn.lock{opacity:.45;pointer-events:none;}
+  .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+  .close{position:absolute;top:10px;right:14px;font-size:1.4em;cursor:pointer;color:#7a5a2c;border:none;background:none;}
+
+  /* dialogue */
+  #dlg .card{display:flex;gap:16px;align-items:flex-start;max-width:720px;}
+  #dlg .port{width:128px;min-width:128px;height:160px;border-radius:10px;border:3px solid var(--ink);
+    background:#cdbb8e center/cover no-repeat;box-shadow:0 4px 12px var(--shadow);}
+  #dlg .body{flex:1;}
+  #dlg .name{font-weight:bold;color:var(--terra);font-size:1.15em;margin-bottom:4px;}
+  #dlg .txt{min-height:64px;line-height:1.5;}
+  @media(max-width:560px){#dlg .port{width:84px;min-width:84px;height:108px;}}
+
+  /* hud */
+  #hud{position:fixed;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;
+    pointer-events:none;z-index:15;gap:8px;}
+  #questbar{background:var(--shadow);color:#fff;padding:8px 12px;border-radius:10px;
+    font-size:.92em;max-width:62%;backdrop-filter:blur(3px);}
+  #questbar b{color:var(--gold);}
+  .hudbtn{pointer-events:auto;background:var(--panel);border:2px solid var(--ink);
+    border-radius:10px;padding:8px 12px;cursor:pointer;font-family:inherit;font-size:.92em;
+    box-shadow:0 3px 0 var(--ink);}
+  .hudbtn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink);}
+
+  /* touch controls */
+  #pad{position:fixed;left:18px;bottom:18px;width:150px;height:150px;z-index:16;
+    display:none;touch-action:none;}
+  #pad.show{display:block;}
+  #pad .stick{position:absolute;inset:0;border-radius:50%;background:rgba(243,231,201,.18);
+    border:2px solid rgba(243,231,201,.45);}
+  #pad .nub{position:absolute;width:62px;height:62px;left:44px;top:44px;border-radius:50%;
+    background:rgba(243,231,201,.65);border:2px solid #7d3f1d;}
+  #actbtn{position:fixed;right:22px;bottom:42px;width:96px;height:96px;border-radius:50%;
+    background:var(--gold);border:3px solid #7d3f1d;color:#3a2c1a;font-weight:bold;
+    font-family:inherit;font-size:1em;z-index:16;display:none;box-shadow:0 4px 0 #7d3f1d;}
+  #actbtn.show{display:block;}
+
+  /* title */
+  #title .card{text-align:center;max-width:560px;background:
+    linear-gradient(180deg,#f7eed5,#ecd9ac);}
+  #logo{width:148px;height:148px;margin:4px auto 6px;border-radius:50%;
+    background:#e7d3a4 center/cover no-repeat;border:4px solid var(--ink);
+    box-shadow:0 6px 18px var(--shadow);}
+  #title h1{font-size:2.2em;margin:.1em 0 0;color:#5a3d1c;letter-spacing:1px;}
+  #title .sub{color:#7a5a2c;margin:.2em 0 1em;font-style:italic;}
+  .tag{display:inline-block;background:#e3d3a8;border:1px solid #b79b63;border-radius:20px;
+    padding:3px 11px;margin:3px;font-size:.8em;color:#5a4520;}
+
+  /* clue chip */
+  .chip{display:inline-flex;align-items:center;gap:8px;background:#ecdcb2;border:2px solid #b79b63;
+    border-radius:10px;padding:7px 10px;margin:5px 5px 0 0;font-size:.9em;}
+  .chip i{width:34px;height:34px;border-radius:7px;background:#cdbb8e center/cover no-repeat;
+    display:inline-block;border:1px solid #8a7038;flex:none;font-style:normal;text-align:center;line-height:34px;}
+  .takeaway{background:#e8f0dc;border:2px dashed var(--moss);border-radius:10px;padding:12px 14px;margin-top:12px;}
+  .takeaway b{color:#46562f;}
+  .grid{display:grid;gap:8px;}
+  .cell{background:#ece0bf;border:2px solid #b79b63;border-radius:8px;padding:9px;text-align:center;
+    cursor:pointer;user-select:none;font-size:.9em;}
+  .cell.on{background:var(--moss);color:#fff;border-color:#46562f;}
+  .cipher-disp{font-family:"Courier New",monospace;font-size:1.25em;letter-spacing:3px;
+    background:#26201a;color:#e9d39a;padding:12px;border-radius:8px;text-align:center;margin:8px 0;}
+  .wheelrow{display:flex;align-items:center;justify-content:center;gap:14px;margin:6px 0;}
+  .shiftnum{font-size:1.6em;font-family:"Courier New",monospace;min-width:48px;text-align:center;
+    background:#e7d3a4;border:2px solid var(--ink);border-radius:8px;padding:4px;}
+  .fadein{animation:fade .4s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+  .vignette{position:fixed;inset:0;pointer-events:none;z-index:5;
+    box-shadow:inset 0 0 160px 40px rgba(20,14,6,.55);}
+</style>
+</head>
+<body>
+<div id="game"><canvas id="cv"></canvas></div>
+<div class="vignette"></div>
+
+<div id="hud">
+  <div id="questbar">…</div>
+  <div class="row" style="pointer-events:auto;gap:6px;align-items:flex-start;">
+    <button class="hudbtn" id="journalBtn">Journal</button>
+    <button class="hudbtn" id="helpBtn">?</button>
+  </div>
+</div>
+
+<div id="pad"><div class="stick"></div><div class="nub" id="nub"></div></div>
+<button id="actbtn">Look</button>
+
+<!-- Title -->
+<div id="title" class="layer show"><div class="card">
+  <div id="logo"></div>
+  <h1>CIPHERFELL</h1>
+  <div class="sub">The Warden's Eye</div>
+  <p>A village mystery where you learn to <b>think like a guardian of secrets</b> —
+     no machines, no jargon, just suspicion, proof, and a careful eye.</p>
+  <div>
+    <span class="tag">Who are you, really?</span>
+    <span class="tag">Secrets in plain sight</span>
+    <span class="tag">The wrong key</span>
+    <span class="tag">Loose lips</span>
+  </div>
+  <div style="margin-top:14px"><button class="btn" id="startBtn">Enter Cipherfell</button></div>
+  <p class="small" style="margin-top:14px">Move: WASD / arrows · joystick on touch. Interact: E / Space / the Look button.</p>
+</div></div>
+
+<!-- Dialogue -->
+<div id="dlg" class="layer"><div class="card">
+  <div class="port" id="dlgPort"></div>
+  <div class="body">
+    <div class="name" id="dlgName"></div>
+    <div class="txt" id="dlgTxt"></div>
+    <div class="row" id="dlgChoices" style="margin-top:12px"></div>
+  </div>
+</div></div>
+
+<!-- Generic modal (puzzles, journal, help) -->
+<div id="modal" class="layer"><div class="card">
+  <button class="close" id="modalClose">×</button>
+  <div id="modalBody"></div>
+</div></div>
+
+<script>
+"use strict";
+/* ============================================================ ASSETS */
+const A = {}; // image cache; missing images degrade to drawn fallbacks
+const ASSET_FILES = {
+  cover:"assets/cover.webp", map:"assets/map.webp", player:"assets/player.webp", logo:"assets/logo.webp",
+  npc_aldric:"assets/npc_aldric.webp", npc_impostor:"assets/npc_impostor.webp",
+  npc_steward:"assets/npc_steward.webp", npc_tavernkeeper:"assets/npc_tavernkeeper.webp",
+  npc_captain:"assets/npc_captain.webp", npc_herald:"assets/npc_herald.webp",
+  prop_signet_real:"assets/prop_signet_real.webp", prop_signet_forged:"assets/prop_signet_forged.webp",
+  prop_letter:"assets/prop_letter.webp", prop_cipher:"assets/prop_cipher.webp",
+  prop_keyring:"assets/prop_keyring.webp", prop_gossip:"assets/prop_gossip.webp",
+};
+const loaded={};
+for(const k in ASSET_FILES){
+  const img=new Image();
+  img.onload=()=>{loaded[k]=true;
+    if(k==="logo"){const L=document.getElementById("logo");if(L)L.style.background=`#e7d3a4 url(${ASSET_FILES.logo}) center/cover no-repeat`;}};
+  img.onerror=()=>{loaded[k]=false;};
+  img.src=ASSET_FILES[k]; A[k]=img;
+}
+function has(k){return loaded[k];}
+function bg(k){ return has(k) ? `url(${ASSET_FILES[k]})` : "none"; }
+
+/* ============================================================ STATE */
+const state = {
+  scene:"title",
+  px:0.5, py:0.62,            // player position, normalized on map
+  clues:{},                  // id -> {name,icon}
+  q1:{factorsChecked:{}, solved:false},
+  q2:{decoded:false, encoded:false, solved:false},
+  q3:{assigned:false, solved:false},
+  q4:{fragments:{}, solved:false},
+  capstone:false, won:false,
+};
+function addClue(id,name,iconKey,emoji){
+  if(state.clues[id])return;
+  state.clues[id]={name,iconKey,emoji};
+  toast("Added to journal: "+name);
+}
+function hasClue(id){return !!state.clues[id];}
+
+/* quest tracker text */
+function questText(){
+  if(state.won) return "<b>Case closed.</b> The Warden's Eye is open. Speak to the Herald to reflect.";
+  const order=[
+    [!state.q1.solved,"Gate","A stranger claims to be Aldric the merchant. Prove who he <i>really</i> is."],
+    [!state.q2.solved,"Study","The Duke's order can be read by the spy. Make it secret."],
+    [!state.q3.solved,"Granary","Grain is vanishing and everyone holds the master key. Fix who holds what."],
+    [!state.q4.solved,"Tavern","The Baron knows our plans. Find how harmless talk adds up."],
+  ];
+  const cur=order.find(o=>o[0]);
+  if(!cur) return "<b>All threads solved.</b> Return to the Market Square notice board to name the hand behind it.";
+  return "<b>"+cur[1]+":</b> "+cur[2];
+}
+
+/* ============================================================ CANVAS */
+const cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+let W=900,H=900; // world is square map
+function fit(){
+  const pad=0;
+  const vw=window.innerWidth, vh=window.innerHeight;
+  const s=Math.min(vw,vh);
+  cv.width=s; cv.height=s; W=s; H=s;
+}
+window.addEventListener("resize",fit); fit();
+
+/* Buildings / interaction pins (normalized coords on the map) */
+const PINS=[
+  {id:"gate",     name:"Gatehouse",     x:0.55,y:0.17, emoji:"🚪", quest:1},
+  {id:"tavern",   name:"The Tankard",   x:0.24,y:0.33, emoji:"🍺", quest:4},
+  {id:"chapel",   name:"Chapel",        x:0.80,y:0.37, emoji:"⛪", quest:4},
+  {id:"square",   name:"Notice Board",  x:0.47,y:0.47, emoji:"📜", quest:0},
+  {id:"smithy",   name:"Smithy",        x:0.16,y:0.66, emoji:"⚒️", quest:1},
+  {id:"archive",  name:"Archive",       x:0.42,y:0.70, emoji:"🗄️", quest:3},
+  {id:"study",    name:"Warden's Study",x:0.72,y:0.66, emoji:"🕯️", quest:2},
+  {id:"granary",  name:"Granary",       x:0.55,y:0.83, emoji:"🌾", quest:3},
+];
+const PIN_R=0.10; // interaction radius (normalized)
+
+function nearestPin(){
+  let best=null,bd=1e9;
+  for(const p of PINS){
+    const d=Math.hypot(p.x-state.px,p.y-state.py);
+    if(d<bd){bd=d;best=p;}
+  }
+  return bd<PIN_R?best:null;
+}
+
+/* ============================================================ INPUT */
+const keys={};
+const MOVE_CODES={ArrowUp:"up",ArrowDown:"down",ArrowLeft:"left",ArrowRight:"right",
+  KeyW:"up",KeyS:"down",KeyA:"left",KeyD:"right"};
+addEventListener("keydown",e=>{
+  if(MOVE_CODES[e.code]){keys[MOVE_CODES[e.code]]=true;e.preventDefault();}
+  if(e.code==="Space"||e.code==="KeyE"||e.code==="Enter"){e.preventDefault();tryInteract();}
+  if(e.code==="KeyJ")openJournal();
+  if(e.code==="Escape")closeTop();
+});
+addEventListener("keyup",e=>{if(MOVE_CODES[e.code])keys[MOVE_CODES[e.code]]=false;});
+
+/* touch joystick */
+let stick={active:false,dx:0,dy:0,id:null};
+const pad=document.getElementById("pad"), nub=document.getElementById("nub");
+function padStart(e){const t=e.changedTouches?e.changedTouches[0]:e;stick.active=true;stick.id=t.identifier;padMove(e);}
+function padMove(e){
+  if(!stick.active)return;
+  let t=null; const list=e.changedTouches||[e];
+  for(const x of list){if(x.identifier===stick.id||stick.id===undefined){t=x;break;}}
+  if(!t)t=(e.changedTouches?e.changedTouches[0]:e);
+  const r=pad.getBoundingClientRect();
+  let dx=(t.clientX-(r.left+r.width/2))/(r.width/2);
+  let dy=(t.clientY-(r.top+r.height/2))/(r.height/2);
+  const m=Math.hypot(dx,dy)||1; if(m>1){dx/=m;dy/=m;}
+  stick.dx=dx;stick.dy=dy;
+  nub.style.left=(44+dx*44)+"px"; nub.style.top=(44+dy*44)+"px";
+}
+function padEnd(){stick.active=false;stick.dx=0;stick.dy=0;nub.style.left="44px";nub.style.top="44px";}
+pad.addEventListener("touchstart",padStart,{passive:false});
+pad.addEventListener("touchmove",e=>{e.preventDefault();padMove(e);},{passive:false});
+pad.addEventListener("touchend",padEnd); pad.addEventListener("touchcancel",padEnd);
+document.getElementById("actbtn").addEventListener("click",tryInteract);
+
+const isTouch = ('ontouchstart' in window)||navigator.maxTouchPoints>0;
+
+/* gamepad */
+let gpAxis={x:0,y:0}, gpAct=false, gpActPrev=false;
+function pollGamepad(){
+  const gps=navigator.getGamepads?navigator.getGamepads():[];
+  gpAxis={x:0,y:0};gpAct=false;
+  for(const g of gps){ if(!g)continue;
+    const ax=g.axes[0]||0, ay=g.axes[1]||0;
+    if(Math.abs(ax)>0.25)gpAxis.x=ax; if(Math.abs(ay)>0.25)gpAxis.y=ay;
+    if(g.buttons[0]&&g.buttons[0].pressed)gpAct=true;
+    // dpad
+    if(g.buttons[12]&&g.buttons[12].pressed)gpAxis.y=-1;
+    if(g.buttons[13]&&g.buttons[13].pressed)gpAxis.y=1;
+    if(g.buttons[14]&&g.buttons[14].pressed)gpAxis.x=-1;
+    if(g.buttons[15]&&g.buttons[15].pressed)gpAxis.x=1;
+  }
+  if(gpAct&&!gpActPrev)tryInteract();
+  gpActPrev=gpAct;
+}
+
+/* ============================================================ LOOP */
+let last=0;
+function loop(t){
+  const dt=Math.min(0.05,(t-last)/1000||0); last=t;
+  if(state.scene==="play")update(dt);
+  render();
+  requestAnimationFrame(loop);
+}
+function update(dt){
+  pollGamepad();
+  let mx=0,my=0;
+  if(keys.left)mx-=1; if(keys.right)mx+=1; if(keys.up)my-=1; if(keys.down)my+=1;
+  mx+=stick.dx+gpAxis.x; my+=stick.dy+gpAxis.y;
+  const m=Math.hypot(mx,my); if(m>1){mx/=m;my/=m;}
+  const sp=0.42*dt;
+  state.px=Math.max(0.04,Math.min(0.96,state.px+mx*sp));
+  state.py=Math.max(0.05,Math.min(0.96,state.py+my*sp));
+}
+function modalOpen(){
+  return document.getElementById("dlg").classList.contains("show")
+      || document.getElementById("modal").classList.contains("show");
+}
+function tryInteract(){
+  if(state.scene!=="play"||modalOpen())return;
+  const p=nearestPin(); if(p)interact(p);
+}
+
+/* ============================================================ RENDER */
+function render(){
+  ctx.clearRect(0,0,W,H);
+  if(state.scene!=="play"){drawTitleBg();return;}
+  // map
+  if(has("map")) ctx.drawImage(A.map,0,0,W,H);
+  else drawFallbackMap();
+  // pins
+  const near=nearestPin();
+  for(const p of PINS){
+    const x=p.x*W,y=p.y*H, active=(p===near);
+    const done=pinDone(p);
+    ctx.save();
+    ctx.globalAlpha=done?0.5:0.95;
+    // glow
+    if(active){ctx.beginPath();ctx.arc(x,y,30,0,7);ctx.fillStyle="rgba(216,164,62,.35)";ctx.fill();}
+    ctx.beginPath();ctx.arc(x,y,18,0,7);
+    ctx.fillStyle=done?"#7c8a5e":"#f3e7c9";ctx.strokeStyle="#3a2c1a";ctx.lineWidth=3;ctx.fill();ctx.stroke();
+    ctx.font="18px serif";ctx.textAlign="center";ctx.textBaseline="middle";
+    ctx.fillText(p.emoji,x,y+1);
+    // label
+    ctx.globalAlpha=active?1:0.0;
+    if(active){
+      ctx.font="bold 15px Georgia,serif";const w=ctx.measureText(p.name).width+14;
+      ctx.fillStyle="rgba(30,22,12,.78)";roundRect(x-w/2,y-44,w,24,7);ctx.fill();
+      ctx.fillStyle="#fff";ctx.fillText(p.name,x,y-31);
+    }
+    ctx.restore();
+  }
+  // player
+  const px=state.px*W, py=state.py*H, ps=Math.max(46,W*0.075);
+  ctx.save();
+  ctx.beginPath();ctx.ellipse(px,py+ps*0.36,ps*0.32,ps*0.12,0,0,7);
+  ctx.fillStyle="rgba(20,14,6,.35)";ctx.fill();
+  if(has("player")) ctx.drawImage(A.player,px-ps/2,py-ps*0.72,ps,ps);
+  else{ctx.beginPath();ctx.arc(px,py,ps*0.3,0,7);ctx.fillStyle="#b5663b";ctx.strokeStyle="#3a2c1a";ctx.lineWidth=3;ctx.fill();ctx.stroke();}
+  ctx.restore();
+  // prompt
+  if(near){
+    const label=isTouch?"Look":"Press E";
+    ctx.font="bold 16px Georgia,serif";ctx.textAlign="center";
+    const tx="▶ "+label+" — "+near.name, w=ctx.measureText(tx).width+22;
+    ctx.fillStyle="rgba(216,164,62,.95)";roundRect(W/2-w/2,H-46,w,30,9);ctx.fill();
+    ctx.fillStyle="#3a2c1a";ctx.fillText(tx,W/2,H-26);
+  }
+  document.getElementById("actbtn").classList.toggle("show", isTouch && !!near && !modalOpen());
+}
+function pinDone(p){
+  if(p.quest===1)return state.q1.solved; if(p.quest===2)return state.q2.solved;
+  if(p.quest===3)return state.q3.solved; if(p.quest===4&&p.id!=="square")return state.q4.solved;
+  return false;
+}
+function roundRect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function drawFallbackMap(){
+  ctx.fillStyle="#7d8a55";ctx.fillRect(0,0,W,H);
+  ctx.fillStyle="#caa86a";ctx.fillRect(W*0.42,0,W*0.16,H);ctx.fillRect(0,H*0.4,W,W*0.16);
+  ctx.fillStyle="#9a8350";for(const p of PINS){ctx.fillRect(p.x*W-34,p.y*H-34,68,68);}
+}
+function drawTitleBg(){
+  if(has("cover")){const r=A.cover.width/A.cover.height;let w=W,h=W/r;if(h<H){h=H;w=H*r;}
+    ctx.drawImage(A.cover,(W-w)/2,(H-h)/2,w,h);}
+  else{ctx.fillStyle="#2f3b54";ctx.fillRect(0,0,W,H);}
+}
+
+/* ============================================================ TOAST */
+let toastT=0;
+function toast(msg){
+  let el=document.getElementById("toast");
+  if(!el){el=document.createElement("div");el.id="toast";
+    el.style.cssText="position:fixed;left:50%;top:64px;transform:translateX(-50%);z-index:30;"+
+      "background:rgba(30,22,12,.9);color:#f3e7c9;padding:9px 16px;border-radius:10px;"+
+      "font-family:Georgia,serif;font-size:.95em;border:1px solid #d8a43e;transition:opacity .3s;";
+    document.body.appendChild(el);}
+  el.textContent=msg; el.style.opacity="1"; clearTimeout(toastT);
+  toastT=setTimeout(()=>el.style.opacity="0",2200);
+}
+
+/* ============================================================ DIALOGUE helpers */
+const dlg=document.getElementById("dlg");
+function say(portKey,name,text,choices){
+  document.getElementById("dlgPort").style.background = has(portKey)
+    ? `#cdbb8e url(${ASSET_FILES[portKey]}) center/cover no-repeat` : "#cdbb8e";
+  document.getElementById("dlgName").textContent=name;
+  document.getElementById("dlgTxt").innerHTML=text;
+  const c=document.getElementById("dlgChoices");c.innerHTML="";
+  (choices||[{t:"Continue",f:closeDlg}]).forEach(ch=>{
+    const b=document.createElement("button");b.className="btn"+(ch.cls?" "+ch.cls:"");
+    b.textContent=ch.t;b.onclick=ch.f;c.appendChild(b);
+  });
+  dlg.classList.add("show");
+}
+function closeDlg(){dlg.classList.remove("show");}
+
+/* generic modal */
+const modal=document.getElementById("modal"), modalBody=document.getElementById("modalBody");
+function showModal(html){modalBody.innerHTML=html;modal.classList.add("show");}
+function closeModal(){modal.classList.remove("show");}
+document.getElementById("modalClose").onclick=closeModal;
+function closeTop(){if(dlg.classList.contains("show"))closeDlg();else if(modal.classList.contains("show"))closeModal();}
+
+/* ============================================================ HUD */
+function refreshHud(){document.getElementById("questbar").innerHTML=questText();}
+document.getElementById("journalBtn").onclick=openJournal;
+document.getElementById("helpBtn").onclick=openHelp;
+
+function openJournal(){
+  if(state.scene!=="play")return;
+  let chips="";
+  const list=Object.values(state.clues);
+  if(!list.length)chips="<p class='small'>No clues yet. Walk up to people and places and take a look.</p>";
+  for(const c of list){
+    const ic = has(c.iconKey)?`style="background:#cdbb8e url(${ASSET_FILES[c.iconKey]}) center/cover"`:"";
+    chips+=`<span class="chip"><i ${ic}>${has(c.iconKey)?"":(c.emoji||"•")}</i>${c.name}</span>`;
+  }
+  const prog=[["The Impostor",state.q1.solved],["The Sealed Letter",state.q2.solved],
+    ["The Keyring",state.q3.solved],["Loose Lips",state.q4.solved]];
+  let pr=prog.map(p=>`<span class="tag">${p[1]?"✔ ":""}${p[0]}</span>`).join("");
+  showModal(`<h2>The Warden's Journal</h2><div>${pr}</div>
+    <h3>Clues</h3><div>${chips}</div>`);
+}
+function openHelp(){
+  showModal(`<h2>How to play</h2>
+    <p><b>Move</b> with WASD / arrow keys, the on-screen joystick, or a gamepad stick.</p>
+    <p><b>Interact</b> with E / Space / the Look button when a place lights up.</p>
+    <p>Four troubles grip Cipherfell. Gather clues into your <b>Journal</b>, solve each, then
+       name the single hand behind them at the Market notice board.</p>
+    <div class="takeaway"><b>The real lesson:</b> every puzzle here is a security idea in disguise —
+       proving identity, keeping secrets, limiting access, and noticing how small facts add up.
+       You're training the <i>mindset</i>, not memorizing tools.</div>`);
+}
+
+/* ============================================================ INTERACTIONS ROUTER */
+function interact(p){
+  switch(p.id){
+    case "gate": case "smithy": Q1(p.id); break;
+    case "study": Q2(); break;
+    case "granary": case "archive": Q3(p.id); break;
+    case "tavern": case "chapel": Q4(p.id); break;
+    case "square": SQUARE(); break;
+  }
+}
+
+/* ===================================================== START */
+document.getElementById("startBtn").onclick=()=>{
+  document.getElementById("title").classList.remove("show");
+  state.scene="play";
+  if(isTouch){pad.classList.add("show");}
+  refreshHud();
+  intro();
+};
+function intro(){
+  say("npc_herald","Herald of the Duke",
+   "Warden! Thank the saints. Four troubles have struck Cipherfell at once, and I'd wager "+
+   "one cunning hand is behind them all. A stranger at the gate, a letter the spy keeps reading, "+
+   "grain gone from a locked granary, and the Baron always a step ahead. You have the Eye for it. "+
+   "<i>Look closely. Trust nothing you cannot prove.</i>",
+   [{t:"I'll begin.",f:()=>{closeDlg();toast("Walk up to a glowing place and press Look.");}}]);
+}
+
+/* ============================================================ Q1 — IMPOSTOR / AUTHENTICATION */
+function Q1(where){
+  if(state.q1.solved){
+    say("npc_aldric","Aldric (the true)","The village owes you its trust, Warden. You did not take my word — you <i>proved</i> it.");
+    return;
+  }
+  if(where==="smithy"){
+    // blacksmith = "something you ARE" witness
+    addClue("c_face","Blacksmith's recognition","npc_captain","⚒️");
+    state.q1.factorsChecked.are=true;
+    say("npc_captain","Bryn the Smith",
+     "Aldric? I shod his mule for twenty years. The real Aldric has a burn-scar across his right thumb "+
+     "from my own forge. <b>A face and a scar can't be borrowed.</b> Bring the stranger here, or check his hand yourself. "+
+     "The man at the gate? I've not looked at him.",
+     [{t:"Noted (something he IS).",f:closeDlg}]);
+    return;
+  }
+  // gate: the stranger + factor checks
+  const f=state.q1.factorsChecked;
+  const choices=[];
+  choices.push({t:(f.knows?"✔ ":"")+"Ask the passphrase (knows)",cls:f.knows?"lock":"",f:()=>q1Knows()});
+  choices.push({t:(f.has?"✔ ":"")+"Inspect his signet (has)",cls:f.has?"lock":"",f:()=>q1Has()});
+  choices.push({t:(f.are?"✔ ":"")+"Check his thumb / face (is)",cls:f.are?"lock":"",f:()=>q1Are()});
+  choices.push({t:"Make a ruling…",cls:"good",f:()=>q1Rule()});
+  choices.push({t:"Leave",cls:"ghost",f:closeDlg});
+  say("npc_impostor","The Stranger at the Gate",
+   "Warden, at last! It's me — Aldric, home from the city. Three long winters! "+
+   "Just wave me through, there's a good fellow. <span class='small'>(He smiles a great deal.)</span>",
+   choices);
+}
+function q1Knows(){
+  state.q1.factorsChecked.knows=true;
+  addClue("c_pass","Passphrase test result","prop_letter","🗝️");
+  say("npc_impostor","The Stranger",
+   "A passphrase? Ah — the old word Aldric shared with the tavern? It's… 'barley moon,' surely. "+
+   "<span class='small'>(The tavernkeeper later frowns: the real word was 'barley <b>gate</b>'. "+
+   "A wrong-but-close guess — the kind you make from <i>overheard gossip</i>, not memory.)</span>"+
+   "<div class='takeaway'><b>Factor 1 — something you KNOW.</b> Passwords and secret words can be "+
+   "overheard, guessed, or phished. He got it <i>almost</i> right, which is exactly how a thief who "+
+   "listened at the door would.</div>",
+   [{t:"Back",f:()=>Q1("gate")}]);
+}
+function q1Has(){
+  state.q1.factorsChecked.has=true;
+  addClue("c_signet","The stranger's signet","prop_signet_forged","💍");
+  const realImg=has("prop_signet_real")?`<div class="chip"><i style="background:#cdbb8e url(${ASSET_FILES.prop_signet_real}) center/cover"></i>Aldric's true seal (from the archive)</div>`:"";
+  const forgeImg=has("prop_signet_forged")?`<div class="chip"><i style="background:#cdbb8e url(${ASSET_FILES.prop_signet_forged}) center/cover"></i>The stranger's seal</div>`:"";
+  say("npc_impostor","The Stranger",
+   "My signet? Of course, here. The stag crest, see? Proof enough, eh?"+
+   `<div class="row" style="margin-top:8px">${realImg}${forgeImg}</div>`+
+   "<div class='takeaway'><b>Factor 2 — something you HAVE.</b> A token (key, badge, seal) can be "+
+   "<i>copied or stolen</i>. Set beside the archive's true seal, his stag is crude and smeared — a forgery. "+
+   "Having a token isn't being the person.</div>",
+   [{t:"Back",f:()=>Q1("gate")}]);
+}
+function q1Are(){
+  if(!state.q1.factorsChecked.are){
+    say("npc_impostor","The Stranger",
+     "My… thumb? <span class='small'>(He tucks his right hand away, just slightly.)</span> "+
+     "Why ever would you— it's nothing, an old habit. "+
+     "<div class='takeaway'><b>Factor 3 — something you ARE.</b> A scar, a face, a voice the smith "+
+     "would know on sight. This is the hardest factor to fake — but you need the smith to confirm it. "+
+     "Visit the <b>Smithy</b> first.</div>",
+     [{t:"Visit the Smithy",f:closeDlg},{t:"Back",f:()=>Q1("gate")}]);
+  }else{
+    say("npc_impostor","The Stranger",
+     "<span class='small'>(You ask him to show the burn-scar Bryn described. He cannot — there is "+
+     "no scar. His face is wrong, too, now you truly look.)</span>"+
+     "<div class='takeaway'><b>The unforgeable factor fails.</b> He passed the <i>stealable</i> tests "+
+     "(an overheard word, a copied seal) and failed the one he could not borrow.</div>",
+     [{t:"Make a ruling",cls:"good",f:()=>q1Rule()},{t:"Back",f:()=>Q1("gate")}]);
+  }
+}
+function q1Rule(){
+  const f=state.q1.factorsChecked;
+  const n=(f.knows?1:0)+(f.has?1:0)+(f.are?1:0);
+  if(n<2){
+    say("npc_impostor","The Stranger",
+     "Ruling already? You've barely looked at me. "+
+     "<div class='takeaway'><b>Don't rule on one factor.</b> A single test — just a friendly manner, "+
+     "or just a seal — is how impostors walk right in. Gather at least two independent factors first.</div>",
+     [{t:"Keep checking",f:()=>Q1("gate")}]);
+    return;
+  }
+  say("npc_impostor","The Stranger",
+   "You can't prove I'm— ",
+   [{t:"He's an IMPOSTOR. Detain him.",cls:"good",f:q1Win},
+    {t:"He's genuine. Wave him through.",cls:"ghost",f:()=>{
+      say("npc_impostor","The Stranger","<i>He grins and slips inside. That smile will cost the village dearly…</i>"+
+      "<div class='takeaway'>Trusting the friendly-and-confident is exactly the social-engineering trap. "+
+      "Re-examine the factors.</div>",[{t:"Reconsider",f:()=>Q1("gate")}]);
+    }}]);
+}
+function q1Win(){
+  state.q1.solved=true;
+  addClue("c_impostor","The detained impostor","npc_impostor","🕵️");
+  say("npc_aldric","The True Aldric (arrives)",
+   "Saints — you caught him wearing my name! I've only just reached the road. "+
+   "He had my old seal copied and my words half-right, but not my hand."+
+   "<div class='takeaway'><b>Security idea: Authentication & MFA.</b> Proving identity rests on "+
+   "<b>something you know</b> (a secret), <b>something you have</b> (a token), and "+
+   "<b>something you are</b> (a trait). Each alone is weak; an attacker targets the easiest one. "+
+   "Requiring <i>several independent</i> factors — multi-factor authentication — is what stopped him.</div>",
+   [{t:"One thread mended.",f:()=>{closeDlg();refreshHud();checkAllSolved();}}]);
+}
+
+/* ============================================================ Q2 — CIPHER / CONFIDENTIALITY */
+const CIPHER_INTERCEPT="MEET THE BARONS MAN AT DUSK"; // hidden plaintext
+const CIPHER_SHIFT=3;
+function caesar(s,k){return s.replace(/[A-Z]/g,c=>String.fromCharCode((c.charCodeAt(0)-65+k+26)%26+65));}
+function Q2(){
+  if(state.q2.solved){
+    say("npc_captain","Captain Mara","The Duke's words reached me and the spy got nothing. The wheel did its work — "+
+      "and you kept the setting off the page.");return;
+  }
+  const ct=caesar(CIPHER_INTERCEPT,CIPHER_SHIFT);
+  showModal(`<h2>The Warden's Study — the Cipher Wheel</h2>
+    <p>Your spies snatched a coded note off the Baron's runner. A brass <b>cipher wheel</b> sits on the desk:
+       turn the inner ring and every letter shifts by the same amount (a <i>Caesar</i> shift).
+       Find the turn that makes the gibberish read as plain words.</p>
+    ${has("prop_cipher")?`<div style="text-align:center"><img src="${ASSET_FILES.prop_cipher}" style="width:120px;border-radius:10px;border:2px solid #3a2c1a"></div>`:""}
+    <div class="small">Intercepted note:</div>
+    <div class="cipher-disp" id="ctDisp">${ct}</div>
+    <div class="wheelrow">
+      <button class="btn ghost" id="shDown">◀ turn</button>
+      <div>shift <div class="shiftnum" id="shVal">0</div></div>
+      <button class="btn ghost" id="shUp">turn ▶</button>
+    </div>
+    <div class="small">Reads as:</div>
+    <div class="cipher-disp" id="ptDisp" style="color:#9fd28a">${ct}</div>
+    <div id="q2msg"></div>
+    <div id="q2next"></div>`);
+  let sh=0;
+  const ctDisp=document.getElementById("ptDisp"), shVal=document.getElementById("shVal");
+  function upd(){ // decoding tries shift k => apply -k
+    const guess=caesar(ct,(26-sh)%26);
+    ctDisp.textContent=guess; shVal.textContent=sh;
+    if(guess===CIPHER_INTERCEPT){
+      document.getElementById("q2msg").innerHTML=
+        "<div class='takeaway fadein'><b>Decoded.</b> “MEET THE BARON'S MAN AT DUSK.” So the spy "+
+        "has an inside contact. Now send the Duke's reply so <i>only</i> the Captain can read it.</div>";
+      document.getElementById("q2next").innerHTML=`<button class="btn good" id="toEnc">Encode the Duke's reply ▶</button>`;
+      document.getElementById("toEnc").onclick=q2Encode;
+      if(!state.q2.decoded){state.q2.decoded=true;addClue("c_decoded","Decoded enemy note","prop_letter","✉️");}
+    }
+  }
+  document.getElementById("shUp").onclick=()=>{sh=(sh+1)%26;upd();};
+  document.getElementById("shDown").onclick=()=>{sh=(sh+25)%26;upd();};
+  upd();
+}
+function q2Encode(){
+  const PLAIN="THE GRAIN IS SAFE TONIGHT";
+  const KEY=7;
+  showModal(`<h2>Encode the Duke's Reply</h2>
+    <p>The Captain's wheel is set to <b>${KEY}</b>. Turn <i>your</i> wheel to the same setting and the
+       message becomes safe to send across the open square.</p>
+    <div class="small">The Duke's words:</div>
+    <div class="cipher-disp">${PLAIN}</div>
+    <div class="wheelrow">
+      <button class="btn ghost" id="eDown">◀ turn</button>
+      <div>shift <div class="shiftnum" id="eVal">0</div></div>
+      <button class="btn ghost" id="eUp">turn ▶</button>
+    </div>
+    <div class="small">You will hand the runner:</div>
+    <div class="cipher-disp" id="eOut" style="color:#e9b06a">${PLAIN}</div>
+    <div id="eMsg"></div>`);
+  let sh=0;
+  function upd(){
+    const out=caesar(PLAIN,sh);
+    document.getElementById("eOut").textContent=out;
+    document.getElementById("eVal").textContent=sh;
+    if(sh===KEY){
+      document.getElementById("eMsg").innerHTML=
+        "<div class='takeaway fadein'><b>Sealed.</b> Anyone who grabs this sees only "+
+        "“"+out+"”. Without the wheel-setting, it's noise."+
+        "<br><br><b>But notice:</b> the runner you caught earlier had scrawled the shift-number "+
+        "<i>on the very same parchment</i> as his message. That is the cardinal sin — "+
+        "<b>never send the key with the secret.</b> The method can be public; only the "+
+        "<i>key</i> must stay private.</div>"+
+        `<button class="btn good" id="eDone">Send it safely ▶</button>`;
+      document.getElementById("eDone").onclick=q2Win;
+    }
+  }
+  document.getElementById("eUp").onclick=()=>{sh=(sh+1)%26;upd();};
+  document.getElementById("eDown").onclick=()=>{sh=(sh+25)%26;upd();};
+  upd();
+}
+function q2Win(){
+  state.q2.solved=true;state.q2.encoded=true;
+  addClue("c_cipher","Mastery of the cipher wheel","prop_cipher","🎡");
+  closeModal();
+  say("npc_captain","Captain Mara",
+   "Clean work, Warden. The Duke's order is in my hand and the spy holds nonsense."+
+   "<div class='takeaway'><b>Security idea: Encryption & key management.</b> Confidentiality comes from "+
+   "a <b>key</b>, not from hiding the method (Kerckhoffs's principle). Keep the key apart from the message, "+
+   "share it only with the right reader, and even an intercepted secret stays secret.</div>",
+   [{t:"Two threads mended.",f:()=>{closeDlg();refreshHud();checkAllSolved();}}]);
+}
+
+/* ============================================================ Q3 — KEYRING / LEAST PRIVILEGE + THREAT MODEL */
+const ROLES=["Granary-hand","Scribe","Captain","Steward"];
+const DOORS=["Granary","Archive","Armory","Strongbox"];
+// minimal correct access (least privilege)
+const MINIMAL={
+  "Granary-hand":["Granary"], "Scribe":["Archive"],
+  "Captain":["Armory"], "Steward":["Strongbox"]
+};
+function Q3(where){
+  if(state.q3.solved){
+    say("npc_steward","Steward Pell","Fewer keys, fewer worries — who knew? Now I can see at a glance who could "+
+      "have reached the grain. Just the one soul.");return;
+  }
+  if(!state.q3.assigned){
+    say("npc_steward","Steward Pell",
+     "Keys? Oh, I gave everyone the <b>master key</b> — saves them coming to me! Convenient, yes? "+
+     "Though… now grain's gone and I can't think who could've, since <i>everyone</i> could. "+
+     "<span class='small'>(He beams, entirely missing the problem.)</span>",
+     [{t:"Re-cut the keys properly.",cls:"good",f:q3Assign},{t:"Leave",cls:"ghost",f:closeDlg}]);
+    return;
+  }
+  q3Deduce();
+}
+function q3Assign(){
+  closeDlg();
+  let chosen={}; ROLES.forEach(r=>chosen[r]=new Set());
+  let html=`<h2>Re-cut the Keyring — give each role only what its job needs</h2>
+    ${has("prop_keyring")?`<div style="text-align:center"><img src="${ASSET_FILES.prop_keyring}" style="width:110px;border-radius:10px;border:2px solid #3a2c1a"></div>`:""}
+    <p class="small">Tap to grant a key. The steward's “everyone gets everything” is the opposite of what you want.</p>
+    <div class="grid" style="grid-template-columns:repeat(${DOORS.length+1},1fr);align-items:center">
+      <div></div>${DOORS.map(d=>`<div class="small" style="text-align:center"><b>${d}</b></div>`).join("")}`;
+  ROLES.forEach(r=>{
+    html+=`<div class="small"><b>${r}</b></div>`;
+    DOORS.forEach(d=>{html+=`<div class="cell" data-r="${r}" data-d="${d}">·</div>`;});
+  });
+  html+=`</div><div id="q3msg"></div><div class="row"><button class="btn good" id="q3check">Lock it in</button></div>`;
+  showModal(html);
+  modalBody.querySelectorAll(".cell[data-r]").forEach(c=>{
+    c.onclick=()=>{const r=c.dataset.r,d=c.dataset.d;
+      if(chosen[r].has(d)){chosen[r].delete(d);c.classList.remove("on");c.textContent="·";}
+      else{chosen[r].add(d);c.classList.add("on");c.textContent="🔑";}};
+  });
+  document.getElementById("q3check").onclick=()=>{
+    let extra=0,missing=0;
+    for(const r of ROLES){
+      const want=new Set(MINIMAL[r]);
+      for(const d of DOORS){
+        const giv=chosen[r].has(d), need=want.has(d);
+        if(giv&&!need)extra++; if(!giv&&need)missing++;
+      }
+    }
+    const msg=document.getElementById("q3msg");
+    if(extra===0&&missing===0){
+      state.q3.assigned=true;
+      addClue("c_keys","Least-privilege keyring","prop_keyring","🔑");
+      msg.innerHTML="<div class='takeaway fadein'><b>Least privilege set.</b> Each role holds exactly one key — "+
+        "its own. Now a single theft can only open a single door. Speak to the Steward again to find the thief.</div>"+
+        `<button class="btn good" id="q3go">Now — who took the grain? ▶</button>`;
+      document.getElementById("q3go").onclick=()=>{closeModal();Q3("granary");};
+    }else if(missing>0){
+      msg.innerHTML="<div class='takeaway fadein'>Some role can't do its job — a granary-hand needs the granary. "+
+        "Give each its <i>own</i> door (and only that).</div>";
+    }else{
+      msg.innerHTML="<div class='takeaway fadein'>Too many keys still. <b>"+extra+"</b> extra grant(s). "+
+        "Least privilege means the <i>minimum</i> — strip every key a role doesn't strictly need.</div>";
+    }
+  };
+}
+function q3Deduce(){
+  // threat model: assets, who can reach, who had motive/opportunity
+  showModal(`<h2>Who took the grain? — a threat model</h2>
+    <p>With keys minimized, reasoning is finally possible. The grain sat behind the <b>Granary</b> door.
+       Under the new keyring, only the <b>Granary-hand</b> holds that key — but the theft happened on a
+       night he was abed with fever (the chapel sister vouches).</p>
+    <p>Yet grain still vanished. What does that tell you?</p>
+    <div class="row">
+      <button class="btn" data-a="hand">The Granary-hand lied about the fever</button>
+      <button class="btn" data-a="copy">Someone still holds an old <b>copy</b> of the master key</button>
+      <button class="btn" data-a="steward">No one — the steward miscounted</button>
+    </div><div id="q3dmsg"></div>`);
+  modalBody.querySelectorAll("[data-a]").forEach(b=>{
+    b.onclick=()=>{
+      const a=b.dataset.a, m=document.getElementById("q3dmsg");
+      if(a==="copy"){
+        state.q3.solved=true;
+        addClue("c_oldkey","Outstanding master-key copy","prop_keyring","🗝️");
+        m.innerHTML="<div class='takeaway fadein'><b>Right.</b> When <i>everyone</i> held the master key, "+
+          "anyone could have quietly cut a copy. Minimizing keys <i>going forward</i> isn't enough — "+
+          "you must also <b>revoke</b> what was over-granted. The outstanding copy is the impostor's way in."+
+          `<br><br><b>Security idea: Threat modeling & least privilege.</b> List your assets, ask who can "+
+          "reach each and what happens if they turn, grant the <i>minimum</i> access, and <b>revoke</b> "+
+          "stale access. Over-broad permissions don't just risk theft — they make it impossible to even "+
+          "reason about <i>who could have</i>.</div>`+
+          `<button class="btn good" id="q3win">Revoke the old keys ▶</button>`;
+        document.getElementById("q3win").onclick=()=>{closeModal();
+          say("npc_steward","Steward Pell","I'll call in every old key tonight. From now on: one key, one door, "+
+            "and a tally of who holds each. Never again the master key for all.",
+            [{t:"Three threads mended.",f:()=>{closeDlg();refreshHud();checkAllSolved();}}]);};
+      }else if(a==="hand"){
+        m.innerHTML="<div class='takeaway fadein'>The sister's word clears him — and blaming the obvious "+
+          "key-holder is the trap. Think about who <i>used to</i> have access.</div>";
+      }else{
+        m.innerHTML="<div class='takeaway fadein'>The grain is truly gone; this isn't a counting error. "+
+          "Think about keys cut <i>before</i> you minimized them.</div>";
+      }
+    };
+  });
+}
+
+/* ============================================================ Q4 — OSINT / AGGREGATION */
+const FRAGMENTS={
+  tavern:{name:"Tavern talk: 'big shipment Thursday'",icon:"prop_gossip",emoji:"🍺"},
+  chapel:{name:"Chapel bell rings early when stores are full",icon:"prop_gossip",emoji:"⛪"},
+  laundry:{name:"Laundry list: Captain away two days",icon:"prop_gossip",emoji:"🧺"},
+  ledger:{name:"Merchant ledger: only one wagon this week",icon:"prop_gossip",emoji:"📒"},
+};
+function Q4(where){
+  if(state.q4.solved){
+    say("npc_tavernkeeper","Goodwife Esa","Funny — none of us told a single secret, yet the Baron knew it all. "+
+      "We'll mind how the little things add up now.");return;
+  }
+  if(where==="tavern"){
+    q4Collect("tavern","npc_tavernkeeper","Goodwife Esa",
+      "Oh it's lively! Big shipment coming Thursday, they say — the whole village is chattering. "+
+      "No harm telling <i>you</i>, surely?");
+    return;
+  }
+  if(where==="chapel"){
+    q4Collect("chapel","npc_captain","Sister at the Chapel",
+      "The bell? We ring it early when the granary's full — a little blessing for the harvest. "+
+      "Everyone knows our bells. And the Captain's away two days; I have his laundry sent on.",
+      ()=>{ // chapel gives two fragments
+        if(!state.q4.fragments.laundry){state.q4.fragments.laundry=true;
+          addClue("f_laundry",FRAGMENTS.laundry.name,FRAGMENTS.laundry.icon,FRAGMENTS.laundry.emoji);}
+      });
+    return;
+  }
+}
+function q4Collect(key,port,name,text,extra){
+  if(!state.q4.fragments[key]){
+    state.q4.fragments[key]=true;
+    addClue("f_"+key,FRAGMENTS[key].name,FRAGMENTS[key].icon,FRAGMENTS[key].emoji);
+  }
+  if(extra)extra();
+  // ledger fragment is found at the square notice board; remind player
+  const got=Object.keys(state.q4.fragments).length + (state.q4.fragments.laundry?0:0);
+  say(port,name,text+"<div class='takeaway'>None of this is secret. Jot it in your journal anyway — "+
+    "<i>scraps add up</i>. Gather them all, then piece them together at the <b>Market notice board</b>.</div>",
+    [{t:"Noted.",f:closeDlg}]);
+}
+
+/* ============================================================ MARKET SQUARE — board: ledger frag + Q4 combine + capstone */
+function SQUARE(){
+  // give ledger fragment here
+  if(!state.q4.fragments.ledger){
+    state.q4.fragments.ledger=true;
+    addClue("f_ledger",FRAGMENTS.ledger.name,FRAGMENTS.ledger.icon,FRAGMENTS.ledger.emoji);
+  }
+  const frags=["tavern","chapel","laundry","ledger"].filter(k=>state.q4.fragments[k]);
+  if(!state.q4.solved){
+    if(frags.length<4){
+      say("npc_herald","Market Notice Board",
+        "You've pinned <b>"+frags.length+" of 4</b> scraps here. None secret on its own. "+
+        "Visit the <b>Tankard</b> and the <b>Chapel</b>, and read the merchant's ledger here, to gather them all.",
+        [{t:"Keep gathering",f:closeDlg}]);
+      return;
+    }
+    q4Combine(); return;
+  }
+  // all four quests? -> capstone
+  if(state.q1.solved&&state.q2.solved&&state.q3.solved&&state.q4.solved&&!state.won){
+    capstone(); return;
+  }
+  if(state.won){ epilogue(); return; }
+  say("npc_herald","Market Notice Board","Four troubles still vex Cipherfell. Mend each thread, then return here to "+
+    "name the hand behind them all.",[{t:"Back to work",f:closeDlg}]);
+}
+function q4Combine(){
+  showModal(`<h2>The Notice Board — piece the scraps together</h2>
+    <p>Four harmless notes, pinned side by side. An outsider — the Baron's man — reads them together.
+       What can he now <b>infer</b> that no one ever told him?</p>
+    <div>${["tavern","chapel","laundry","ledger"].map(k=>{
+      const f=FRAGMENTS[k];const ic=has(f.icon)?`style="background:#cdbb8e url(${ASSET_FILES[f.icon]}) center/cover"`:"";
+      return `<span class="chip"><i ${ic}>${has(f.icon)?"":f.emoji}</i>${f.name}</span>`;}).join("")}</div>
+    <h3>So the Baron concludes…</h3>
+    <div class="row">
+      <button class="btn" data-a="a">Nothing useful — it's idle gossip</button>
+      <button class="btn" data-a="b">A lone wagon of grain leaves Thursday, guard captain away — easy to raid</button>
+      <button class="btn" data-a="c">The village is wealthy this year</button>
+    </div><div id="q4msg"></div>`);
+  modalBody.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{
+    const m=document.getElementById("q4msg");
+    if(b.dataset.a==="b"){
+      state.q4.solved=true;
+      addClue("c_osint","The aggregated leak","prop_gossip","🧩");
+      m.innerHTML="<div class='takeaway fadein'><b>Exactly.</b> Shipment day (tavern) + only one wagon (ledger) "+
+        "+ captain away (laundry) + full-granary bell (chapel) = a precise, undefended target. "+
+        "<b>No one leaked a secret; the <i>sum</i> was the secret.</b><br><br>"+
+        "<b>Security idea: Information leakage, OSINT & OPSEC.</b> Public + public + public can equal "+
+        "private. Attackers aggregate open scraps (open-source intelligence). Defend the <i>aggregate</i>: "+
+        "vary patterns, compartmentalize, and watch what your routines reveal.</div>"+
+        `<button class="btn good" id="q4win">Plug the aggregation ▶</button>`;
+      document.getElementById("q4win").onclick=()=>{closeModal();
+        say("npc_tavernkeeper","Goodwife Esa","So we'll move shipments about, hush the bell, and not post the "+
+          "captain's comings and goings. Clever — guard the <i>pattern</i>, not just the words.",
+          [{t:"Four threads mended.",f:()=>{closeDlg();refreshHud();checkAllSolved();}}]);};
+    }else{
+      m.innerHTML="<div class='takeaway fadein'>Look again — pin the four together and imagine you're the raider. "+
+        "When does the grain move, how guarded, how much?</div>";
+    }
+  });
+}
+
+/* ============================================================ CAPSTONE */
+function checkAllSolved(){
+  if(state.q1.solved&&state.q2.solved&&state.q3.solved&&state.q4.solved&&!state.won){
+    toast("All four threads mended. Return to the Market notice board.");
+  }
+}
+function capstone(){
+  showModal(`<h2>The Warden's Eye — name the hand</h2>
+    <p>Four threads, one weave. The culprit must satisfy <b>every</b> clue at once:</p>
+    <ul>
+      <li>Wore a <b>forged identity</b> to get inside (the Gate).</li>
+      <li>Could <b>read the Duke's letters</b> — needed to be trusted near them.</li>
+      <li>Used an <b>old master-key copy</b> to reach the grain unseen.</li>
+      <li><b>Aggregated tavern gossip</b> to time the raid for the Baron.</li>
+    </ul>
+    <p>Who is the single hand behind it all?</p>
+    <div class="row">
+      <button class="btn" data-s="steward">Steward Pell</button>
+      <button class="btn" data-s="impostor">The false "Aldric"</button>
+      <button class="btn" data-s="captain">Captain Mara</button>
+      <button class="btn" data-s="tavern">Goodwife Esa</button>
+    </div><div id="capmsg"></div>`);
+  modalBody.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>{
+    const m=document.getElementById("capmsg");
+    if(b.dataset.s==="impostor"){
+      state.won=true;
+      m.innerHTML="<div class='takeaway fadein'><b>The Warden's Eye sees true.</b> The false Aldric was the "+
+        "Baron's agent: a forged seal got him through the gate, a trusted 'merchant' could linger near the "+
+        "Duke's correspondence, an old master-key copy let him empty the granary, and a week in the Tankard "+
+        "let him aggregate exactly when to strike. Every other suspect fails at least one thread.</div>"+
+        `<button class="btn good" id="capDone">The Duke will hear of this ▶</button>`;
+      document.getElementById("capDone").onclick=()=>{closeModal();refreshHud();epilogue();};
+    }else{
+      const why={steward:"careless with keys, yes — but he never forged an identity nor read the letters.",
+        captain:"holds the armory and was provably <i>away</i>; she can't be the inside reader and raider.",
+        tavern:"gossips freely but passed no gate in disguise and copied no seal."}[b.dataset.s];
+      m.innerHTML="<div class='takeaway fadein'>That one fails a thread: "+why+" The culprit must fit <b>all four</b>.</div>";
+    }
+  });
+}
+function epilogue(){
+  showModal(`<h2>Epilogue — the Warden's lessons</h2>
+    <p>You never touched a machine. Yet what you practiced in Cipherfell <i>is</i> the craft of keeping
+       people and secrets safe:</p>
+    <div class="takeaway"><b>The Impostor → Authentication & MFA.</b> Prove identity with several independent
+       factors — know, have, are. Attackers strike the weakest single one.</div>
+    <div class="takeaway"><b>The Sealed Letter → Encryption & key management.</b> Secrecy lives in the key,
+       not in hiding the method. Never ship the key with the message.</div>
+    <div class="takeaway"><b>The Keyring → Least privilege & threat modeling.</b> Grant the minimum access,
+       revoke what's stale, and shrink the blast radius so you can reason about who-could-have.</div>
+    <div class="takeaway"><b>Loose Lips → Information leakage, OSINT & OPSEC.</b> Harmless public scraps,
+       aggregated, become a secret. Defend the pattern, not only the words.</div>
+    <p style="margin-top:14px"><b>You have the Eye, Warden.</b> Carry it back to the wider world —
+       the village was only practice.</p>
+    <div class="row"><button class="btn good" id="replay">Play again</button></div>`);
+  document.getElementById("replay").onclick=()=>location.reload();
+}
+
+/* ============================================================ BOOT */
+refreshHud();
+requestAnimationFrame(loop);
+// keep hud fresh
+setInterval(refreshHud,600);
+</script>
+</body>
+</html>
