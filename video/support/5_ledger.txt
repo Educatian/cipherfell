@@ -1,0 +1,1 @@
+The tampered ledger. A page's seal should equal the sum of its figures. Re tally every page yourself, then compare. The one page whose seal no longer matches its true sum is the forgery. That is how a checksum catches a hidden change.

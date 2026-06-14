@@ -63,6 +63,7 @@ Solve all six, earn the six Warden's Seals, and the single hand behind them is e
 
 - **Gameplay screencast (28s):** [docs/media/gameplay_screencast.mp4](docs/media/gameplay_screencast.mp4)
 - **Narrated 1-minute trailer (grandfather storyteller voiceover):** [docs/media/cipherfell_trailer.mp4](docs/media/cipherfell_trailer.mp4)
+- **Learning-support video (~1:45, narrated walkthrough of the hardest puzzles):** [docs/media/cipherfell_learning_support.mp4](docs/media/cipherfell_learning_support.mp4) — how to think through the cipher wheel, the least-privilege keyring, OSINT aggregation, and the tampered-ledger checksum, without giving the answers away.
 
 ---
 

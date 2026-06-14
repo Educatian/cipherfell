@@ -1,0 +1,1 @@
+The cipher wheel. Every letter is turned by the same secret amount. Turn the wheel one notch at a time and watch the note. The moment real words appear, a three letter word is often the, you have found the shift, and the whole message unlocks at once.

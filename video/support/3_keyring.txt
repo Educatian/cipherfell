@@ -1,0 +1,1 @@
+The keyring. Resist the urge to hand out every key. Give each role only the one door its work needs. When every role holds a single key, a single theft can open only a single door. That is least privilege.
