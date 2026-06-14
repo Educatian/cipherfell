@@ -98,6 +98,17 @@ Solve all six, earn the six Warden's Seals, and the single hand behind them is e
 | **6. The Tampered Ledger** | The accounts balance, yet the stolen grain left no trace. Each ledger page carries a wax tally seal (a checksum of its figures). Re-tally every page and find the one whose sealed number no longer matches its true sum — the doctored entry. | **Integrity, checksums, and hashing.** Don't keep the data secret — make tampering *detectable*. A checksum (or cryptographic hash) over the content changes if even one figure changes; recompute and compare to a trusted value. This is how file hashes, digital signatures, and tamper-evident logs work. |
 | **Capstone** | Name the one suspect consistent with all six threads (a forged identity, access to the letters, an old master-key copy, a week of tavern gossip, a summons forged in the Duke's name, and a doctored ledger). | **Synthesis and adversarial thinking.** Correlate weak signals into a single attribution; think like the attacker to defend. |
 
+### See each mental model in play
+
+| | |
+|:---:|:---:|
+| ![Authentication / MFA](docs/media/concept_01_authentication.gif) | ![Encryption / key management](docs/media/concept_02_encryption.gif) |
+| **1. Authentication / MFA** — cross-examine the impostor on what he *knows*, *has*, and *is*. | **2. Encryption / key management** — turn the Caesar wheel until the intercepted note reads as words. |
+| ![Least privilege](docs/media/concept_03_least_privilege.gif) | ![OSINT / OPSEC](docs/media/concept_04_osint.gif) |
+| **3. Least privilege** — re-cut the keyring so each role holds only its own door. | **4. OSINT / OPSEC** — aggregate harmless public scraps into a precise raid window. |
+| ![Social engineering](docs/media/concept_05_social_engineering.gif) | ![Integrity / hashing](docs/media/concept_06_integrity.gif) |
+| **5. Social engineering** — spot the pretext levers in a forged summons, then verify out-of-band. | **6. Integrity / hashing** — re-tally each ledger page to expose the doctored figure. |
+
 ---
 
 ## Mapping to cybersecurity education curriculum standards
