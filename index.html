@@ -304,6 +304,8 @@ const fresh=()=>({
   q5:{spotted:false,solved:false},
   q6:{tallied:false,solved:false},
   won:false, hints:0, wrong:0, t0:0, playMs:0,
+  // research layer
+  consent:null, pid:"", pre:{done:false,ans:[],score:0}, post:{done:false,ans:[],score:0}, log:[],
 });
 let S=fresh();
 function save(){ try{ S.playMs=(S.playMs||0); localStorage.setItem(SAVEKEY,JSON.stringify(S)); }catch(e){} }
@@ -315,9 +317,11 @@ function loadSave(){ try{ const d=JSON.parse(localStorage.getItem(SAVEKEY)); if(
   if(S.q4&&S.q4.solved&&!S.q5.solved&&!S.won&&S.act<5)S.act=5; } }catch(e){} }
 
 function addClue(id,name,iconKey,emoji){
-  if(S.clues[id])return; S.clues[id]={name,iconKey,emoji}; toast("Clue added: "+name); Audio_.sfx("clue"); spawnSparkle(S.px,S.py); save();
+  if(S.clues[id])return; S.clues[id]={name,iconKey,emoji}; toast("Clue added: "+name); Audio_.sfx("clue"); spawnSparkle(S.px,S.py); logEv("clue",{id:id}); save();
 }
 function clue(id){return !!S.clues[id];}
+function logEv(type,extra){ if(S.consent!=="yes")return; if(!S.log)S.log=[]; if(S.log.length>1500)return;
+  S.log.push(Object.assign({t:Math.round(S.playMs||0),act:S.act,seals:S.seals,type:type},extra||{})); }
 
 /* ============================================================ CANVAS */
 const cv=document.getElementById("cv"), ctx=cv.getContext("2d");
@@ -726,12 +730,17 @@ function openSettings(){ Audio_.init(); const v=Math.round((Audio_.vol||0.45)*10
     <p style="margin-bottom:4px">Music volume — <b id="volval">${v}</b></p>
     <input type="range" id="volSld" min="0" max="100" value="${v}" style="width:100%;accent-color:#b5663b">
     <p style="margin-top:14px"><button class="btn ghost" id="muteToggle">${Audio_.muted?"🔇 Sound: Off":"🔊 Sound: On"}</button></p>
+    <p style="margin-top:12px"><button class="btn ghost" id="expCsv">⤓ Export my data (CSV)</button>
+      <button class="btn ghost" id="wipeData">Wipe my data</button></p>
+    <p class="small">Research logging: <b>${S.consent==="yes"?"on":S.consent==="no"?"off":"not yet chosen"}</b>${S.pid?(" · ID "+S.pid):""} · events: ${(S.log||[]).length}</p>
     <div class="takeaway" style="font-size:.84em"><b>Cipherfell</b> teaches security mindsets, no computers required.
       World/character art &amp; music: CC0 (ArMM1998, Ninja-Adventure). Story art: hand-painted. Progress saves automatically.</div>`);
   const sld=document.getElementById("volSld");
   sld.oninput=()=>{ document.getElementById("volval").textContent=sld.value; Audio_.init(); Audio_.setVol(sld.value/100); };
   document.getElementById("muteToggle").onclick=()=>{ Audio_.setMuted(!Audio_.muted);
     document.getElementById("muteToggle").textContent=Audio_.muted?"🔇 Sound: Off":"🔊 Sound: On"; };
+  document.getElementById("expCsv").onclick=()=>{ if(S.consent!=="yes"){toast("No logged data — research logging is off.");return;} csvExport(); };
+  document.getElementById("wipeData").onclick=()=>{ if(confirm("Wipe all saved progress and logged data from this browser?")){ try{localStorage.removeItem(SAVEKEY);}catch(e){} location.reload(); } };
 }
 function openJournal(){ if(scene!=="play")return; boardOpen(); }
 function openHelp(){ showModal(`<h2>How to play</h2>
@@ -786,13 +795,14 @@ function talkNPC(n){
     case "bard": BARD(); break;
   }
 }
-function gainSeal(act,nextToast){ S.seals=Math.max(S.seals,act); S.act=Math.min(6,act+1); save(); refreshHud(); Audio_.sfx("seal"); spawnSparkle(S.px,S.py,"255,220,120",30);
+function gainSeal(act,nextToast){ S.seals=Math.max(S.seals,act); S.act=Math.min(6,act+1); logEv("seal",{act:act,hints:S.hints,wrong:S.wrong}); save(); refreshHud(); Audio_.sfx("seal"); spawnSparkle(S.px,S.py,"255,220,120",30);
   if(act>=6){ toast("All six seals earned — name the hand at the Notice Board."); }
   else { toast(nextToast||"Warden's Seal earned. A new door has opened."); pendingBeat=act; } }
 
 /* ============================================================ INTRO */
 document.getElementById("startBtn").onclick=()=>{ Audio_.init(); S=fresh();
-  document.getElementById("title").classList.remove("show"); openingCine(); };
+  document.getElementById("title").classList.remove("show");
+  consentScreen(()=>{ if(S.consent==="yes") kcRun("pre",()=>{closeModal();openingCine();}); else openingCine(); }); };
 document.getElementById("continueBtn").onclick=()=>{ Audio_.init(); loadSave();
   document.getElementById("title").classList.remove("show"); fadeOut(()=>enterPlay()); };
 function enterPlay(){ scene="play"; if(isTouch)pad.classList.add("show"); buildSolids(); refreshHud();
@@ -1189,15 +1199,17 @@ function capstone(){
    <div class="row"><button class="btn" data-s="steward">Steward Pell</button><button class="btn" data-s="impostor">The false "Aldric"</button>
    <button class="btn" data-s="captain">Captain Mara</button><button class="btn" data-s="peddler">The Peddler</button></div><div id="mc"></div>`);
   modalBody.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>{ const m=document.getElementById("mc");
-    if(b.dataset.s==="impostor"){ S.won=true; save();
+    if(b.dataset.s==="impostor"){ S.won=true; logEv("won",{hints:S.hints,wrong:S.wrong,ms:Math.round(S.playMs||0)}); save();
       m.innerHTML="<div class='takeaway fadein'><b>The Warden's Eye sees true.</b> The false Aldric was the Baron of Thornmoor's agent: a forged seal got him through the gate, a trusted 'merchant' lingered near the Duke's letters, an old master-key copy emptied the granary, a week in the Tankard let him time the raid, a summons in the Duke's name nearly stripped the watch, and a doctored ledger hid the loss. Every other suspect fails at least one thread.</div>"+`<button class="btn good" id="cd">The Duke will hear of this ▶</button>`;
       Audio_.sfx("seal"); document.getElementById("cd").onclick=()=>{refreshHud();endingCine();}; }
     else { S.wrong++; const why={steward:"careless with keys, but never forged an identity nor read the letters.",captain:"holds the armory and was provably <i>away</i> — can't be the inside reader and raider.",peddler:"a loud gossip, but passed no gate in disguise and copied no seal."}[b.dataset.s];
       m.innerHTML="<div class='takeaway fadein'>That one fails a thread: "+why+" The culprit must fit <b>all four</b>.</div>"; } });
 }
 function rating(){ const pen=S.hints+S.wrong; if(pen<=1)return "★★★ Master Warden"; if(pen<=4)return "★★ Sharp-eyed"; return "★ Warden-in-training"; }
-function epilogue(){
+function epilogue(){ if(S.consent==="yes" && !S.post.done){ kcRun("post", epilogueResults); } else epilogueResults(); }
+function epilogueResults(){
   const mins=Math.max(1,Math.round((S.playMs||0)/60000));
+  const delta=S.post.score-S.pre.score, dstr=(delta>=0?"+":"")+delta;
   showModal(`<h2>Epilogue — the Warden's lessons</h2>
    <p>You never touched a machine. Yet what you practiced in Cipherfell <i>is</i> the craft of keeping people and secrets safe:</p>
    <div class="takeaway"><b>The Impostor → Authentication &amp; MFA.</b> Prove identity with several independent factors — know, have, are.</div>
@@ -1206,10 +1218,78 @@ function epilogue(){
    <div class="takeaway"><b>Loose Lips → Information leakage, OSINT &amp; OPSEC.</b> Public scraps, aggregated, become a secret. Defend the pattern.</div>
    <div class="takeaway"><b>The Forged Summons → Social engineering &amp; phishing.</b> Authority and urgency are levers, not proof. A message can't authenticate itself — verify through a separate, trusted channel.</div>
    <div class="takeaway"><b>The Tampered Ledger → Integrity, checksums &amp; hashing.</b> Don't just hide data — make tampering detectable. Recompute the seal (hash) and compare; one changed figure breaks the match.</div>
+   ${S.consent==="yes"&&S.post.done?`<div class="takeaway" style="border-style:solid"><b>Your knowledge check:</b> before <b>${S.pre.score}/6</b> → after <b>${S.post.score}/6</b> &nbsp;(<b>${dstr}</b>).</div>`:""}
    <h3 style="margin-top:14px">Your Warden's rating: ${rating()}</h3>
    <p class="small">Hints used: ${S.hints} · Missteps: ${S.wrong} · Time: ~${mins} min</p>
-   <div class="row"><button class="btn good" id="rp">Play again</button></div>`);
+   <div class="row"><button class="btn good" id="rp">Play again</button>${S.consent==="yes"?`<button class="btn ghost" id="csv">⤓ Export my data (CSV)</button>`:""}</div>`);
   document.getElementById("rp").onclick=()=>{ try{localStorage.removeItem(SAVEKEY);}catch(e){} location.reload(); };
+  const cx=document.getElementById("csv"); if(cx)cx.onclick=csvExport;
+}
+
+/* ============================================================ RESEARCH LAYER (consent · pre/post knowledge check · CSV) */
+const KC=[
+ {c:"Authentication / MFA", q:"Why does requiring a password AND a physical token AND a fingerprint resist impersonation better than any one alone?",
+  o:["Each added factor is one more independent thing an attacker must defeat at once.","A long enough password is effectively unbreakable on its own.","Fingerprints can never be copied or faked.","Three checks are slower, which discourages attackers."], a:0},
+ {c:"Encryption / key management", q:"An encrypted message is intercepted by an enemy. When is its secret still safe?",
+  o:["When the key is kept separate and only the intended reader holds it.","When the method used to lock it is kept secret.","When the message is sent quickly enough.","When no one knows a message was sent at all."], a:0},
+ {c:"Least privilege", q:"Everyone is given the master key 'for convenience.' What is the main security problem?",
+  o:["One stolen key now opens everything, and you cannot reason about who could have done it.","The locks wear out faster from extra use.","People get confused about which key is which.","It becomes harder to cut new copies."], a:0},
+ {c:"OSINT / OPSEC", q:"Several separate, harmless public facts are posted. How can they become a secret?",
+  o:["Combined, they can reveal something none of them showed on its own.","They cannot — anything public is by definition not sensitive.","Only if one of the facts was actually secret to begin with.","Only if they were all posted on the same day."], a:0},
+ {c:"Social engineering", q:"An urgent message bearing your superior's name says 'act now, tell no one.' Best response?",
+  o:["Confirm it through a separate, trusted channel before acting.","Obey at once — it carries the right authority.","Delete it and do nothing further.","Reply to that message asking the sender to confirm they are genuine."], a:0},
+ {c:"Integrity / hashing", q:"How can you tell a document was not secretly altered?",
+  o:["Recompute a checksum / fingerprint of its contents and compare it to a trusted value.","Check that the file still opens without an error.","Make sure the document is encrypted.","Confirm the file size looks about right."], a:0},
+];
+function kcShuffle(opts,a){ const idx=opts.map((_,i)=>i); for(let i=idx.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));const t=idx[i];idx[i]=idx[j];idx[j]=t;}
+  return {opts:idx.map(i=>opts[i]), correct:idx.indexOf(a)}; }
+function kcRun(phase,onDone){
+  const fb = phase==="post"; const shuf=KC.map(k=>kcShuffle(k.o,k.a));
+  let h=`<h2>${fb?"One last check — what stuck":"Before you begin — a quick check"}</h2>
+   <p class="small">${fb?"The same six ideas. See how your thinking shifted.":"Six quick questions. Answer as best you can — there is no penalty; this just helps us learn what the game teaches."}</p>`;
+  KC.forEach((k,qi)=>{ h+=`<div style="margin-top:12px"><div><b>${qi+1}.</b> ${k.q} <span class="small">(${k.c})</span></div>`;
+    shuf[qi].opts.forEach((opt,oi)=>{ h+=`<label class="cell" style="display:block;text-align:left;margin-top:5px;cursor:pointer"><input type="radio" name="kc${qi}" value="${oi}" style="margin-right:8px">${opt}</label>`; });
+    h+=`<div class="kcfb" data-fb="${qi}"></div></div>`; });
+  h+=`<div id="kcm" class="small" style="margin-top:10px;color:#b5391f"></div><div class="row"><button class="btn good" id="kcSub">${fb?"See my results":"Begin the mystery ▶"}</button></div>`;
+  showModal(h); document.getElementById("modalClose").style.display="none";
+  document.getElementById("kcSub").onclick=()=>{
+    for(let qi=0;qi<KC.length;qi++){ if(!modalBody.querySelector(`input[name="kc${qi}"]:checked`)){ document.getElementById("kcm").textContent="Please answer every question."; return; } }
+    let score=0; const ans=[];
+    KC.forEach((k,qi)=>{ const sel=+modalBody.querySelector(`input[name="kc${qi}"]:checked`).value;
+      const picked=k.o.indexOf(shuf[qi].opts[sel]), ok=sel===shuf[qi].correct; if(ok)score++;
+      ans.push({q:qi,picked:picked,correct:ok}); logEv("kc_"+phase,{q:qi,picked:picked,correct:ok?1:0});
+      if(fb){ modalBody.querySelector(`.kcfb[data-fb="${qi}"]`).innerHTML=`<div class="takeaway" style="margin-top:6px">${ok?"<b>Correct.</b> ":"<b>Not quite.</b> "}${k.o[k.a]}</div>`; } });
+    S[phase]={done:true,ans:ans,score:score}; save();
+    document.getElementById("modalClose").style.display="";
+    if(fb){ document.getElementById("kcm").style.color="#46562f"; document.getElementById("kcm").innerHTML=`<b>Post-check: ${score} / ${KC.length}.</b>`;
+      const b=document.getElementById("kcSub"); b.textContent="Continue ▶"; b.onclick=onDone; }
+    else onDone();
+  };
+}
+function consentScreen(onDone){
+  showModal(`<h2>A note before you play</h2>
+   <p>Cipherfell is a <b>research prototype</b> for teaching security thinking. With your permission we'd log your in-game choices (clues found, hints, time) and two short quizzes, to study how well it teaches. <b>No names, no accounts</b> — data stays in your browser unless <i>you</i> export it.</p>
+   <p class="small">Optional study ID: <input id="pidIn" maxlength="40" style="font-family:inherit;padding:4px 8px;border:2px solid #b79b63;border-radius:6px;width:150px"></p>
+   <div class="row"><button class="btn good" id="cYes">Yes — log my session &amp; quizzes</button>
+   <button class="btn ghost" id="cNo">No — just let me play</button></div>
+   <p class="small" style="margin-top:8px">The game plays the same either way. Export or wipe your data anytime from ⚙ Settings.</p>`);
+  document.getElementById("modalClose").style.display="none";
+  const fin=c=>{ S.consent=c; S.pid=(document.getElementById("pidIn").value||"").slice(0,40); logEv("consent",{c:c}); save();
+    document.getElementById("modalClose").style.display=""; closeModal(); onDone(); };
+  document.getElementById("cYes").onclick=()=>fin("yes"); document.getElementById("cNo").onclick=()=>fin("no");
+}
+function csvEsc(v){ return '"'+String(v).replace(/"/g,'""')+'"'; }
+function csvExport(){
+  const meta=[["pid",S.pid||""],["consent",S.consent||""],["won",S.won?1:0],["pre_score",S.pre.score],["post_score",S.post.score],
+    ["delta",S.post.score-S.pre.score],["seals",S.seals],["hints",S.hints],["wrong",S.wrong],["play_ms",Math.round(S.playMs||0)],["rating",rating()]];
+  let out="# session\nfield,value\n"+meta.map(r=>r[0]+","+csvEsc(r[1])).join("\n")+"\n\n# pre_answers\nq,concept,picked,correct\n";
+  S.pre.ans.forEach(a=>out+=`${a.q+1},${csvEsc(KC[a.q].c)},${a.picked},${a.correct?1:0}\n`);
+  out+="\n# post_answers\nq,concept,picked,correct\n";
+  S.post.ans.forEach(a=>out+=`${a.q+1},${csvEsc(KC[a.q].c)},${a.picked},${a.correct?1:0}\n`);
+  out+="\n# events\nt_ms,act,seals,type,detail\n";
+  (S.log||[]).forEach(e=>{ const det=Object.keys(e).filter(k=>!["t","act","seals","type"].includes(k)).map(k=>k+"="+e[k]).join(" "); out+=`${e.t},${e.act},${e.seals},${e.type},${csvEsc(det)}\n`; });
+  const blob=new Blob([out],{type:"text/csv"}), url=URL.createObjectURL(blob), a=document.createElement("a");
+  a.href=url; a.download="cipherfell_"+(S.pid||"session")+".csv"; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
 }
 
 /* ============================================================ BOOT */
