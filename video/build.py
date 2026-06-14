@@ -14,16 +14,16 @@ W, H, FPS = 1920, 1080, 30
 
 # storyboard: (image, weight) — weights distribute the voiceover duration
 STORY = [
-    ("assets/cover.webp",          1.05),
-    ("assets/cine_night.webp",     1.15),
-    ("assets/cine_baron.webp",     0.95),
-    ("assets/cine_commission.webp",1.05),
-    ("assets/npc_impostor.webp",   1.10),
-    ("assets/prop_cipher.webp",    1.00),
-    ("assets/prop_keyring.webp",   1.00),
-    ("assets/prop_gossip.webp",    1.00),
-    ("_shot_refined_square.png",   1.05),
-    ("assets/cine_finale.webp",    1.30),
+    ("assets/keyart.webp",         1.00),  # intro
+    ("assets/cine_night.webp",     1.55),  # Baron's agents by night + the Duke's rule
+    ("assets/splash_act1.webp",    0.95),  # gate impostor
+    ("assets/splash_act2.webp",    1.00),  # sealed letter / cipher
+    ("assets/splash_act3.webp",    1.05),  # keyring / least privilege
+    ("assets/splash_act4.webp",    1.10),  # OSINT board
+    ("assets/splash_act5.webp",    1.00),  # forged summons
+    ("assets/splash_act6.webp",    0.95),  # tampered ledger
+    ("assets/cine_fire.webp",      1.05),  # burned records / backups
+    ("assets/cine_finale.webp",    1.45),  # outro
 ]
 BGM = "assets/audio/bgm_cine.ogg"
 XFADE = 0.0   # using fade-to-black between segments (robust)
