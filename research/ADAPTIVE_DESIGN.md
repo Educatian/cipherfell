@@ -56,7 +56,7 @@ The tier difficulties above are author-set anchors validated by simulation. `res
 ## 6. Measurement & data
 
 - **Consent gate** (anonymous; optional study ID). The game plays identically if declined; only consented sessions are logged.
-- **Pre/post knowledge check** — seven transfer items, one per concept, options shuffled per administration; no feedback on pre (clean baseline), misconception feedback on post.
+- **Pre/post knowledge check** — drawn from a **21-item bank (3 per concept)**: one item per concept is administered, with **parallel pre/post forms** (post draws a different bank item than pre, reducing test-retest memorization while measuring the same competency; the spare third item supports a later delayed-retention form). Options shuffled per administration; no feedback on pre (clean baseline), misconception feedback on post. The export records the exact bank item id per response (`concept-slot.bank-item`), so item-level difficulty can be checked and weak items re-authored.
 - **Telemetry** — timestamped events: consent, pre/post answers, clue pickups, seals, hints (manual `hint`, auto `hint_auto`, offered `hint_offer`), AI-tutor calls, adaptive updates (`adapt`), win.
 - **CSV export** (client-side, one click) — sections: `# session` (ids, pre/post scores & delta, seals/hints/wrong/time/rating, seed, per-act tiers, θ_G, per-concept θ, calibration: `mean_predP`, `clean_solve_rate`, `zpd_target`), `# pre_answers`, `# post_answers`, `# events`.
 
@@ -70,7 +70,7 @@ The tier difficulties above are author-set anchors validated by simulation. `res
 ## 7. Limitations
 - Single-play within-game adaptation spans only seven items; cross-play persistence is where adaptation compounds.
 - Tier difficulties are author-set anchors; §5a re-anchors them from data, but unbiased *item-level* difficulty in a self-correcting adaptive system needs the external KC ability anchor and an iterative re-collect, not a single export pass.
-- The pre/post knowledge check is **one item per concept**; it is a transfer probe, not a reliable per-concept scale (no internal-consistency estimate). A 2–3-item bank per concept would let it carry stronger psychometric weight.
+- The pre/post knowledge check now draws from a **3-item-per-concept bank with parallel forms**, and the analyzer reports per-bank-item difficulty (to retire weak items). It is still a one-item-per-concept *administration*, so a per-concept internal-consistency estimate needs either multi-item-per-concept administration or pooling bank items across participants; the bank + item-level export is the foundation for that.
 - Korean localization currently covers comprehension-/research-critical surfaces; some in-world dialogue falls back to English.
 
 ## References (frontier, indicative)

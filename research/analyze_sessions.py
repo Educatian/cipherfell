@@ -208,6 +208,7 @@ def main():
 
     rows = []
     pre_item = defaultdict(list); post_item = defaultdict(list); concepts = {}
+    pre_bank = defaultdict(list); post_bank = defaultdict(list); bank_concept = {}
     for f in files:
         d = parse_export(f); s = d["session"]
         rows.append({
@@ -220,9 +221,15 @@ def main():
             "theta": {c: fnum(s, "theta_" + c) for c in CONCEPTS},
         })
         for r in d["pre"]:
-            pre_item[r.get("q", "?")].append(int(r.get("correct", "0") or 0)); concepts[r.get("q", "?")] = r.get("concept", "")
+            ok = int(r.get("correct", "0") or 0)
+            pre_item[r.get("q", "?")].append(ok); concepts[r.get("q", "?")] = r.get("concept", "")
+            iid = r.get("item")
+            if iid: pre_bank[iid].append(ok); bank_concept[iid] = r.get("concept", "")
         for r in d["post"]:
-            post_item[r.get("q", "?")].append(int(r.get("correct", "0") or 0))
+            ok = int(r.get("correct", "0") or 0)
+            post_item[r.get("q", "?")].append(ok)
+            iid = r.get("item")
+            if iid: post_bank[iid].append(ok)
 
     pre = [r["pre"] for r in rows if r["pre"] is not None]
     post = [r["post"] for r in rows if r["post"] is not None]
@@ -240,6 +247,41 @@ def main():
     for q in sorted(pre_item, key=lambda x: (len(x), x)):
         pr = mean(pre_item[q]); po = mean(post_item.get(q, [])) if post_item.get(q) else float("nan")
         print(f"  Q{q} {concepts.get(q,'')[:26]:26s}  pre {pr:.2f} -> post {po:.2f}")
+
+    if pre_bank or post_bank:
+        # parallel forms: an item appears in pre for some sessions and post for others,
+        # so pool pre+post for each item's overall difficulty (and show the split).
+        ids = set(pre_bank) | set(post_bank)
+        def idkey(x):
+            try: return [float(p) for p in x.split(".")]
+            except ValueError: return [9, 9]
+        print("\nPer knowledge-item (bank) difficulty   [item id = concept-slot.bank-item]:")
+        print("  item   concept                       n   correct%   (pre/post)   note")
+        last_c = None
+        rates = defaultdict(dict)  # concept -> {iid: pooled_rate}
+        for iid in sorted(ids, key=idkey):
+            allr = pre_bank.get(iid, []) + post_bank.get(iid, [])
+            n = len(allr); r = mean(allr) if allr else float("nan")
+            pr = mean(pre_bank[iid]) if pre_bank.get(iid) else float("nan")
+            po = mean(post_bank[iid]) if post_bank.get(iid) else float("nan")
+            c = bank_concept.get(iid, "")
+            rates[c][iid] = r
+            note = ""
+            if n >= 20 and (r <= 0.03 or r >= 0.97): note = "floor/ceiling (low info)"
+            sep = "" if c == last_c else "\n"; last_c = c
+            print(f"{sep}  {iid:5s}  {c[:28]:28s}  {n:4d}   {r*100:5.0f}%     ({pr:.2f}/{po:.2f})   {note}")
+        # flag items that deviate strongly from their concept's bank average
+        print("\n  Outlier items (|item - concept-bank mean| > 0.15):")
+        any_out = False
+        for c, d in rates.items():
+            vals = [v for v in d.values() if v == v]
+            if len(vals) < 2: continue
+            cm = mean(vals)
+            for iid, v in d.items():
+                if v == v and abs(v - cm) > 0.15:
+                    any_out = True
+                    print(f"    {iid} ({c}): {v:.2f} vs bank {cm:.2f}  -> {'harder' if v < cm else 'easier'}; candidate to re-author")
+        if not any_out: print("    none — bank items are evenly matched within each concept.")
 
     print("\nPer-concept ability theta (mean across learners):")
     for c in CONCEPTS:

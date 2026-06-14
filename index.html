@@ -1529,53 +1529,128 @@ function epilogueResults(){ const ko=LANG==="ko", L=(k,e)=>ko?k:e;
 }
 
 /* ============================================================ RESEARCH LAYER (consent · pre/post knowledge check · CSV) */
-const KC=[
- {c:"Authentication / MFA", q:"Why does requiring a password AND a physical token AND a fingerprint resist impersonation better than any one alone?",
-  o:["Each added factor is one more independent thing an attacker must defeat at once.","A long enough password is effectively unbreakable on its own.","Fingerprints can never be copied or faked.","Three checks are slower, which discourages attackers."], a:0,
-  ck:"인증 / 다중요소(MFA)", qk:"비밀번호 AND 실물 토큰 AND 지문을 모두 요구하면, 어느 하나만 쓸 때보다 사칭에 더 강한 이유는?",
-  ok:["요소가 하나 늘 때마다 공격자가 동시에 뚫어야 할 독립적 관문이 하나 더 늘기 때문.","비밀번호가 충분히 길면 그 자체로 사실상 뚫리지 않기 때문.","지문은 절대 복제·위조될 수 없기 때문.","검사가 세 번이라 느려져 공격자가 단념하기 때문."]},
- {c:"Encryption / key management", q:"An encrypted message is intercepted by an enemy. When is its secret still safe?",
-  o:["When the key is kept separate and only the intended reader holds it.","When the method used to lock it is kept secret.","When the message is sent quickly enough.","When no one knows a message was sent at all."], a:0,
-  ck:"암호화 / 키 관리", qk:"암호화된 메시지를 적이 가로챘다. 그 비밀이 여전히 안전한 경우는?",
-  ok:["열쇠(키)를 따로 보관하고 의도된 수신자만 가지고 있을 때.","잠그는 데 쓴 방법을 비밀로 할 때.","메시지를 충분히 빨리 보냈을 때.","메시지를 보냈다는 사실을 아무도 모를 때."]},
- {c:"Least privilege", q:"Everyone is given the master key 'for convenience.' What is the main security problem?",
-  o:["One stolen key now opens everything, and you cannot reason about who could have done it.","The locks wear out faster from extra use.","People get confused about which key is which.","It becomes harder to cut new copies."], a:0,
-  ck:"최소 권한", qk:"'편의를 위해' 모두에게 마스터 키를 줬다. 가장 큰 보안 문제는?",
-  ok:["열쇠 하나만 도난당해도 전부 열리고, 누가 저질렀는지 추론조차 불가능해진다.","열쇠를 더 자주 써서 자물쇠가 빨리 닳는다.","어느 열쇠가 어느 것인지 사람들이 헷갈린다.","새 복제본을 만들기가 더 어려워진다."]},
- {c:"OSINT / OPSEC", q:"Several separate, harmless public facts are posted. How can they become a secret?",
-  o:["Combined, they can reveal something none of them showed on its own.","They cannot — anything public is by definition not sensitive.","Only if one of the facts was actually secret to begin with.","Only if they were all posted on the same day."], a:0,
-  ck:"OSINT / OPSEC", qk:"무해한 공개 사실 여러 개가 따로따로 게시됐다. 이것이 어떻게 비밀이 될 수 있나?",
-  ok:["합치면, 각각으로는 드러나지 않던 것을 드러낼 수 있다.","될 수 없다 — 공개된 것은 정의상 민감하지 않다.","그 사실 중 하나가 애초에 비밀이었을 때만.","전부 같은 날 게시됐을 때만."]},
- {c:"Social engineering", q:"An urgent message bearing your superior's name says 'act now, tell no one.' Best response?",
-  o:["Confirm it through a separate, trusted channel before acting.","Obey at once — it carries the right authority.","Delete it and do nothing further.","Reply to that message asking the sender to confirm they are genuine."], a:0,
-  ck:"사회공학", qk:"상관의 이름으로 온 긴급 메시지가 '지금 당장 하라, 아무에게도 말하지 말라'고 한다. 최선의 대응은?",
-  ok:["행동하기 전에 별도의 신뢰할 수 있는 경로로 확인한다.","즉시 따른다 — 올바른 권위를 지녔으니까.","삭제하고 더는 아무것도 하지 않는다.","그 메시지에 답장해 발신자에게 진짜인지 확인을 요청한다."]},
- {c:"Integrity / hashing", q:"How can you tell a document was not secretly altered?",
-  o:["Recompute a checksum / fingerprint of its contents and compare it to a trusted value.","Check that the file still opens without an error.","Make sure the document is encrypted.","Confirm the file size looks about right."], a:0,
-  ck:"무결성 / 해싱", qk:"문서가 몰래 변조되지 않았는지 어떻게 알 수 있나?",
-  ok:["내용의 체크섬/지문을 다시 계산해 신뢰할 수 있는 값과 비교한다.","파일이 오류 없이 열리는지 확인한다.","문서가 암호화되어 있는지 확인한다.","파일 크기가 대략 맞아 보이는지 확인한다."]},
- {c:"Availability / backups", q:"Ransomware has locked your only copy of critical files and demands payment. The best protection beforehand was:",
-  o:["Keeping separate, off-site backups so you can restore instead of paying.","A longer password on the files.","Encrypting the files.","Renaming the files so attackers can't find them."], a:0,
-  ck:"가용성 / 백업", qk:"랜섬웨어가 유일한 사본을 잠그고 돈을 요구한다. 사전에 가장 좋은 대비책은?",
-  ok:["별도의 오프사이트 백업을 두어 돈을 내는 대신 복원할 수 있게 한다.","파일에 더 긴 비밀번호를 건다.","파일을 암호화한다.","공격자가 못 찾게 파일 이름을 바꾼다."]},
+/* Knowledge-check item BANK: 3 items per concept (one per concept is drawn per
+   administration). Pre and post draw DIFFERENT items from the same concept's
+   bank (parallel forms), reducing test-retest memorization while measuring the
+   same competency. A 3-item bank also gives a spare form for delayed retention. */
+const KC_BANK=[
+ {c:"Authentication / MFA", ck:"인증 / 다중요소(MFA)", items:[
+  {a:0, q:"Why does requiring a password AND a physical token AND a fingerprint resist impersonation better than any one alone?",
+   o:["Each added factor is one more independent thing an attacker must defeat at once.","A long enough password is effectively unbreakable on its own.","Fingerprints can never be copied or faked.","Three checks are slower, which discourages attackers."],
+   qk:"비밀번호 AND 실물 토큰 AND 지문을 모두 요구하면, 어느 하나만 쓸 때보다 사칭에 더 강한 이유는?",
+   ok:["요소가 하나 늘 때마다 공격자가 동시에 뚫어야 할 독립적 관문이 하나 더 늘기 때문.","비밀번호가 충분히 길면 그 자체로 사실상 뚫리지 않기 때문.","지문은 절대 복제·위조될 수 없기 때문.","검사가 세 번이라 느려져 공격자가 단념하기 때문."]},
+  {a:0, q:"A spy copies your secret passphrase from a note. Which kind of check would still stop them?",
+   o:["A check of something you *are*, like a fingerprint or a recognized scar.","A longer passphrase.","Asking for the passphrase a second time.","Writing the passphrase in code."],
+   qk:"첩자가 쪽지에서 당신의 암호문구를 베꼈다. 그래도 그를 막을 수 있는 확인은?",
+   ok:["당신 '자체'인 것 — 지문이나 알아보는 흉터 같은 것의 확인.","더 긴 암호문구.","암호문구를 한 번 더 묻기.","암호문구를 부호로 적어두기."]},
+  {a:0, q:"An account has a strong password, but its 'reset' question is your pet's name, posted online. How secure is it?",
+   o:["Only as secure as its weakest factor — the guessable reset path.","Very secure, because the password is strong.","Secure, because two checks exist.","At risk only if the password is also weak."],
+   qk:"어떤 계정의 비밀번호는 강력하지만 '재설정' 질문이 온라인에 올라온 반려동물 이름이다. 얼마나 안전한가?",
+   ok:["가장 약한 요소만큼만 안전하다 — 추측 가능한 재설정 경로.","비밀번호가 강력하니 매우 안전하다.","확인이 두 개 있으니 안전하다.","비밀번호까지 약할 때만 위험하다."]}]},
+ {c:"Encryption / key management", ck:"암호화 / 키 관리", items:[
+  {a:0, q:"An encrypted message is intercepted by an enemy. When is its secret still safe?",
+   o:["When the key is kept separate and only the intended reader holds it.","When the method used to lock it is kept secret.","When the message is sent quickly enough.","When no one knows a message was sent at all."],
+   qk:"암호화된 메시지를 적이 가로챘다. 그 비밀이 여전히 안전한 경우는?",
+   ok:["열쇠(키)를 따로 보관하고 의도된 수신자만 가지고 있을 때.","잠그는 데 쓴 방법을 비밀로 할 때.","메시지를 충분히 빨리 보냈을 때.","메시지를 보냈다는 사실을 아무도 모를 때."]},
+  {a:0, q:"One locksmith hides how his lock is built; another publishes the design but guards the key. Whose secret is safer?",
+   o:["The one who guards the key — security should live in the key, not the method.","The one who hides the design — obscurity is the strongest defense.","Both are equal, as long as the message is short.","Neither; any published design is immediately broken."],
+   qk:"한 자물쇠공은 자물쇠 구조를 숨기고, 다른 한 명은 설계를 공개하되 열쇠를 지킨다. 누구의 비밀이 더 안전한가?",
+   ok:["열쇠를 지키는 쪽 — 보안은 방법이 아니라 열쇠에 있어야 한다.","설계를 숨기는 쪽 — 은폐가 가장 강한 방어다.","메시지가 짧기만 하면 둘 다 같다.","둘 다 아니다; 공개된 설계는 즉시 뚫린다."]},
+  {a:0, q:"A courier writes the cipher key on the same parchment as the secret message. What is wrong with that?",
+   o:["Anyone who intercepts the parchment gets both the lock and its key.","Nothing — you need the key to read it anyway.","The parchment might tear in transit.","The message should have been made longer."],
+   qk:"전령이 암호 열쇠를 비밀 메시지와 같은 양피지에 적었다. 무엇이 잘못됐나?",
+   ok:["양피지를 가로챈 자가 자물쇠와 열쇠를 한꺼번에 얻는다.","문제없다 — 어차피 읽으려면 열쇠가 필요하다.","이동 중 양피지가 찢어질 수 있다.","메시지가 더 길었어야 한다."]}]},
+ {c:"Least privilege", ck:"최소 권한", items:[
+  {a:0, q:"Everyone is given the master key 'for convenience.' What is the main security problem?",
+   o:["One stolen key now opens everything, and you cannot reason about who could have done it.","The locks wear out faster from extra use.","People get confused about which key is which.","It becomes harder to cut new copies."],
+   qk:"'편의를 위해' 모두에게 마스터 키를 줬다. 가장 큰 보안 문제는?",
+   ok:["열쇠 하나만 도난당해도 전부 열리고, 누가 저질렀는지 추론조차 불가능해진다.","열쇠를 더 자주 써서 자물쇠가 빨리 닳는다.","어느 열쇠가 어느 것인지 사람들이 헷갈린다.","새 복제본을 만들기가 더 어려워진다."]},
+  {a:0, q:"A worker who once tended the granary left months ago but still holds its key. The right action is to:",
+   o:["Revoke access that is no longer needed — keep rights matched to the current job.","Leave it; an unused key does no harm.","Give them more keys so they feel trusted.","Re-cut every other lock instead."],
+   qk:"한때 곳간을 돌보던 일꾼이 몇 달 전 떠났는데 아직 그 열쇠를 갖고 있다. 옳은 조치는?",
+   ok:["더는 필요 없는 접근을 회수한다 — 권한을 현재 직무에 맞춘다.","둔다; 안 쓰는 열쇠는 해롭지 않다.","신뢰받는다고 느끼게 열쇠를 더 준다.","대신 다른 자물쇠를 전부 다시 만든다."]},
+  {a:0, q:"Why does giving each role only the doors its job needs make a theft easier to investigate?",
+   o:["The set of people who *could* have done it shrinks to those with that specific access.","It makes the locks sound an alarm.","Fewer keys means thieves simply give up.","It encrypts the record of who opened what."],
+   qk:"각 역할에 직무가 필요로 하는 문만 주면 도난 수사가 쉬워지는 이유는?",
+   ok:["'할 수 있었던' 사람의 범위가 그 특정 접근을 가진 이들로 좁혀진다.","자물쇠가 경보를 울리게 만든다.","열쇠가 적으면 도둑이 그냥 단념한다.","누가 무엇을 열었는지 기록을 암호화한다."]}]},
+ {c:"OSINT / OPSEC", ck:"OSINT / OPSEC", items:[
+  {a:0, q:"Several separate, harmless public facts are posted. How can they become a secret?",
+   o:["Combined, they can reveal something none of them showed on its own.","They cannot — anything public is by definition not sensitive.","Only if one of the facts was actually secret to begin with.","Only if they were all posted on the same day."],
+   qk:"무해한 공개 사실 여러 개가 따로따로 게시됐다. 이것이 어떻게 비밀이 될 수 있나?",
+   ok:["합치면, 각각으로는 드러나지 않던 것을 드러낼 수 있다.","될 수 없다 — 공개된 것은 정의상 민감하지 않다.","그 사실 중 하나가 애초에 비밀이었을 때만.","전부 같은 날 게시됐을 때만."]},
+  {a:0, q:"Your watch posts the shipment day, the guard rota, and the feast schedule — each harmless. Best defense?",
+   o:["Reduce what is shared, so the pieces can't be combined into a raid window.","Post even more, to bury the useful facts in noise.","Punish whoever reads them.","Nothing — each fact is public and harmless."],
+   qk:"경비대가 선적일·근무표·연회 일정을 올린다 — 각각은 무해하다. 최선의 방어는?",
+   ok:["공유를 줄여 조각들이 습격 시점으로 합쳐지지 못하게 한다.","더 많이 올려 유용한 사실을 잡음에 묻는다.","읽는 사람을 처벌한다.","없다 — 각 사실은 공개·무해하다."]},
+  {a:0, q:"To protect a secret routine from open-source snooping, the first step is to:",
+   o:["Look at your own public traces the way an outsider aggregating them would.","Assume nothing public could ever matter.","Make the routine longer and more elaborate.","Share the routine so it seems ordinary."],
+   qk:"공개정보 정찰로부터 비밀 일과를 지키려면 먼저 해야 할 일은?",
+   ok:["외부인이 그것들을 모은다는 관점에서 자신의 공개 흔적을 살핀다.","공개된 것은 결코 중요하지 않다고 가정한다.","일과를 더 길고 복잡하게 만든다.","평범해 보이도록 일과를 공유한다."]}]},
+ {c:"Social engineering", ck:"사회공학", items:[
+  {a:0, q:"An urgent message bearing your superior's name says 'act now, tell no one.' Best response?",
+   o:["Confirm it through a separate, trusted channel before acting.","Obey at once — it carries the right authority.","Delete it and do nothing further.","Reply to that message asking the sender to confirm they are genuine."],
+   qk:"상관의 이름으로 온 긴급 메시지가 '지금 당장 하라, 아무에게도 말하지 말라'고 한다. 최선의 대응은?",
+   ok:["행동하기 전에 별도의 신뢰할 수 있는 경로로 확인한다.","즉시 따른다 — 올바른 권위를 지녔으니까.","삭제하고 더는 아무것도 하지 않는다.","그 메시지에 답장해 발신자에게 진짜인지 확인을 요청한다."]},
+  {a:0, q:"Which combination is the classic fingerprint of a manipulation attempt?",
+   o:["Borrowed authority + urgency + secrecy + a request that breaks normal procedure.","A polite tone and correct spelling.","A message that arrives during working hours.","A request that happens to be easy to fulfill."],
+   qk:"조작 시도의 전형적 '지문'에 해당하는 조합은?",
+   ok:["빌린 권위 + 긴급성 + 비밀 요구 + 정상 절차를 깨는 요청.","공손한 말투와 올바른 맞춤법.","근무 시간 중에 도착한 메시지.","마침 들어주기 쉬운 요청."]},
+  {a:0, q:"Why is replying to a suspicious message to ask 'are you really my boss?' a weak check?",
+   o:["The same forger answers — a message can't prove its own sender; verify out-of-band.","Replying is impolite.","It wastes the sender's time.","It is fine, as long as they answer yes."],
+   qk:"의심스러운 메시지에 답장해 '정말 제 상관 맞나요?'라고 묻는 것이 약한 확인인 이유는?",
+   ok:["같은 위조자가 답한다 — 메시지는 발신자를 스스로 증명 못 한다; 별도 경로로 확인하라.","답장이 무례하다.","발신자의 시간을 낭비한다.","상대가 그렇다고 답하면 괜찮다."]}]},
+ {c:"Integrity / hashing", ck:"무결성 / 해싱", items:[
+  {a:0, q:"How can you tell a document was not secretly altered?",
+   o:["Recompute a checksum / fingerprint of its contents and compare it to a trusted value.","Check that the file still opens without an error.","Make sure the document is encrypted.","Confirm the file size looks about right."],
+   qk:"문서가 몰래 변조되지 않았는지 어떻게 알 수 있나?",
+   ok:["내용의 체크섬/지문을 다시 계산해 신뢰할 수 있는 값과 비교한다.","파일이 오류 없이 열리는지 확인한다.","문서가 암호화되어 있는지 확인한다.","파일 크기가 대략 맞아 보이는지 확인한다."]},
+  {a:0, q:"A tamper-evident seal (checksum) computed over a page of figures will:",
+   o:["Change if even a single figure is altered, exposing the edit.","Hide the figures from any reader.","Stop anyone from opening the page.","Make the page impossible to copy."],
+   qk:"숫자 장부 한 면에 대해 계산한 변조 감지 봉인(체크섬)은?",
+   ok:["숫자가 단 하나만 바뀌어도 값이 달라져 수정을 드러낸다.","어떤 독자에게도 숫자를 숨긴다.","누구도 그 면을 못 열게 한다.","그 면을 복제 불가능하게 만든다."]},
+  {a:0, q:"Integrity protection differs from secrecy because it aims to:",
+   o:["Make tampering *detectable*, rather than to hide the contents.","Keep the contents unreadable to outsiders.","Slow down how fast the data is sent.","Erase the data after it is read."],
+   qk:"무결성 보호가 비밀 유지와 다른 점은, 그 목적이:",
+   ok:["내용을 숨기는 게 아니라 변조를 '감지 가능'하게 만드는 것이다.","내용을 외부인이 못 읽게 하는 것이다.","데이터 전송 속도를 늦추는 것이다.","읽은 뒤 데이터를 지우는 것이다."]}]},
+ {c:"Availability / backups", ck:"가용성 / 백업", items:[
+  {a:0, q:"Ransomware has locked your only copy of critical files and demands payment. The best protection beforehand was:",
+   o:["Keeping separate, off-site backups so you can restore instead of paying.","A longer password on the files.","Encrypting the files.","Renaming the files so attackers can't find them."],
+   qk:"랜섬웨어가 유일한 사본을 잠그고 돈을 요구한다. 사전에 가장 좋은 대비책은?",
+   ok:["별도의 오프사이트 백업을 두어 돈을 내는 대신 복원할 수 있게 한다.","파일에 더 긴 비밀번호를 건다.","파일을 암호화한다.","공격자가 못 찾게 파일 이름을 바꾼다."]},
+  {a:0, q:"Which backup habit best survives a fire that destroys the whole building?",
+   o:["Keeping at least one copy off-site, on separate media.","Saving a second copy on the same shelf.","Encrypting the single copy.","Naming the copy something secret."],
+   qk:"건물 전체를 태우는 화재에서도 가장 잘 살아남는 백업 습관은?",
+   ok:["최소 한 부를 별도 매체로 외부에 보관한다.","같은 선반에 사본을 하나 더 둔다.","유일한 사본을 암호화한다.","사본 이름을 비밀스럽게 짓는다."]},
+  {a:0, q:"With good backups in hand, the right response to a ransom demand is to:",
+   o:["Restore from the backups and refuse to pay.","Pay quickly to get the files back.","Negotiate the ransom down to a smaller sum.","Delete everything and rebuild from memory."],
+   qk:"좋은 백업이 있을 때 몸값 요구에 대한 옳은 대응은?",
+   ok:["백업에서 복원하고 지불을 거부한다.","빨리 지불해 파일을 되찾는다.","더 적은 금액으로 몸값을 협상한다.","전부 지우고 기억에 의존해 다시 만든다."]}]},
 ];
+const KC=KC_BANK;  // length 7 (one slot per concept); items drawn per administration
 function kcShuffle(n){ const idx=[]; for(let i=0;i<n;i++)idx.push(i); for(let i=idx.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));const t=idx[i];idx[i]=idx[j];idx[j]=t;} return idx; }
+/* Draw one item index per concept; post draws a different item than pre (parallel
+   forms) when the bank allows. Deterministic per session seed so a reload is stable. */
+function kcPick(phase){ return KC_BANK.map((e,ci)=>{ const n=e.items.length;
+  if(n<=1) return 0; const base=(((S.seed||1)>>>0)+ci*7919)%n;
+  return phase==="post" ? (base+1)%n : base; }); }
 function kcRun(phase,onDone){
-  const fb=phase==="post", ko=LANG==="ko", L=(k,e)=>ko?k:e; const ord=KC.map(()=>kcShuffle(4));
+  const fb=phase==="post", ko=LANG==="ko", L=(k,e)=>ko?k:e;
+  const pick=kcPick(phase), item=KC_BANK.map((e,ci)=>e.items[pick[ci]]);
+  const ord=item.map(()=>kcShuffle(4));
   let h=`<h2>${fb?L("마지막 점검 — 무엇이 남았나","One last check — what stuck"):L("시작 전 — 간단한 점검","Before you begin — a quick check")}</h2>
-   <p class="small">${fb?L("같은 일곱 개념입니다. 당신의 생각이 어떻게 바뀌었는지 보세요.","The same seven ideas. See how your thinking shifted."):L("일곱 개의 간단한 문항입니다. 최선껏 답해 주세요 — 벌점은 없으며, 게임이 무엇을 가르치는지 알아보기 위함입니다.","Seven quick questions. Answer as best you can — there is no penalty; this just helps us learn what the game teaches.")}</p>`;
-  KC.forEach((k,qi)=>{ const q=ko?k.qk:k.q, opts=ko?k.ok:k.o, c=ko?k.ck:k.c;
+   <p class="small">${fb?L("같은 일곱 개념을 새로운 문항으로 묻습니다. 당신의 생각이 어떻게 바뀌었는지 보세요.","The same seven ideas, asked with fresh questions. See how your thinking shifted."):L("일곱 개의 간단한 문항입니다. 최선껏 답해 주세요 — 벌점은 없으며, 게임이 무엇을 가르치는지 알아보기 위함입니다.","Seven quick questions. Answer as best you can — there is no penalty; this just helps us learn what the game teaches.")}</p>`;
+  item.forEach((k,qi)=>{ const q=ko?k.qk:k.q, opts=ko?k.ok:k.o, c=ko?KC_BANK[qi].ck:KC_BANK[qi].c;
     h+=`<div style="margin-top:12px"><div><b>${qi+1}.</b> ${q} <span class="small">(${c})</span></div>`;
     ord[qi].forEach((origIdx,oi)=>{ h+=`<label class="cell" style="display:block;text-align:left;margin-top:5px;cursor:pointer"><input type="radio" name="kc${qi}" value="${oi}" style="margin-right:8px">${opts[origIdx]}</label>`; });
     h+=`<div class="kcfb" data-fb="${qi}"></div></div>`; });
   h+=`<div id="kcm" class="small" style="margin-top:10px;color:#b5391f"></div><div class="row"><button class="btn good" id="kcSub">${fb?L("내 결과 보기","See my results"):L("미스터리 시작 ▶","Begin the mystery ▶")}</button></div>`;
   showModal(h); document.getElementById("modalClose").style.display="none";
   document.getElementById("kcSub").onclick=()=>{
-    for(let qi=0;qi<KC.length;qi++){ if(!modalBody.querySelector(`input[name="kc${qi}"]:checked`)){ document.getElementById("kcm").textContent=L("모든 문항에 답해 주세요.","Please answer every question."); return; } }
+    for(let qi=0;qi<item.length;qi++){ if(!modalBody.querySelector(`input[name="kc${qi}"]:checked`)){ document.getElementById("kcm").textContent=L("모든 문항에 답해 주세요.","Please answer every question."); return; } }
     let score=0; const ans=[];
-    KC.forEach((k,qi)=>{ const sel=+modalBody.querySelector(`input[name="kc${qi}"]:checked`).value;
+    item.forEach((k,qi)=>{ const sel=+modalBody.querySelector(`input[name="kc${qi}"]:checked`).value;
       const picked=ord[qi][sel], ok=picked===k.a; if(ok)score++;
-      ans.push({q:qi,picked:picked,correct:ok}); logEv("kc_"+phase,{q:qi,picked:picked,correct:ok?1:0});
+      ans.push({q:qi,item:pick[qi],picked:picked,correct:ok}); logEv("kc_"+phase,{q:qi,item:pick[qi],picked:picked,correct:ok?1:0});
       if(fb){ const expl=ko?k.ok[k.a]:k.o[k.a]; modalBody.querySelector(`.kcfb[data-fb="${qi}"]`).innerHTML=`<div class="takeaway" style="margin-top:6px">${ok?L("<b>정답.</b> ","<b>Correct.</b> "):L("<b>아쉽네요.</b> ","<b>Not quite.</b> ")}${expl}</div>`; } });
     S[phase]={done:true,ans:ans,score:score}; save();
     document.getElementById("modalClose").style.display="";
@@ -1606,10 +1681,11 @@ function csvExport(){
     ["clean_solve_rate",S.calib&&S.calib.n?(S.calib.sc/S.calib.n).toFixed(3):""],["zpd_target","0.670"],
     ["theta_auth",(th.auth||0).toFixed(3)],["theta_crypto",(th.crypto||0).toFixed(3)],["theta_lp",(th.lp||0).toFixed(3)],
     ["theta_osint",(th.osint||0).toFixed(3)],["theta_social",(th.social||0).toFixed(3)],["theta_integ",(th.integ||0).toFixed(3)],["theta_avail",(th.avail||0).toFixed(3)]];
-  let out="# session\nfield,value\n"+meta.map(r=>r[0]+","+csvEsc(r[1])).join("\n")+"\n\n# pre_answers\nq,concept,picked,correct\n";
-  S.pre.ans.forEach(a=>out+=`${a.q+1},${csvEsc(KC[a.q].c)},${a.picked},${a.correct?1:0}\n`);
-  out+="\n# post_answers\nq,concept,picked,correct\n";
-  S.post.ans.forEach(a=>out+=`${a.q+1},${csvEsc(KC[a.q].c)},${a.picked},${a.correct?1:0}\n`);
+  const itemId=a=>`${a.q+1}.${(a.item!=null?a.item:0)+1}`;  // concept-slot.bank-item
+  let out="# session\nfield,value\n"+meta.map(r=>r[0]+","+csvEsc(r[1])).join("\n")+"\n\n# pre_answers\nq,concept,item,picked,correct\n";
+  S.pre.ans.forEach(a=>out+=`${a.q+1},${csvEsc(KC_BANK[a.q].c)},${itemId(a)},${a.picked},${a.correct?1:0}\n`);
+  out+="\n# post_answers\nq,concept,item,picked,correct\n";
+  S.post.ans.forEach(a=>out+=`${a.q+1},${csvEsc(KC_BANK[a.q].c)},${itemId(a)},${a.picked},${a.correct?1:0}\n`);
   out+="\n# events\nt_ms,act,seals,type,detail\n";
   (S.log||[]).forEach(e=>{ const det=Object.keys(e).filter(k=>!["t","act","seals","type"].includes(k)).map(k=>k+"="+e[k]).join(" "); out+=`${e.t},${e.act},${e.seals},${e.type},${csvEsc(det)}\n`; });
   const blob=new Blob([out],{type:"text/csv"}), url=URL.createObjectURL(blob), a=document.createElement("a");

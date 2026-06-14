@@ -58,30 +58,38 @@ def simulate_learner(theta_true, plays, rng):
                       f"out={clean} pPred={pPred:.2f} clean={clean} "
                       f"thetaG={thetaG:.2f} theta={theta_c[c]:.2f} next={nxt}")
             events.append((t, act, act, "adapt", detail))
-    # plausible pre/post knowledge scores out of 7 (true ability -> probability correct)
-    base = sigmoid(theta_true - 0.3)
-    pre = sum(1 for _ in CONCEPTS if rng.random() < base * 0.7)
-    post = sum(1 for _ in CONCEPTS if rng.random() < min(0.98, base * 0.7 + 0.30))
-    return events, pre, post, thetaG, theta_c
+    # plausible pre/post knowledge check, item-banked (3 items/concept, parallel forms).
+    # One bank item is planted HARD (osint item 3) so the per-item report can flag it.
+    ITEM_HARD = {("osint", 2): 1.5}
+    pre_ans, post_ans = [], []
+    for ci, c in enumerate(CONCEPTS):
+        pre_i = rng.randint(0, 2); post_i = (pre_i + 1) % 3   # per-learner draw, like in-game kcPick
+        for phase, it, ans in (("pre", pre_i, pre_ans), ("post", post_i, post_ans)):
+            ab = (theta_true - 0.3) + (0.0 if phase == "pre" else 1.2)  # learning lifts post
+            p = sigmoid(ab - ITEM_HARD.get((c, it), 0.0))
+            ans.append((ci, it, 1 if rng.random() < p else 0))
+    pre = sum(a[2] for a in pre_ans); post = sum(a[2] for a in post_ans)
+    return events, (pre, pre_ans), (post, post_ans), thetaG, theta_c
 
 def csv_esc(v): return '"' + str(v).replace('"', '""') + '"'
 
 def write_export(path, pid, events, pre, post, thetaG, theta_c):
+    pre_s, pre_ans = pre; post_s, post_ans = post
     lines = ["# session", "field,value",
              f"pid,{pid}", "consent,yes", "won,1",
-             f"pre_score,{pre}", f"post_score,{post}", f"delta,{post-pre}",
+             f"pre_score,{pre_s}", f"post_score,{post_s}", f"delta,{post_s-pre_s}",
              "seals,7", "hints,0", "wrong,0", f"play_ms,{events[-1][0]}", "rating,1500",
              "seed,sim", f"tiers_act1to7,{'|'.join(str(pick_tier(0)) for _ in range(7))}",
              f"thetaG,{thetaG:.3f}", f"calib_n,{len(events)}", "mean_predP,0.700",
-             "clean_solve_rate,0.700", "zpd_target,0.670"]
+             "clean_solve_rate,0.700", "zpd_target,0.731"]
     for c in CONCEPTS:
         lines.append(f"theta_{c},{theta_c[c]:.3f}")
-    lines += ["", "# pre_answers", "q,concept,picked,correct"]
-    for i, c in enumerate(CONCEPTS, 1):
-        lines.append(f"{i},{c},0,{1 if i <= pre else 0}")
-    lines += ["", "# post_answers", "q,concept,picked,correct"]
-    for i, c in enumerate(CONCEPTS, 1):
-        lines.append(f"{i},{c},0,{1 if i <= post else 0}")
+    lines += ["", "# pre_answers", "q,concept,item,picked,correct"]
+    for (ci, it, ok) in pre_ans:
+        lines.append(f"{ci+1},{CONCEPTS[ci]},{ci+1}.{it+1},0,{ok}")
+    lines += ["", "# post_answers", "q,concept,item,picked,correct"]
+    for (ci, it, ok) in post_ans:
+        lines.append(f"{ci+1},{CONCEPTS[ci]},{ci+1}.{it+1},0,{ok}")
     lines += ["", "# events", "t_ms,act,seals,type,detail"]
     for (tm, act, seals, typ, det) in events:
         lines.append(f"{tm},{act},{seals},{typ},{csv_esc(det)}")
