@@ -152,10 +152,10 @@
   <h1>CIPHERFELL</h1>
   <div class="sub">The Warden's Eye</div>
   <p>A village mystery where you learn to <b>think like a guardian of secrets</b> —
-     no machines, no jargon. Walk the town, gather clues, solve five troubles, name the hand behind them.</p>
+     no machines, no jargon. Walk the town, gather clues, solve six troubles, name the hand behind them.</p>
   <div>
     <span class="tag">Who are you, really?</span><span class="tag">Secrets in plain sight</span>
-    <span class="tag">The wrong key</span><span class="tag">Loose lips</span><span class="tag">A summons unproven</span>
+    <span class="tag">The wrong key</span><span class="tag">Loose lips</span><span class="tag">A summons unproven</span><span class="tag">The doctored ledger</span>
   </div>
   <div style="margin-top:14px"><button class="btn" id="startBtn">Enter Cipherfell</button>
     <button class="btn ghost" id="continueBtn" style="display:none">Continue</button></div>
@@ -194,14 +194,14 @@ const PORT={ aldric:"assets/npc_aldric.webp", impostor:"assets/npc_impostor.webp
   steward:"assets/npc_steward.webp", tavernkeeper:"assets/npc_tavernkeeper.webp",
   captain:"assets/npc_captain.webp", herald:"assets/npc_herald.webp", baron:"assets/cine_baron.webp",
   tomas:"assets/npc_tomas.webp", courier:"assets/npc_courier.webp",
-  bard:"assets/npc_bard.webp", sister:"assets/npc_sister.webp" };
+  bard:"assets/npc_bard.webp", sister:"assets/npc_sister.webp", clerk:"assets/npc_clerk.webp" };
 const CINE={ village:"assets/cover.webp", night:"assets/cine_night.webp",
   commission:"assets/cine_commission.webp", baron:"assets/cine_baron.webp", finale:"assets/cine_finale.webp",
-  summons:"assets/cine_summons.webp" };
+  summons:"assets/cine_summons.webp", tamper:"assets/cine_tamper.webp" };
 const PROP={ signet_real:"assets/prop_signet_real.webp", signet_forged:"assets/prop_signet_forged.webp",
   letter:"assets/prop_letter.webp", cipher:"assets/prop_cipher.webp",
   keyring:"assets/prop_keyring.webp", gossip:"assets/prop_gossip.webp", logo:"assets/logo.webp",
-  summons:"assets/prop_summons.webp" };
+  summons:"assets/prop_summons.webp", ledger:"assets/prop_ledger.webp" };
 const WORLD=["house","castle","arch","granary","silo","monument","fountain","stall",
   "crate","barrel","chest","tree","bush","grass","dirt","water","fence","hero",
   "path","gflower","pebble","tuft","sign"];
@@ -232,6 +232,7 @@ const B=[
  {id:"granary",stamp:"granary", tx:14,ty:23,w:3,h:4, name:"Granary"},
  {id:"archive",stamp:"silo",    tx:21,ty:22,w:3,h:5, name:"Archive"},
  {id:"watch",  stamp:"silo",    tx:8, ty:2, w:3,h:5, name:"North Watchtower", tint:"hue-rotate(330deg) brightness(.88) saturate(.85)"},
+ {id:"counting",stamp:"house",  tx:26,ty:2, w:4,h:4, name:"Counting House", tint:"hue-rotate(35deg) saturate(.6) brightness(1.06)"},
 ];
 // decor: solid props
 const DEC=[
@@ -246,7 +247,7 @@ const DEC=[
 const TREES=[];
 (function(){ for(let x=0;x<MAPW;x+=2){TREES.push([x,0]);TREES.push([x,MAPH-1]);}
   for(let y=0;y<MAPH;y+=2){TREES.push([0,y]);TREES.push([MAPW-1,y]);}
-  const extra=[[13,4],[28,5],[12,9],[26,11],[9,16],[30,16],[24,20],[11,26],[20,9],[36,12],[3,7],[37,26]];
+  const extra=[[13,4],[23,3],[12,9],[26,11],[9,16],[30,16],[24,20],[11,26],[20,9],[36,12],[3,7],[37,26]];
   extra.forEach(e=>TREES.push(e)); })();
 // dirt path rectangles (tile coords) connecting hubs
 const PATHS=[
@@ -261,6 +262,7 @@ const PATHS=[
  [22,17,2,10],         // archive spur
  [9,7,2,9],            // north watchtower spur
  [29,17,2,11],         // founders' stone spur (reaches the stone's foot)
+ [27,6,2,10],          // counting house spur
 ];
 
 /* solids + ground grid built at load */
@@ -300,6 +302,7 @@ const fresh=()=>({
   q3:{assigned:false,solved:false,asked:{}},
   q4:{frag:{},solved:false},
   q5:{spotted:false,solved:false},
+  q6:{tallied:false,solved:false},
   won:false, hints:0, wrong:0, t0:0, playMs:0,
 });
 let S=fresh();
@@ -307,6 +310,8 @@ function save(){ try{ S.playMs=(S.playMs||0); localStorage.setItem(SAVEKEY,JSON.
 function hasSave(){ try{return !!localStorage.getItem(SAVEKEY);}catch(e){return false;} }
 function loadSave(){ try{ const d=JSON.parse(localStorage.getItem(SAVEKEY)); if(d){S=Object.assign(fresh(),d);
   if(!S.q5)S.q5={spotted:false,solved:false};
+  if(!S.q6)S.q6={tallied:false,solved:false};
+  if(S.q5&&S.q5.solved&&!S.q6.solved&&!S.won&&S.act<6)S.act=6;
   if(S.q4&&S.q4.solved&&!S.q5.solved&&!S.won&&S.act<5)S.act=5; } }catch(e){} }
 
 function addClue(id,name,iconKey,emoji){
@@ -367,6 +372,8 @@ const NPCS=[
  // Act 5 — the forged summons
  {id:"tomas",   name:"Gate-Guard Tomas",icon:"🛡️",port:"tomas",hue:330,tx:9.5,ty:7.5,see:()=>S.act>=5&&!S.q5.solved},
  {id:"courier", name:"A Hooded Courier",icon:"🪶",port:"courier", hue:265, tx:15,ty:9, wander:1, see:()=>S.act>=5&&!S.q5.solved},
+ // Act 6 — the tampered ledger
+ {id:"reeve",   name:"Reeve Odell",  icon:"🧮",port:"clerk", hue:200, tx:28,ty:6.5, see:()=>S.act>=6&&!S.q6.solved},
  // worldview / lore
  {id:"bard",    name:"Old Faro the Bard",icon:"🎻",port:"bard", hue:45, tx:8,ty:14, see:()=>true},
 ];
@@ -508,6 +515,7 @@ function npcHot(n){ // show ! when this npc advances the current act
   if(S.act===3&&!S.q3.solved) return n.id==="steward";
   if(S.act===4&&!S.q4.solved) return ["keeper","sister"].includes(n.id);
   if(S.act===5&&!S.q5.solved) return clue("c_summons")?n.id==="tomas":n.id==="herald";
+  if(S.act===6&&!S.q6.solved) return n.id==="reeve";
   return false;
 }
 function drawDecal(k,dx,dy){ const im=img(k); if(!im)return; const s=TS*0.8,o=(TS-s)/2; ctx.drawImage(im,dx+o,dy+o,s,s); }
@@ -539,12 +547,13 @@ function currentObjective(){
   if(S.won)return null;
   const bp=id=>{const b=B.find(x=>x.id===id);return b?{x:(b.tx+b.w/2)*TS,y:(b.ty+b.h)*TS,name:b.name}:null;};
   const board={x:23*TS,y:16*TS,name:"Notice Board"};
-  if(S.seals>=5&&!S.won)return board;
+  if(S.seals>=6&&!S.won)return board;
   if(S.act===1&&!S.q1.solved){ if(!S.q1.are)return bp("smithy"); if(!S.q1.know)return bp("tavern"); if(!S.q1.have)return bp("archive"); return bp("gate"); }
   if(S.act===2&&!S.q2.solved)return bp("study");
   if(S.act===3&&!S.q3.solved)return bp("granary");
   if(S.act===4&&!S.q4.solved){ if(!S.q4.frag.tavern)return bp("tavern"); if(!S.q4.frag.chapel)return bp("chapel"); return board; }
   if(S.act===5&&!S.q5.solved){ if(!clue("c_summons"))return {x:20.5*TS,y:16*TS,name:"The Herald"}; return bp("watch"); }
+  if(S.act===6&&!S.q6.solved)return bp("counting");
   return null;
 }
 function drawWaypoint(){ const o=currentObjective(); if(!o)return; const sx=o.x-cam.x, sy=o.y-cam.y, bob=Math.sin((last||0)/250)*5;
@@ -557,7 +566,7 @@ function drawWaypoint(){ const o=currentObjective(); if(!o)return; const sx=o.x-
     ctx.fillStyle="rgba(20,14,8,.82)"; roundRect(ex-tw/2,ly-13,tw,18,6); ctx.fill(); ctx.fillStyle="#ffd98a"; ctx.fillText(o.name,ex,ly); ctx.restore(); }
 }
 function buildingDone(b){ if(b.id==="gate"||b.id==="smithy"||b.id==="archive")return S.q1.solved&&(b.id!=="archive"||S.q3.solved);
-  if(b.id==="study")return S.q2.solved; if(b.id==="granary")return S.q3.solved; if(b.id==="chapel"||b.id==="tavern")return S.q4.solved; if(b.id==="watch")return S.q5.solved; return false; }
+  if(b.id==="study")return S.q2.solved; if(b.id==="granary")return S.q3.solved; if(b.id==="chapel"||b.id==="tavern")return S.q4.solved; if(b.id==="watch")return S.q5.solved; if(b.id==="counting")return S.q6.solved; return false; }
 function drawMinimap(){ const o=currentObjective(), pad=10, mmW=126, sc=mmW/(MAPW*TS), mmH=MAPH*TS*sc, x0=VW-mmW-pad, y0=56;
   ctx.save(); ctx.fillStyle="rgba(20,14,8,.66)"; roundRect(x0-5,y0-5,mmW+10,mmH+10,8); ctx.fill();
   ctx.fillStyle="#5d7544"; ctx.fillRect(x0,y0,mmW,mmH);
@@ -702,11 +711,12 @@ function questText(){
    [3,"At the <b>Granary</b>, grain vanishes though it's locked. Fix who holds which key."],
    [4,"The Baron knows our plans. Gather talk at <b>Tankard</b> &amp; <b>Chapel</b>, piece it at the Board."],
    [5,"A summons in the Duke's name orders the gate stripped. Ask the <b>Herald</b>, then judge it at the <b>North Watchtower</b>."],
+   [6,"The granary's loss is hidden in the books. Re-tally the sealed ledger at the <b>Counting House</b> to find the doctored page."],
   ];
-  const cur=L.find(l=>l[0]===S.act)||L[4];
-  return "<b>Act "+S.act+" / 5:</b> "+cur[1];
+  const cur=L.find(l=>l[0]===S.act)||L[5];
+  return "<b>Act "+S.act+" / 6:</b> "+cur[1];
 }
-function sealStr(){ let s=""; for(let i=0;i<5;i++)s+=i<S.seals?"🟡":"⚪"; return s; }
+function sealStr(){ let s=""; for(let i=0;i<6;i++)s+=i<S.seals?"🟡":"⚪"; return s; }
 function refreshHud(){ document.getElementById("questbar").innerHTML=questText()+"<div id='seals'>Warden's Seals: "+sealStr()+"</div>"; }
 document.getElementById("journalBtn").onclick=openJournal;
 document.getElementById("helpBtn").onclick=openHelp;
@@ -726,7 +736,7 @@ function openSettings(){ Audio_.init(); const v=Math.round((Audio_.vol||0.45)*10
 function openJournal(){ if(scene!=="play")return; boardOpen(); }
 function openHelp(){ showModal(`<h2>How to play</h2>
   <p><b>Move</b> WASD / arrows / joystick / gamepad. <b>Interact</b> with E / Space / Talk when something lights up (look for the <b>!</b>).</p>
-  <p>Five troubles grip Cipherfell, unlocked one act at a time. Each needs you to <b>walk the town and gather clues</b> before its puzzle opens. Earn a <b>Warden's Seal</b> for each, then name the culprit at the <b>Notice Board</b> by the fountain.</p>
+  <p>Six troubles grip Cipherfell, unlocked one act at a time. Each needs you to <b>walk the town and gather clues</b> before its puzzle opens. Earn a <b>Warden's Seal</b> for each, then name the culprit at the <b>Notice Board</b> by the fountain.</p>
   <div class="takeaway"><b>The real lesson:</b> every puzzle is a security idea in disguise — proving identity, keeping secrets, limiting access, noticing how small facts add up, and resisting a forged order. You train the <i>mindset</i>, not tools.</div>
   <p class="small">Progress saves automatically. Closed the tab? Press <b>Continue</b> on the title.</p>
   <div class="row"><button class="btn ghost" id="replayTut">↺ Replay tutorial</button></div>`);
@@ -737,6 +747,7 @@ function lockMsg(b){
   if(b.id==="study"&&S.seals<1)return "Earn the Warden's trust first (Act 1)";
   if(b.id==="granary"&&S.seals<2)return "Sealed by the Duke's order (Act 2)";
   if(b.id==="watch"&&S.seals<4)return "Manned until the fourth Seal (Act 4)";
+  if(b.id==="counting"&&S.seals<5)return "The reeve admits you at the fifth Seal (Act 5)";
   return null;
 }
 function enter(b){
@@ -751,6 +762,7 @@ function enter(b){
     case "granary": GRANARY(); break;
     case "chapel": CHAPEL(); break;
     case "watch": WATCH(); break;
+    case "counting": COUNTING(); break;
   }
 }
 function talkNPC(n){
@@ -766,6 +778,7 @@ function talkNPC(n){
     case "child": say(null,"A Child","I saw a man climb the granary wall once! …Or maybe that was a dream. I dream a lot.",[{t:"Hm.",f:closeDlg}]); break;
     case "sister": say("sister","The Sister","Our bell rings early when the granary's full — a little blessing. Everyone knows our bells.",[{t:"Interesting…",f:()=>{ if(S.act>=4){q4Frag("chapel");q4Frag("laundry");} closeDlg(); }}]); break;
     case "tomas": WATCH(); break;
+    case "reeve": COUNTING(); break;
     case "courier": say("courier","A Hooded Courier", S.q5.solved?
        "<i>(The courier is gone — slipped out the moment the post held firm.)</i>":
        "A summons for the watch, Warden — straight from the Duke, on my honour. Best it's obeyed at once; <i>great</i> men dislike waiting. No need to trouble the Herald over it.",
@@ -773,8 +786,8 @@ function talkNPC(n){
     case "bard": BARD(); break;
   }
 }
-function gainSeal(act,nextToast){ S.seals=Math.max(S.seals,act); S.act=Math.min(5,act+1); save(); refreshHud(); Audio_.sfx("seal"); spawnSparkle(S.px,S.py,"255,220,120",30);
-  if(act>=5){ toast("All five seals earned — name the hand at the Notice Board."); }
+function gainSeal(act,nextToast){ S.seals=Math.max(S.seals,act); S.act=Math.min(6,act+1); save(); refreshHud(); Audio_.sfx("seal"); spawnSparkle(S.px,S.py,"255,220,120",30);
+  if(act>=6){ toast("All six seals earned — name the hand at the Notice Board."); }
   else { toast(nextToast||"Warden's Seal earned. A new door has opened."); pendingBeat=act; } }
 
 /* ============================================================ INTRO */
@@ -791,7 +804,7 @@ function openingCine(){
     {img:CINE.baron,      text:"The Baron asks one thing of them: <b>learn everything, and take it.</b>"},
     {img:CINE.commission, text:"So the Duke names <b>you</b> the new Warden of the Seal: a ring, a warrant, and one rule."},
     {img:CINE.commission, text:"<b>Trust nothing you cannot prove.</b>"},
-    {img:CINE.village,    text:"By dawn, five troubles wait. A stranger at the gate. A letter already read. Grain gone from a locked store. A summons in the Duke's name that is not his. And the Baron, always a step ahead."},
+    {img:CINE.village,    text:"By dawn, six troubles wait. A stranger at the gate. A letter already read. Grain gone from a locked store. A summons in the Duke's name that is not his. Figures that do not add up. And the Baron, always a step ahead."},
   ], ()=>{ enterPlay(); if(!maybeTutorial()) toast("Follow the gold marker. Press E / Talk to interact."); }, {bgm:"cine"}); });
 }
 /* act-transition narrative beats */
@@ -800,6 +813,7 @@ const BEATS={
  2:[{img:CINE.night,   text:"His letters are safe now. Yet grain still vanishes from a <b>locked</b> store. A key, where no key should be."}],
  3:[{img:CINE.baron,   text:"A stolen key. An old copy. Three threads, one hand. And the Baron always knew <b>when</b> to strike. Who keeps telling him?"}],
  4:[{img:CINE.summons, text:"Now a letter rides in under the <b>Duke's own name</b>, ordering the north gate stripped at midnight. If the watch obeys, Thornmoor walks in unopposed. But does a seal make an order <b>true</b>?"}],
+ 5:[{img:CINE.tamper,  text:"Five threads cut — yet the granary's loss never appears in the <b>accounts</b>. Someone altered the ledger itself to hide the theft. But a tampered figure leaves a <b>broken seal</b>. Find it, and the cover-up unravels."}],
 };
 let pendingBeat=0;
 function actBeat(act){ const sc=BEATS[act]; if(!sc){return;}
@@ -819,7 +833,7 @@ function HERALD(){
      "<div class='takeaway'>A grand seal and a great name are not proof — they are exactly what a forger borrows. Go judge the letter at the <b>Watchtower</b>, and remember: an order can be confirmed only through a channel you already <b>trust</b>.</div>",
      [{t:"To the Watchtower",f:closeDlg}]); return;
   }
-  say("herald","The Herald","Five troubles, one hand. Mend each thread — the town's trust (your Seals) opens the way.",[{t:"Onward",f:closeDlg}]); }
+  say("herald","The Herald","Six troubles, one hand. Mend each thread — the town's trust (your Seals) opens the way.",[{t:"Onward",f:closeDlg}]); }
 
 /* ============================================================ ACT 1 — IMPOSTOR (authentication) */
 function SMITHY(){
@@ -1061,19 +1075,63 @@ function watchActionHTML(){ return `<h3>Your ruling</h3><div class="row">
   <button class="btn" data-w="tear">Tear it up, say nothing</button>
   <button class="btn good" data-w="verify">Hold the post &amp; verify with the Herald</button></div><div id="m5b"></div>`; }
 function wireWatchAction(){ modalBody.querySelectorAll("[data-w]").forEach(b=>b.onclick=()=>{ const mb=document.getElementById("m5b");
-  if(b.dataset.w==="verify"){ S.q5.solved=true; addClue("c_verify","Out-of-band verification","letter","✅"); gainSeal(5);
+  if(b.dataset.w==="verify"){ S.q5.solved=true; addClue("c_verify","Out-of-band verification","letter","✅"); gainSeal(5,"Seal 5 earned — but the accounts themselves may lie. Seek the Counting House.");
     mb.innerHTML="<div class='takeaway fadein'><b>Right.</b> You keep the gate manned and send to the <b>Herald</b> — a channel you already trust — who confirms the Duke gave no such order. The summons is unmasked as the Baron's forgery.<br><br><b>Security idea: Social engineering &amp; phishing.</b> Attackers forge authority and manufacture urgency to make you act before you think. <b>A message can never authenticate itself.</b> Any unexpected, high-pressure request must be confirmed through a <i>separate</i>, trusted channel — never the one that delivered it.</div>"+`<button class="btn good" id="w5">Hold the gate ▶</button>`;
-    document.getElementById("w5").onclick=()=>{ closeModal(); say("tomas","Gate-Guard Tomas","The post stays manned, then — and the Herald will have the truth of it by dawn. A keen eye, Warden.",[{t:"Five threads mended — name the hand at the Board.",f:closeDlg}]); }; }
+    document.getElementById("w5").onclick=()=>{ closeModal(); say("tomas","Gate-Guard Tomas","The post stays manned, then — and the Herald will have the truth of it by dawn. A keen eye, Warden.",[{t:"Five threads mended — one trouble remains.",f:closeDlg}]); }; }
   else if(b.dataset.w==="obey"){ S.wrong++; mb.innerHTML="<div class='takeaway fadein'>The seal is the very thing a forger copies — you proved exactly that at the gate in Act 1. Obeying because an order <i>claims</i> authority is the whole trap.</div>"; }
   else { S.wrong++; mb.innerHTML="<div class='takeaway fadein'>Better than obeying — but you've confirmed nothing, and Tomas may still waver. The Baron will simply forge another. <b>Verify</b>, don't merely discard.</div>"; }
 }); }
+
+/* ============================================================ ACT 6 — TAMPERED LEDGER (integrity / hashing) */
+const LEDGER=[
+ {name:"Tithes", figs:[12,8,5],  seal:25},   // 25 ✓
+ {name:"Grain",  figs:[40,18,9], seal:82},   // sums to 67; sealed 82 ✗ (grain lowered 55→40 to hide 15)
+ {name:"Wool",   figs:[14,6,20], seal:40},   // 40 ✓
+ {name:"Ale",    figs:[9,11,7],  seal:27},   // 27 ✓
+];
+const ltally=f=>f.reduce((a,b)=>a+b,0);
+function COUNTING(){
+  if(S.q6.solved){ say("clerk","Reeve Odell","The books balance to the mark again, Warden. A false figure can hide from the eye, but never from the tally."); return; }
+  if(!clue("c_ledger")){ addClue("c_ledger","The sealed village ledger","ledger","📒"); save();
+    say("clerk","Reeve Odell",
+     "Every page of my ledger is closed with a <b>tally seal</b> — a small wax number I reckon from that page's own figures. Change a single figure and the tally no longer matches; that is how we catch a cheat. "+
+     "Grain went missing, yet the books show no loss. <b>Re-tally each page</b> and find the one whose seal is a lie.",
+     [{t:"Open the ledger",cls:"good",f:ledgerPuzzle},{t:"Later",f:closeDlg}]); return; }
+  ledgerPuzzle();
+}
+function ledgerPuzzle(){
+  closeDlg(); let revealed=false;
+  const rows=LEDGER.map((p,i)=>`<div class="cell" data-p="${i}" style="text-align:left;display:flex;justify-content:space-between;align-items:center;gap:10px">
+     <span><b>${p.name}</b> &nbsp; <span class="small">${p.figs.join(" + ")}</span></span>
+     <span>sealed tally <b style="font-family:monospace">${p.seal}</b> <span class="recomp" data-r="${i}"></span></span></div>`).join("");
+  showModal(`<h2>The Counting House — re-tally the sealed ledger</h2>
+   ${A.ledger?`<div style="text-align:center"><img src="${PROP.ledger}" style="width:104px;border-radius:10px;border:2px solid #2c2114"></div>`:""}
+   <p>Each page's <b>tally seal</b> should equal the sum of its figures. <b>Re-tally</b>, then click the page whose sealed number does not match — the doctored one.</p>
+   <div class="grid" style="grid-template-columns:1fr">${rows}</div>
+   <div class="row"><button class="btn good" id="retally">Re-tally every page</button></div>
+   <div id="m6"></div>`);
+  document.getElementById("retally").onclick=()=>{ revealed=true;
+    LEDGER.forEach((p,i)=>{ const t=ltally(p.figs), ok=t===p.seal;
+      const el=modalBody.querySelector(`.recomp[data-r="${i}"]`);
+      el.innerHTML = ok?`= <b style="color:#5a7a3a;font-family:monospace">${t}</b> ✓`:`= <b style="color:#b5391f;font-family:monospace">${t}</b> ✗`; });
+    document.getElementById("m6").innerHTML="<div class='small'>Now name the page whose seal does not match its true tally.</div>";
+  };
+  modalBody.querySelectorAll(".cell[data-p]").forEach(c=>c.onclick=()=>{
+    if(!revealed){ S.hints++; document.getElementById("m6").innerHTML="<div class='takeaway fadein'>Re-tally first — you cannot spot a forged seal without recomputing the true one.</div>"; return; }
+    const i=+c.dataset.p, p=LEDGER[i], ok=ltally(p.figs)===p.seal, m=document.getElementById("m6");
+    if(!ok){ S.q6.solved=true; addClue("c_integrity","The broken tally seal","ledger","🔏"); gainSeal(6);
+      m.innerHTML="<div class='takeaway fadein'><b>Caught.</b> The <b>Grain</b> page was sealed at 82 (55 + 18 + 9), but its figures now sum to 67 — fifteen measures of grain quietly erased to hide the theft. The forger could change the figure, but could not re-forge a matching seal on every page.<br><br><b>Security idea: Integrity, checksums &amp; hashing.</b> You do not keep the data secret — you make tampering <i>detectable</i>. A checksum (or cryptographic hash) over the content changes if even one figure changes; recompute it and compare to the stored value to prove nothing was altered. This is how file hashes, digital signatures, and tamper-evident logs work.</div>"+`<button class="btn good" id="w6">Restore the true figure ▶</button>`;
+      document.getElementById("w6").onclick=()=>{ closeModal(); say("clerk","Reeve Odell","Fifteen measures, just as the granary lost. I'll re-seal the page true and keep a second tally apart, so no single hand can change both. The books cannot lie to you now, Warden.",[{t:"Six threads mended — name the hand at the Board.",f:closeDlg}]); };
+    } else { S.wrong++; m.innerHTML="<div class='takeaway fadein'>That page's seal matches its tally — it is honest. Look for the one where the re-tally shows ✗.</div>"; }
+  });
+}
 
 /* ============================================================ WORLDVIEW / LORE */
 function BARD(){ say("bard","Old Faro the Bard",
   "Sit a moment, Warden, and hear how Cipherfell came to be.<br><br>Two houses raised this valley: the Duke's line, who sealed every bargain in honest wax, and the lords of <b>Thornmoor</b>, who preferred a blade to a handshake. When the old Baron lost the valley <i>at law</i>, he swore his heirs would take by cunning what they could not win by right.<br><br>So his grandson sends no army — only whispers, forgeries, and borrowed faces. The Duke answered the only way that holds: he named a <b>Warden of the Seal</b>, and bid them trust nothing they cannot prove. That, friend, is <b>you</b>.",
   [{t:"A fine tale.",f:closeDlg}]); }
 function LORE(){ say(null,"The Founders' Stone",
-  "Worn letters, cut deep into the rock:<br><br><i>“Here stands Cipherfell, founded in the Year of the Open Hand. Let no gate open to a stranger's word, no letter be read by the wrong eye, no key be cut for idle hands, no secret be left in plain sight, and no summons be obeyed unproven. Guard these five vows, and the valley keeps itself.”</i><br><br><span class='small'>Five vows — one for each of the Warden's troubles.</span>",
+  "Worn letters, cut deep into the rock:<br><br><i>“Here stands Cipherfell, founded in the Year of the Open Hand. Let no gate open to a stranger's word, no letter be read by the wrong eye, no key be cut for idle hands, no secret be left in plain sight, no summons be obeyed unproven, and no figure be changed without its seal. Guard these six vows, and the valley keeps itself.”</i><br><br><span class='small'>Six vows — one for each of the Warden's troubles.</span>",
   [{t:"Step back",f:closeDlg}]); }
 
 /* ============================================================ NOTICE / CASE BOARD (journal + Q4 combine + capstone) */
@@ -1084,7 +1142,7 @@ function boardOpen(){
   let chips=""; const list=Object.values(S.clues);
   if(!list.length)chips="<p class='small'>No clues yet. Follow the <b>!</b> markers and talk to people.</p>";
   for(const c of list){ const ic=A[c.iconKey]?`style="background:#cdbb8e url(${assetURL(c.iconKey)}) center/cover"`:""; chips+=`<span class="chip"><i ${ic}>${A[c.iconKey]?"":(c.emoji||"•")}</i>${c.name}</span>`; }
-  const prog=[["Impostor",S.q1.solved],["Sealed Letter",S.q2.solved],["Keyring",S.q3.solved],["Loose Lips",S.q4.solved],["Forged Summons",S.q5.solved]];
+  const prog=[["Impostor",S.q1.solved],["Sealed Letter",S.q2.solved],["Keyring",S.q3.solved],["Loose Lips",S.q4.solved],["Forged Summons",S.q5.solved],["Tampered Ledger",S.q6.solved]];
   let pr=prog.map(p=>`<span class="tag">${p[1]?"✔ ":""}${p[0]}</span>`).join("");
   let body=`<h2>The Notice &amp; Case Board</h2><div>${pr} &nbsp; Seals: ${sealStr()}</div><h3>Clues gathered</h3><div>${chips}</div>`;
   // act4 combine
@@ -1094,7 +1152,7 @@ function boardOpen(){
     else body+=`<p class="small" style="margin-top:10px">You've pinned <b>${have}/4</b> scraps. Visit the <b>Tankard</b> and <b>Chapel</b> to gather the rest.</p>`;
   }
   // capstone
-  if(S.seals>=5 && !S.won) body+=`<div class="row" style="margin-top:12px"><button class="btn good" id="capstone">⚖ Name the hand behind it all ▶</button></div>`;
+  if(S.seals>=6 && !S.won) body+=`<div class="row" style="margin-top:12px"><button class="btn good" id="capstone">⚖ Name the hand behind it all ▶</button></div>`;
   if(S.won) body+=`<div class="row" style="margin-top:12px"><button class="btn" id="epi">See the Warden's lessons ▶</button></div>`;
   showModal(body);
   const cb=document.getElementById("combine"); if(cb)cb.onclick=q4Combine;
@@ -1126,12 +1184,13 @@ function capstone(){
    <p>Four threads, one weave. The culprit must satisfy <b>every</b> clue at once:</p>
    <ul><li>Wore a <b>forged identity</b> to get inside.</li><li>Could <b>read the Duke's letters</b> — trusted near them.</li>
    <li>Used an <b>old master-key copy</b> to reach the grain.</li><li><b>Aggregated tavern gossip</b> to time the raid.</li>
-   <li>Forged a <b>summons in the Duke's name</b> to strip the gate.</li></ul>
+   <li>Forged a <b>summons in the Duke's name</b> to strip the gate.</li>
+   <li><b>Altered the ledger</b> to hide the stolen grain.</li></ul>
    <div class="row"><button class="btn" data-s="steward">Steward Pell</button><button class="btn" data-s="impostor">The false "Aldric"</button>
    <button class="btn" data-s="captain">Captain Mara</button><button class="btn" data-s="peddler">The Peddler</button></div><div id="mc"></div>`);
   modalBody.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>{ const m=document.getElementById("mc");
     if(b.dataset.s==="impostor"){ S.won=true; save();
-      m.innerHTML="<div class='takeaway fadein'><b>The Warden's Eye sees true.</b> The false Aldric was the Baron of Thornmoor's agent: a forged seal got him through the gate, a trusted 'merchant' lingered near the Duke's letters, an old master-key copy emptied the granary, a week in the Tankard let him time the raid, and a summons in the Duke's name nearly stripped the watch. Every other suspect fails at least one thread.</div>"+`<button class="btn good" id="cd">The Duke will hear of this ▶</button>`;
+      m.innerHTML="<div class='takeaway fadein'><b>The Warden's Eye sees true.</b> The false Aldric was the Baron of Thornmoor's agent: a forged seal got him through the gate, a trusted 'merchant' lingered near the Duke's letters, an old master-key copy emptied the granary, a week in the Tankard let him time the raid, a summons in the Duke's name nearly stripped the watch, and a doctored ledger hid the loss. Every other suspect fails at least one thread.</div>"+`<button class="btn good" id="cd">The Duke will hear of this ▶</button>`;
       Audio_.sfx("seal"); document.getElementById("cd").onclick=()=>{refreshHud();endingCine();}; }
     else { S.wrong++; const why={steward:"careless with keys, but never forged an identity nor read the letters.",captain:"holds the armory and was provably <i>away</i> — can't be the inside reader and raider.",peddler:"a loud gossip, but passed no gate in disguise and copied no seal."}[b.dataset.s];
       m.innerHTML="<div class='takeaway fadein'>That one fails a thread: "+why+" The culprit must fit <b>all four</b>.</div>"; } });
@@ -1146,6 +1205,7 @@ function epilogue(){
    <div class="takeaway"><b>The Keyring → Least privilege &amp; threat modeling.</b> Grant the minimum, revoke the stale, shrink the blast radius.</div>
    <div class="takeaway"><b>Loose Lips → Information leakage, OSINT &amp; OPSEC.</b> Public scraps, aggregated, become a secret. Defend the pattern.</div>
    <div class="takeaway"><b>The Forged Summons → Social engineering &amp; phishing.</b> Authority and urgency are levers, not proof. A message can't authenticate itself — verify through a separate, trusted channel.</div>
+   <div class="takeaway"><b>The Tampered Ledger → Integrity, checksums &amp; hashing.</b> Don't just hide data — make tampering detectable. Recompute the seal (hash) and compare; one changed figure breaks the match.</div>
    <h3 style="margin-top:14px">Your Warden's rating: ${rating()}</h3>
    <p class="small">Hints used: ${S.hints} · Missteps: ${S.wrong} · Time: ~${mins} min</p>
    <div class="row"><button class="btn good" id="rp">Play again</button></div>`);
