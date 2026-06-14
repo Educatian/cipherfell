@@ -435,7 +435,7 @@ const HINTS={
      {en:"The mismatched page is the doctored one.",ko:"일치하지 않는 쪽이 조작된 쪽이다."}],
 };
 let _curHints=null;
-function mountHints(host,hints){ if(!host||!hints){_curHints=null;return;} let i=0,w=0; const L=o=>LANG==="ko"?o.ko:o.en;
+function mountHints(host,hints){ if(!host||!hints){_curHints=null;return;} let i=0,w=0,aiAuto=false; const L=o=>LANG==="ko"?o.ko:o.en;
   const lab=()=>(LANG==="ko"?"💡 힌트":"💡 Hint")+" ("+i+"/"+hints.length+")";
   const btn=document.createElement("button"); btn.className="btn ghost"; btn.style.marginTop="10px"; btn.textContent=lab();
   const out=document.createElement("div"); const prompt=document.createElement("div"); prompt.className="small"; prompt.style.marginTop="4px";
@@ -449,7 +449,8 @@ function mountHints(host,hints){ if(!host||!hints){_curHints=null;return;} let i
     ab.textContent=LANG==="ko"?"✨ AI 튜터에게 묻기":"✨ Ask the AI tutor";
     ab.onclick=()=>{ ab.disabled=true; aiTutor(out).then(()=>{ab.disabled=false;}); }; host.appendChild(ab); }
   // proactive scaffolding (Shute-style ZPD): offer help on stall, auto-surface after repeated misses
-  _curHints={ onWrong:()=>{ w++; if(w>=2 && i<hints.length){ reveal(true); btn.style.animation="pulse 1.4s infinite"; } } };
+  _curHints={ onWrong:()=>{ w++; if(w>=2){ if(i<hints.length){ reveal(true); btn.style.animation="pulse 1.4s infinite"; }
+    if(AI_ON && !aiAuto){ aiAuto=true; aiTutor(out); } } } };   // struggling + tutor on -> auto AI hint (once)
   setTimeout(()=>{ if(i===0 && document.body.contains(btn)){ btn.style.animation="pulse 1.4s infinite";
     prompt.textContent=LANG==="ko"?"막히면 힌트를 눌러보세요.":"Stuck? A hint is here when you need it."; logEv("hint_offer",{act:S.act}); } }, 18000); }
 function hintOnWrong(){ if(_curHints)_curHints.onWrong(); }
@@ -880,6 +881,7 @@ function openSettings(){ Audio_.init(); const v=Math.round((Audio_.vol||0.45)*10
     <p style="margin-top:12px"><button class="btn ghost" id="expCsv">${L("⤓ 내 데이터 내보내기 (CSV)","⤓ Export my data (CSV)")}</button>
       <button class="btn ghost" id="wipeData">${L("내 데이터 삭제","Wipe my data")}</button></p>
     <p class="small">${L("연구 로깅","Research logging")}: <b>${S.consent==="yes"?L("켬","on"):S.consent==="no"?L("끔","off"):L("미선택","not yet chosen")}</b>${S.pid?(" · ID "+S.pid):""} · ${L("이벤트","events")}: ${(S.log||[]).length}</p>
+    ${(S.calib&&S.calib.n)?`<p class="small">${L("난이도 보정","Difficulty calibration")}: ${L("예측 P","predicted P")} <b>${(S.calib.sp/S.calib.n).toFixed(2)}</b> vs ${L("실제 무오류율","clean-solve")} <b>${(S.calib.sc/S.calib.n).toFixed(2)}</b> (${L("목표","target")} 0.67, n=${S.calib.n})</p>`:""}
     <div class="takeaway" style="font-size:.84em">${L("<b>사이퍼펠</b>은 컴퓨터 없이 보안 사고방식을 가르칩니다. 월드/캐릭터 아트·음악: CC0 (ArMM1998, Ninja-Adventure). 스토리 아트: 손그림. 진행은 자동 저장. <i>한국어는 핵심 화면 위주이며 미번역분은 영어로 표시됩니다.</i>","<b>Cipherfell</b> teaches security mindsets, no computers required. World/character art &amp; music: CC0 (ArMM1998, Ninja-Adventure). Story art: hand-painted. Progress saves automatically.")}</div>`);
   const relang=l=>{ setLang(l); applyI18n(); refreshHud(); openSettings(); };
   document.getElementById("langEn").onclick=()=>relang("en");
