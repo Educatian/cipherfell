@@ -192,12 +192,16 @@
 /* ============================================================ ASSETS */
 const PORT={ aldric:"assets/npc_aldric.webp", impostor:"assets/npc_impostor.webp",
   steward:"assets/npc_steward.webp", tavernkeeper:"assets/npc_tavernkeeper.webp",
-  captain:"assets/npc_captain.webp", herald:"assets/npc_herald.webp", baron:"assets/cine_baron.webp" };
+  captain:"assets/npc_captain.webp", herald:"assets/npc_herald.webp", baron:"assets/cine_baron.webp",
+  tomas:"assets/npc_tomas.webp", courier:"assets/npc_courier.webp",
+  bard:"assets/npc_bard.webp", sister:"assets/npc_sister.webp" };
 const CINE={ village:"assets/cover.webp", night:"assets/cine_night.webp",
-  commission:"assets/cine_commission.webp", baron:"assets/cine_baron.webp", finale:"assets/cine_finale.webp" };
+  commission:"assets/cine_commission.webp", baron:"assets/cine_baron.webp", finale:"assets/cine_finale.webp",
+  summons:"assets/cine_summons.webp" };
 const PROP={ signet_real:"assets/prop_signet_real.webp", signet_forged:"assets/prop_signet_forged.webp",
   letter:"assets/prop_letter.webp", cipher:"assets/prop_cipher.webp",
-  keyring:"assets/prop_keyring.webp", gossip:"assets/prop_gossip.webp", logo:"assets/logo.webp" };
+  keyring:"assets/prop_keyring.webp", gossip:"assets/prop_gossip.webp", logo:"assets/logo.webp",
+  summons:"assets/prop_summons.webp" };
 const WORLD=["house","castle","arch","granary","silo","monument","fountain","stall",
   "crate","barrel","chest","tree","bush","grass","dirt","water","fence","hero",
   "path","gflower","pebble","tuft","sign"];
@@ -359,12 +363,12 @@ const NPCS=[
  // ambient + red herrings
  {id:"peddler", name:"A Peddler",   icon:"🎒",port:null, hue:270, tx:24,ty:17, wander:1, see:()=>true},
  {id:"child",   name:"A Child",     icon:"🧒",port:null, hue:90,  tx:16,ty:12, wander:1, see:()=>true},
- {id:"sister",  name:"The Sister",  icon:"⛪",port:null, hue:175, tx:33,ty:11, see:()=>S.act>=4||S.q4.frag.chapel},
+ {id:"sister",  name:"The Sister",  icon:"⛪",port:"sister", hue:175, tx:33,ty:11, see:()=>S.act>=4||S.q4.frag.chapel},
  // Act 5 — the forged summons
- {id:"tomas",   name:"Gate-Guard Tomas",icon:"🛡️",port:"captain",hue:330,tx:9.5,ty:7.5,see:()=>S.act>=5&&!S.q5.solved},
- {id:"courier", name:"A Hooded Courier",icon:"🪶",port:null, hue:265, tx:15,ty:9, wander:1, see:()=>S.act>=5&&!S.q5.solved},
+ {id:"tomas",   name:"Gate-Guard Tomas",icon:"🛡️",port:"tomas",hue:330,tx:9.5,ty:7.5,see:()=>S.act>=5&&!S.q5.solved},
+ {id:"courier", name:"A Hooded Courier",icon:"🪶",port:"courier", hue:265, tx:15,ty:9, wander:1, see:()=>S.act>=5&&!S.q5.solved},
  // worldview / lore
- {id:"bard",    name:"Old Faro the Bard",icon:"🎻",port:null, hue:45, tx:8,ty:14, see:()=>true},
+ {id:"bard",    name:"Old Faro the Bard",icon:"🎻",port:"bard", hue:45, tx:8,ty:14, see:()=>true},
 ];
 NPCS.forEach(n=>{ n.x=n.tx*TS; n.y=n.ty*TS; n.dir="down"; n.wx=n.x; n.wy=n.y; n.wt=0; n.frame=0; n.at=0; });
 
@@ -760,9 +764,9 @@ function talkNPC(n){
     case "herald": HERALD(); break;
     case "peddler": say(null,"A Peddler","Trinkets! Ribbons! …You've a suspicious eye, Warden. I only sell buttons, I swear it.",[{t:"Carry on",f:closeDlg}]); break;
     case "child": say(null,"A Child","I saw a man climb the granary wall once! …Or maybe that was a dream. I dream a lot.",[{t:"Hm.",f:closeDlg}]); break;
-    case "sister": say(null,"The Sister","Our bell rings early when the granary's full — a little blessing. Everyone knows our bells.",[{t:"Interesting…",f:()=>{ if(S.act>=4){q4Frag("chapel");q4Frag("laundry");} closeDlg(); }}]); break;
+    case "sister": say("sister","The Sister","Our bell rings early when the granary's full — a little blessing. Everyone knows our bells.",[{t:"Interesting…",f:()=>{ if(S.act>=4){q4Frag("chapel");q4Frag("laundry");} closeDlg(); }}]); break;
     case "tomas": WATCH(); break;
-    case "courier": say(null,"A Hooded Courier", S.q5.solved?
+    case "courier": say("courier","A Hooded Courier", S.q5.solved?
        "<i>(The courier is gone — slipped out the moment the post held firm.)</i>":
        "A summons for the watch, Warden — straight from the Duke, on my honour. Best it's obeyed at once; <i>great</i> men dislike waiting. No need to trouble the Herald over it.",
        [{t:"…We shall see.",f:closeDlg}]); break;
@@ -795,7 +799,7 @@ const BEATS={
  1:[{img:CINE.baron,   text:"One mask torn away. But a <b>forged seal</b> means someone inside helped him. The Baron's reach runs deeper than a single impostor."}],
  2:[{img:CINE.night,   text:"His letters are safe now. Yet grain still vanishes from a <b>locked</b> store. A key, where no key should be."}],
  3:[{img:CINE.baron,   text:"A stolen key. An old copy. Three threads, one hand. And the Baron always knew <b>when</b> to strike. Who keeps telling him?"}],
- 4:[{img:CINE.night,   text:"Now a letter rides in under the <b>Duke's own name</b>, ordering the north gate stripped at midnight. If the watch obeys, Thornmoor walks in unopposed. But does a seal make an order <b>true</b>?"}],
+ 4:[{img:CINE.summons, text:"Now a letter rides in under the <b>Duke's own name</b>, ordering the north gate stripped at midnight. If the watch obeys, Thornmoor walks in unopposed. But does a seal make an order <b>true</b>?"}],
 };
 let pendingBeat=0;
 function actBeat(act){ const sc=BEATS[act]; if(!sc){return;}
@@ -809,7 +813,7 @@ function endingCine(){ closeModal();
 function HERALD(){
   if(S.won){ say("herald","The Herald","Cipherfell is safe because of your Eye, Warden. The Duke shall hear of it.",[{t:"Onward",f:closeDlg}]); return; }
   if(S.act>=5&&!S.q5.solved){
-    if(!clue("c_summons")){ addClue("c_summons","A summons bearing the Duke's name","letter","📜"); save(); }
+    if(!clue("c_summons")){ addClue("c_summons","A summons bearing the Duke's name","summons","📜"); save(); }
     say("herald","The Herald",
      "Warden, mark me well: I am the Duke's <b>only</b> true crier, and I carry <i>no</i> such order. Yet a sealed summons has reached Gate-Guard Tomas at the <b>North Watchtower</b>, commanding him to abandon the gate at midnight. "+
      "<div class='takeaway'>A grand seal and a great name are not proof — they are exactly what a forger borrows. Go judge the letter at the <b>Watchtower</b>, and remember: an order can be confirmed only through a channel you already <b>trust</b>.</div>",
@@ -1012,7 +1016,7 @@ function TAVERN4(){
 function CHAPEL4(){
   if(S.q4.solved){ say("captain","Chapel","The leak is plugged — we vary the pattern now."); return; }
   q4Frag("chapel"); q4Frag("laundry");
-  say(null,"The Sister","The bell rings early when the granary's full — everyone knows our bells. And the Captain's away two days; I send his laundry on."+
+  say("sister","The Sister","The bell rings early when the granary's full — everyone knows our bells. And the Captain's away two days; I send his laundry on."+
    "<div class='takeaway'>Two more harmless scraps. Combine everything at the <b>Notice Board</b> by the fountain.</div>",[{t:"Noted",f:closeDlg}]);
 }
 
@@ -1026,8 +1030,8 @@ const SUMMONS=[
  {red:false, t:"“The harvest has been kind this year.”"},
 ];
 function WATCH(){
-  if(S.q5.solved){ say("captain","Gate-Guard Tomas","I held the post on your word, Warden — parchment be damned. Come dawn the gate stood shut, and not a soul of Thornmoor slipped through."); return; }
-  if(!clue("c_summons")){ say("captain","Gate-Guard Tomas",
+  if(S.q5.solved){ say("tomas","Gate-Guard Tomas","I held the post on your word, Warden — parchment be damned. Come dawn the gate stood shut, and not a soul of Thornmoor slipped through."); return; }
+  if(!clue("c_summons")){ say("tomas","Gate-Guard Tomas",
      "A sealed order, Warden — from the Duke, it says, bidding me leave my post this very night. It <i>feels</i> wrong… but who am I to question the Duke's seal? Best ask the <b>Herald</b> what he knows of it first.",
      [{t:"I'll find the Herald",f:closeDlg}]); return; }
   watchSpot();
@@ -1035,7 +1039,7 @@ function WATCH(){
 function watchSpot(){
   const chosen=new Set();
   let h=`<h2>The North Watchtower — judge the summons</h2>
-   ${A.letter?`<div style="text-align:center"><img src="${PROP.letter}" style="width:104px;border-radius:10px;border:2px solid #2c2114"></div>`:""}
+   ${A.summons?`<div style="text-align:center"><img src="${PROP.summons}" style="width:128px;border-radius:10px;border:2px solid #2c2114"></div>`:""}
    <p>Tomas hands you the letter. It <i>looks</i> official — yet the Herald carries no such order. <b>Tap every line that is a manipulation tactic</b>, not an ordinary fact.</p>
    <div class="grid" style="grid-template-columns:1fr">`;
   SUMMONS.forEach((c,i)=>{ h+=`<div class="cell" data-i="${i}" style="text-align:left">${c.t}</div>`; });
@@ -1059,13 +1063,13 @@ function watchActionHTML(){ return `<h3>Your ruling</h3><div class="row">
 function wireWatchAction(){ modalBody.querySelectorAll("[data-w]").forEach(b=>b.onclick=()=>{ const mb=document.getElementById("m5b");
   if(b.dataset.w==="verify"){ S.q5.solved=true; addClue("c_verify","Out-of-band verification","letter","✅"); gainSeal(5);
     mb.innerHTML="<div class='takeaway fadein'><b>Right.</b> You keep the gate manned and send to the <b>Herald</b> — a channel you already trust — who confirms the Duke gave no such order. The summons is unmasked as the Baron's forgery.<br><br><b>Security idea: Social engineering &amp; phishing.</b> Attackers forge authority and manufacture urgency to make you act before you think. <b>A message can never authenticate itself.</b> Any unexpected, high-pressure request must be confirmed through a <i>separate</i>, trusted channel — never the one that delivered it.</div>"+`<button class="btn good" id="w5">Hold the gate ▶</button>`;
-    document.getElementById("w5").onclick=()=>{ closeModal(); say("captain","Gate-Guard Tomas","The post stays manned, then — and the Herald will have the truth of it by dawn. A keen eye, Warden.",[{t:"Five threads mended — name the hand at the Board.",f:closeDlg}]); }; }
+    document.getElementById("w5").onclick=()=>{ closeModal(); say("tomas","Gate-Guard Tomas","The post stays manned, then — and the Herald will have the truth of it by dawn. A keen eye, Warden.",[{t:"Five threads mended — name the hand at the Board.",f:closeDlg}]); }; }
   else if(b.dataset.w==="obey"){ S.wrong++; mb.innerHTML="<div class='takeaway fadein'>The seal is the very thing a forger copies — you proved exactly that at the gate in Act 1. Obeying because an order <i>claims</i> authority is the whole trap.</div>"; }
   else { S.wrong++; mb.innerHTML="<div class='takeaway fadein'>Better than obeying — but you've confirmed nothing, and Tomas may still waver. The Baron will simply forge another. <b>Verify</b>, don't merely discard.</div>"; }
 }); }
 
 /* ============================================================ WORLDVIEW / LORE */
-function BARD(){ say(null,"Old Faro the Bard",
+function BARD(){ say("bard","Old Faro the Bard",
   "Sit a moment, Warden, and hear how Cipherfell came to be.<br><br>Two houses raised this valley: the Duke's line, who sealed every bargain in honest wax, and the lords of <b>Thornmoor</b>, who preferred a blade to a handshake. When the old Baron lost the valley <i>at law</i>, he swore his heirs would take by cunning what they could not win by right.<br><br>So his grandson sends no army — only whispers, forgeries, and borrowed faces. The Duke answered the only way that holds: he named a <b>Warden of the Seal</b>, and bid them trust nothing they cannot prove. That, friend, is <b>you</b>.",
   [{t:"A fine tale.",f:closeDlg}]); }
 function LORE(){ say(null,"The Founders' Stone",
