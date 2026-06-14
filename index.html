@@ -114,6 +114,19 @@
   @keyframes pulse{0%,100%{opacity:.4;}50%{opacity:.95;}}
 
   #soundBtn{font-size:.95em;}
+
+  /* tutorial spotlight */
+  #tut{position:fixed;inset:0;z-index:43;display:none;}
+  #tut.show{display:block;}
+  #tutHole{position:absolute;border-radius:12px;box-shadow:0 0 0 9999px rgba(8,6,4,.76);
+    border:2px solid rgba(216,164,62,.9);transition:left .3s ease,top .3s ease,width .3s ease,height .3s ease;}
+  #tutTip{position:absolute;width:min(310px,84vw);background:#f7eed5;border:3px solid #2c2114;border-radius:12px;
+    padding:14px 16px;box-shadow:0 12px 34px rgba(0,0,0,.55);transition:left .25s ease,top .25s ease;}
+  #tutTip h3{margin:.1em 0 .45em;color:#5a3d1c;font-size:1.12em;}
+  #tutTip p{margin:.3em 0 .9em;line-height:1.5;font-size:.95em;color:#3a2c1a;}
+  #tutTip p b{color:#8a4a1c;}
+  #tutTip .trow{display:flex;justify-content:space-between;align-items:center;gap:8px;}
+  #tutStep{font-size:.8em;color:#8a7048;}
 </style>
 </head>
 <body>
@@ -167,6 +180,12 @@
   <div class="hint" id="cineHint">▶ click / Space</div>
 </div>
 <div id="fade"></div>
+<div id="tut"><div id="tutHole"></div><div id="tutTip">
+  <h3 id="tutTitle"></h3><p id="tutText"></p>
+  <div class="trow"><span id="tutStep"></span><span>
+    <button class="btn ghost" id="tutSkip" style="padding:7px 11px">Skip</button>
+    <button class="btn good" id="tutNext" style="padding:7px 13px">Next ▶</button></span></div>
+</div></div>
 
 <script>
 "use strict";
@@ -352,6 +371,7 @@ function loop(t){ const dt=Math.min(0.05,(t-last)/1000||0); last=t;
 let scene="title";
 function update(dt){
   pollGP();
+  if(tutActive){ S._moving=false; updateParts(dt); updateCam(); return; }
   let mx=0,my=0; if(keys.left)mx-=1;if(keys.right)mx+=1;if(keys.up)my-=1;if(keys.down)my+=1;
   mx+=stick.dx+gpAxis.x; my+=stick.dy+gpAxis.y; const m=Math.hypot(mx,my); if(m>1){mx/=m;my/=m;}
   const moving=m>0.1, sp=125*dt*SCALE/3*3; // speed px/s scaled
@@ -374,7 +394,7 @@ function update(dt){
   updateParts(dt);
   updateCam();
 }
-function tryInteract(){ if(scene!=="play"||modalOpen())return; const t=nearest(); if(t)t.run(); }
+function tryInteract(){ if(scene!=="play"||modalOpen()||tutActive)return; const t=nearest(); if(t)t.run(); }
 function modalOpen(){ return document.getElementById("dlg").classList.contains("show")||document.getElementById("modal").classList.contains("show"); }
 function nearest(){
   let best=null,bd=TS*1.7;
@@ -612,6 +632,48 @@ document.getElementById("cineSkip").onclick=()=>{ const cb=cineState&&cineState.
   cineEl.classList.remove("show"); cineScene.style.backgroundImage=""; cineState=null; fadeEl.classList.remove("on"); if(cb)cb(); };
 addEventListener("keydown",e=>{ if(cineState&&(e.code==="Space"||e.code==="Enter")){e.preventDefault();advanceCine();} });
 
+/* ============================================================ TUTORIAL (spotlight) */
+function mmRect(){ const r=cv.getBoundingClientRect(), sx=r.width/VW, sy=r.height/VH, x0=VW-126-10, y0=56;
+  return {x:r.left+(x0-6)*sx, y:r.top+(y0-6)*sy, w:138*sx, h:109*sy}; }
+const TUT=[
+ {title:"Your mission, Warden", target:null,
+  text:"Four troubles grip Cipherfell, and one hidden hand is behind them all. Solve each, earn the four <b>Warden's Seals</b>, then name the culprit. No swords, no magic, only a careful eye."},
+ {title:"Your current task", target:"#questbar",
+  text:"Your objective always shows here, with the act you're on (1 of 4) and the seals you've earned."},
+ {title:"The town map", target:mmRect,
+  text:"This mini-map shows the whole village. The <b>gold</b> building is where to head next; the <b>red dot</b> is you."},
+ {title:"Getting around", target:(typeof isTouch!=='undefined'&&isTouch)?"#pad":null,
+  text:"Move with <b>WASD</b> / arrow keys / the joystick. A <b>gold arrow</b> on screen always points to your goal. Press <b>E</b> / Space (or the Talk button) to interact."},
+ {title:"Your Case journal", target:"#journalBtn",
+  text:"Every clue you gather is filed in the <b>Case</b>. Open it anytime to review the mystery, and to name the culprit once all four threads are solved."},
+ {title:"Your first lead", target:null,
+  text:"A stranger at the gate claims to be Aldric the merchant. To unmask him, start with the folk he'd have to fool. Follow the gold marker to the <b>Smithy</b>."},
+];
+let tutActive=false, tutI=0;
+function startTutorial(){ tutActive=true; tutI=0; document.getElementById("tut").classList.add("show"); showTut(); }
+function showTut(){ const s=TUT[tutI];
+  document.getElementById("tutTitle").innerHTML=s.title; document.getElementById("tutText").innerHTML=s.text;
+  document.getElementById("tutStep").textContent=(tutI+1)+" / "+TUT.length;
+  document.getElementById("tutNext").innerHTML=tutI<TUT.length-1?"Next ▶":"Begin ▶";
+  const hole=document.getElementById("tutHole"), tip=document.getElementById("tutTip");
+  let r=null;
+  if(s.target){ if(typeof s.target==="function")r=s.target();
+    else{ const el=document.querySelector(s.target); if(el){ const b=el.getBoundingClientRect(); if(b.width)r={x:b.left-8,y:b.top-8,w:b.width+16,h:b.height+16}; } } }
+  const tipW=Math.min(310,innerWidth*0.84);
+  if(r){ hole.style.display="block"; hole.style.left=r.x+"px"; hole.style.top=r.y+"px"; hole.style.width=r.w+"px"; hole.style.height=r.h+"px";
+    let tx=Math.max(10,Math.min(innerWidth-tipW-10, r.x+r.w/2-tipW/2));
+    let ty=(r.y+r.h+210<innerHeight)? r.y+r.h+14 : Math.max(10, r.y-200);
+    tip.style.transform="none"; tip.style.left=tx+"px"; tip.style.top=ty+"px";
+  } else { hole.style.display="none"; tip.style.left="50%"; tip.style.top="50%"; tip.style.transform="translate(-50%,-50%)"; }
+}
+function nextTut(){ tutI++; if(tutI>=TUT.length){ endTutorial(); return; } Audio_.sfx("select"); showTut(); }
+function endTutorial(){ tutActive=false; document.getElementById("tut").classList.remove("show");
+  try{localStorage.setItem("cf_tut_done","1");}catch(e){} toast("Follow the gold marker. Press E / Talk to interact."); }
+document.getElementById("tutNext").onclick=nextTut;
+document.getElementById("tutSkip").onclick=endTutorial;
+addEventListener("resize",()=>{ if(tutActive)showTut(); });
+function maybeTutorial(){ try{ if(localStorage.getItem("cf_tut_done"))return false; }catch(e){} startTutorial(); return true; }
+
 /* ============================================================ HUD */
 function questText(){
   if(S.won)return "<b>Case closed.</b> The Warden's Eye is open.";
@@ -646,7 +708,9 @@ function openHelp(){ showModal(`<h2>How to play</h2>
   <p><b>Move</b> WASD / arrows / joystick / gamepad. <b>Interact</b> with E / Space / Talk when something lights up (look for the <b>!</b>).</p>
   <p>Four troubles grip Cipherfell, unlocked one act at a time. Each needs you to <b>walk the town and gather clues</b> before its puzzle opens. Earn a <b>Warden's Seal</b> for each, then name the culprit at the <b>Notice Board</b> by the fountain.</p>
   <div class="takeaway"><b>The real lesson:</b> every puzzle is a security idea in disguise — proving identity, keeping secrets, limiting access, and noticing how small facts add up. You train the <i>mindset</i>, not tools.</div>
-  <p class="small">Progress saves automatically. Closed the tab? Press <b>Continue</b> on the title.</p>`); }
+  <p class="small">Progress saves automatically. Closed the tab? Press <b>Continue</b> on the title.</p>
+  <div class="row"><button class="btn ghost" id="replayTut">↺ Replay tutorial</button></div>`);
+  const rt=document.getElementById("replayTut"); if(rt)rt.onclick=()=>{ closeModal(); startTutorial(); }; }
 
 /* ============================================================ ENTER BUILDING / GATING */
 function lockMsg(b){
@@ -700,7 +764,7 @@ function openingCine(){
     {img:CINE.commission, text:"So the Duke names <b>you</b> the new Warden of the Seal: a ring, a warrant, and one rule."},
     {img:CINE.commission, text:"<b>Trust nothing you cannot prove.</b>"},
     {img:CINE.village,    text:"By dawn, four troubles wait. A stranger at the gate. A letter already read. Grain gone from a locked store. And the Baron, always a step ahead."},
-  ], ()=>{ enterPlay(); toast("Follow the ! markers. Press E / Talk to interact."); }, {bgm:"cine"}); });
+  ], ()=>{ enterPlay(); if(!maybeTutorial()) toast("Follow the gold marker. Press E / Talk to interact."); }, {bgm:"cine"}); });
 }
 /* act-transition narrative beats */
 const BEATS={
