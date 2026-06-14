@@ -366,7 +366,7 @@ const fresh=()=>({
   // adaptive engine: per-play seed, per-concept Elo ability, global ability, chosen tier per act
   seed:(Math.floor(Math.random()*2147483647))||12345,
   theta:{auth:0,crypto:0,lp:0,osint:0,social:0,integ:0}, thetaG:0,
-  tier:{1:1}, _snap:{hints:0,wrong:0},
+  tier:{}, _snap:{hints:0,wrong:0},      // act tiers chosen adaptively (ZPD) at play time
 });
 let S=fresh();
 function save(){ try{ S.playMs=(S.playMs||0); localStorage.setItem(SAVEKEY,JSON.stringify(S)); }catch(e){} }
@@ -391,19 +391,24 @@ function pz(name){ return mulberry32((((S.seed||1)>>>0) ^ strHash(name))>>>0); }
 function rpick(r,a){ return a[Math.floor(r()*a.length)]; }
 function rshuf(r,a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));const t=a[i];a[i]=a[j];a[j]=t;} return a; }
 const ACT_CONCEPT={1:"auth",2:"crypto",3:"lp",4:"osint",5:"social",6:"integ"};
-const TIERS=[-0.85,0,0.85];                                  // easy / med / hard difficulty (logit)
-function tierOf(act){ return (S.tier&&S.tier[act]!=null)?S.tier[act]:1; }
+const TIERS=[-0.7,0,0.7];                                    // easy / med / hard difficulty (logit)
+const ZPD_OFF=0.708, ELO_K=0.7;                             // target P(success)≈0.67 (ZPD); learning rate
+function tierOf(act){ return (S.tier&&S.tier[act]!=null)?S.tier[act]:pickTier(S.thetaG||0); }
 function pSucc(theta,tier){ return 1/(1+Math.exp(-(theta-TIERS[tier]))); }
-function pickTier(theta){ const target=theta-1.0986; let best=0,bd=1e9;   // target P(success)=0.75
+function pickTier(theta){ const target=theta-ZPD_OFF; let best=0,bd=1e9;
   for(let i=0;i<TIERS.length;i++){ const d=Math.abs(TIERS[i]-target); if(d<bd){bd=d;best=i;} } return best; }
+function persistTheta(){ try{ localStorage.setItem("cf_theta",JSON.stringify(S.theta||{})); localStorage.setItem("cf_thetaG",String(S.thetaG||0)); }catch(e){} }
+function seedThetaFromStore(){ try{ const tg=localStorage.getItem("cf_thetaG"); if(tg!=null)S.thetaG=parseFloat(tg)||0;
+  const tt=localStorage.getItem("cf_theta"); if(tt){ const o=JSON.parse(tt); if(o&&typeof o==="object")S.theta=Object.assign(S.theta||{},o); } }catch(e){} }
 function adaptOutcome(act){                                  // call when a puzzle is solved
   const sn=S._snap||{hints:0,wrong:0}; const dh=Math.max(0,S.hints-sn.hints), dw=Math.max(0,S.wrong-sn.wrong);
   S._snap={hints:S.hints,wrong:S.wrong};
   const out=Math.max(0.1, 1 - 0.3*dh - 0.34*dw);            // solved; quality scaled by hints/missteps
-  const c=ACT_CONCEPT[act], tier=tierOf(act), K=0.6;
-  S.thetaG=(S.thetaG||0)+K*(out-pSucc(S.thetaG||0,tier));
-  if(!S.theta)S.theta={}; S.theta[c]=(S.theta[c]||0)+K*(out-pSucc(S.theta[c]||0,tier));
+  const c=ACT_CONCEPT[act], tier=tierOf(act);
+  S.thetaG=(S.thetaG||0)+ELO_K*(out-pSucc(S.thetaG||0,tier));
+  if(!S.theta)S.theta={}; S.theta[c]=(S.theta[c]||0)+ELO_K*(out-pSucc(S.theta[c]||0,tier));
   if(!S.tier)S.tier={}; if(act<6)S.tier[act+1]=pickTier(S.thetaG);   // next act sits in the learner's ZPD
+  persistTheta();                                            // carry ability across replays (adaptive on return)
   logEv("adapt",{act:act,c:c,tier:tier,dh:dh,dw:dw,out:+out.toFixed(2),thetaG:+(S.thetaG).toFixed(2),theta:+(S.theta[c]).toFixed(2),next:act<6?S.tier[act+1]:null});
 }
 const TIERNAME=["Apprentice","Journeyman","Master"], TIERNAME_KO=["견습","숙련","명인"];
@@ -428,9 +433,14 @@ const HINTS={
 function mountHints(host,hints){ if(!host||!hints)return; let i=0; const L=o=>LANG==="ko"?o.ko:o.en;
   const lab=()=>(LANG==="ko"?"💡 힌트":"💡 Hint")+" ("+i+"/"+hints.length+")";
   const btn=document.createElement("button"); btn.className="btn ghost"; btn.style.marginTop="10px"; btn.textContent=lab();
-  const out=document.createElement("div");
-  btn.onclick=()=>{ if(i>=hints.length)return; out.innerHTML+="<div class='takeaway' style='margin-top:6px'>"+L(hints[i])+"</div>"; i++; S.hints++; logEv("hint",{act:S.act,n:i}); btn.textContent=lab(); if(i>=hints.length){btn.disabled=true;btn.style.opacity=.5;} };
-  host.appendChild(btn); host.appendChild(out); }
+  const out=document.createElement("div"); const prompt=document.createElement("div"); prompt.className="small"; prompt.style.marginTop="4px";
+  btn.onclick=()=>{ btn.style.animation=""; prompt.textContent=""; if(i>=hints.length)return;
+    out.innerHTML+="<div class='takeaway' style='margin-top:6px'>"+L(hints[i])+"</div>"; i++; S.hints++; logEv("hint",{act:S.act,n:i});
+    btn.textContent=lab(); if(i>=hints.length){btn.disabled=true;btn.style.opacity=.5;} };
+  host.appendChild(btn); host.appendChild(prompt); host.appendChild(out);
+  // proactive scaffolding: if the learner stalls, gently offer help (Shute-style, ZPD)
+  setTimeout(()=>{ if(i===0 && document.body.contains(btn)){ btn.style.animation="pulse 1.4s infinite";
+    prompt.textContent=LANG==="ko"?"막히면 힌트를 눌러보세요.":"Stuck? A hint is here when you need it."; logEv("hint_offer",{act:S.act}); } }, 18000); }
 
 /* ============================================================ CANVAS */
 const cv=document.getElementById("cv"), ctx=cv.getContext("2d");
@@ -855,7 +865,7 @@ function openSettings(){ Audio_.init(); const v=Math.round((Audio_.vol||0.45)*10
   document.getElementById("muteToggle").onclick=()=>{ Audio_.setMuted(!Audio_.muted);
     document.getElementById("muteToggle").textContent=Audio_.muted?L("🔇 소리: 끔","🔇 Sound: Off"):L("🔊 소리: 켬","🔊 Sound: On"); };
   document.getElementById("expCsv").onclick=()=>{ if(S.consent!=="yes"){toast(L("기록된 데이터 없음 — 연구 로깅이 꺼져 있습니다.","No logged data — research logging is off."));return;} csvExport(); };
-  document.getElementById("wipeData").onclick=()=>{ if(confirm(L("이 브라우저의 저장 진행과 기록 데이터를 모두 삭제할까요?","Wipe all saved progress and logged data from this browser?"))){ try{localStorage.removeItem(SAVEKEY);}catch(e){} location.reload(); } };
+  document.getElementById("wipeData").onclick=()=>{ if(confirm(L("이 브라우저의 저장 진행·기록·적응 학습이력을 모두 삭제할까요?","Wipe all saved progress, logs, and adaptive learning history from this browser?"))){ try{localStorage.removeItem(SAVEKEY);localStorage.removeItem("cf_theta");localStorage.removeItem("cf_thetaG");}catch(e){} location.reload(); } };
 }
 function openJournal(){ if(scene!=="play")return; boardOpen(); }
 function openHelp(){ const ko=LANG==="ko", L=(k,e)=>ko?k:e; showModal(`<h2>${L("플레이 방법","How to play")}</h2>
@@ -915,13 +925,14 @@ function gainSeal(act,nextToast){ S.seals=Math.max(S.seals,act); S.act=Math.min(
   else { toast(nextToast||"Warden's Seal earned. A new door has opened."); pendingBeat=act; } }
 
 /* ============================================================ INTRO */
-document.getElementById("startBtn").onclick=()=>{ Audio_.init(); S=fresh();
+document.getElementById("startBtn").onclick=()=>{ Audio_.init(); S=fresh(); seedThetaFromStore();
   document.getElementById("title").classList.remove("show");
   consentScreen(()=>{ if(S.consent==="yes") kcRun("pre",()=>{closeModal();openingCine();}); else openingCine(); }); };
 document.getElementById("continueBtn").onclick=()=>{ Audio_.init(); loadSave();
   document.getElementById("title").classList.remove("show"); fadeOut(()=>enterPlay()); };
-function enterPlay(){ scene="play"; if(isTouch)pad.classList.add("show"); buildSolids(); refreshHud();
-  Audio_.playBGM("town"); fadeIn(); }
+function enterPlay(){ scene="play"; if(isTouch)pad.classList.add("show"); buildSolids();
+  if(!S.tier)S.tier={}; if(S.tier[S.act]==null)S.tier[S.act]=pickTier(S.thetaG||0);   // current act sits in learner's ZPD
+  refreshHud(); Audio_.playBGM("town"); fadeIn(); }
 function openingCine(){
   fadeOut(()=>{ fadeIn(); playCine([
     {img:CINE.village,    text:"<b>Cipherfell.</b> A quiet village under the Duke's seal, where everyone knows everyone, and trust is given on a handshake."},
