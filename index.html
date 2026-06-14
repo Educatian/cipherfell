@@ -222,6 +222,7 @@ function img(k){return A[k];}
 
 /* ============================================================ I18N (EN base, KO overlay with English fallback) */
 let LANG="en"; try{ LANG=localStorage.getItem("cf_lang")||"en"; }catch(e){}
+let AI_ON=false; try{ AI_ON=localStorage.getItem("cf_ai")==="1"; }catch(e){}
 function t(s){ return (LANG==="ko" && KO[s]!=null) ? KO[s] : s; }
 function setLang(l){ LANG=(l==="ko")?"ko":"en"; try{localStorage.setItem("cf_lang",LANG);}catch(e){} }
 const KO={
@@ -444,11 +445,24 @@ function mountHints(host,hints){ if(!host||!hints){_curHints=null;return;} let i
     btn.textContent=lab(); if(i>=hints.length){btn.disabled=true;btn.style.opacity=.5;} }
   btn.onclick=()=>reveal(false);
   host.appendChild(btn); host.appendChild(prompt); host.appendChild(out);
+  if(AI_ON){ const ab=document.createElement("button"); ab.className="btn ghost"; ab.style.marginTop="8px";
+    ab.textContent=LANG==="ko"?"✨ AI 튜터에게 묻기":"✨ Ask the AI tutor";
+    ab.onclick=()=>{ ab.disabled=true; aiTutor(out).then(()=>{ab.disabled=false;}); }; host.appendChild(ab); }
   // proactive scaffolding (Shute-style ZPD): offer help on stall, auto-surface after repeated misses
   _curHints={ onWrong:()=>{ w++; if(w>=2 && i<hints.length){ reveal(true); btn.style.animation="pulse 1.4s infinite"; } } };
   setTimeout(()=>{ if(i===0 && document.body.contains(btn)){ btn.style.animation="pulse 1.4s infinite";
     prompt.textContent=LANG==="ko"?"막히면 힌트를 눌러보세요.":"Stuck? A hint is here when you need it."; logEv("hint_offer",{act:S.act}); } }, 18000); }
 function hintOnWrong(){ if(_curHints)_curHints.onWrong(); }
+/* keyless in-browser adaptive tutor: same-origin Cloudflare Workers AI, graceful fallback to scripted hints */
+const AICONCEPT={auth:"authentication and multi-factor authentication",crypto:"encryption and key management",lp:"least privilege and access control",osint:"OSINT and information aggregation",social:"social engineering and phishing",integ:"data integrity, checksums and hashing"};
+async function aiTutor(host){ if(!host)return; const c=AICONCEPT[ACT_CONCEPT[S.act]]||"security thinking";
+  const box=document.createElement("div"); box.className="takeaway"; box.style.marginTop="8px";
+  box.textContent=LANG==="ko"?"✨ AI 튜터가 생각 중…":"✨ AI tutor is thinking…"; host.appendChild(box); logEv("ai_tutor",{act:S.act});
+  try{ const r=await fetch("/api/tutor",{method:"POST",headers:{"content-type":"application/json"},
+        body:JSON.stringify({concept:c,mistake:"the learner is stuck on this puzzle and asked for guidance",lang:LANG})});
+    const j=await r.json(); const txt=((j&&j.text)||"").trim();
+    box.innerHTML = txt ? ("✨ "+txt) : (LANG==="ko"?"✨ AI 튜터를 지금은 쓸 수 없습니다 — 위 단계별 힌트를 이용하세요.":"✨ AI tutor isn't available here — use the step hints above.");
+  }catch(e){ box.innerHTML = LANG==="ko"?"✨ AI 튜터 연결 실패 — 단계별 힌트를 이용하세요.":"✨ AI tutor unavailable — use the step hints above."; } }
 
 /* ============================================================ CANVAS */
 const cv=document.getElementById("cv"), ctx=cv.getContext("2d");
@@ -858,6 +872,8 @@ function openSettings(){ Audio_.init(); const v=Math.round((Audio_.vol||0.45)*10
     <p style="margin-bottom:6px"><b>${L("언어","Language")}</b> &nbsp;
       <button class="btn ${LANG==="en"?"good":"ghost"}" id="langEn">English</button>
       <button class="btn ${LANG==="ko"?"good":"ghost"}" id="langKo">한국어</button></p>
+    <p style="margin-bottom:6px"><b>${L("AI 튜터","AI tutor")}</b> <span class="small">(${L("실험적 · Workers AI","experimental · Workers AI")})</span> &nbsp;
+      <button class="btn ${AI_ON?"good":"ghost"}" id="aiToggle">${AI_ON?L("켜짐","On"):L("꺼짐","Off")}</button></p>
     <p style="margin-bottom:4px">${L("음악 음량","Music volume")} — <b id="volval">${v}</b></p>
     <input type="range" id="volSld" min="0" max="100" value="${v}" style="width:100%;accent-color:#b5663b">
     <p style="margin-top:14px"><button class="btn ghost" id="muteToggle">${Audio_.muted?L("🔇 소리: 끔","🔇 Sound: Off"):L("🔊 소리: 켬","🔊 Sound: On")}</button></p>
@@ -868,6 +884,7 @@ function openSettings(){ Audio_.init(); const v=Math.round((Audio_.vol||0.45)*10
   const relang=l=>{ setLang(l); applyI18n(); refreshHud(); openSettings(); };
   document.getElementById("langEn").onclick=()=>relang("en");
   document.getElementById("langKo").onclick=()=>relang("ko");
+  document.getElementById("aiToggle").onclick=()=>{ AI_ON=!AI_ON; try{localStorage.setItem("cf_ai",AI_ON?"1":"0");}catch(e){} openSettings(); };
   const sld=document.getElementById("volSld");
   sld.oninput=()=>{ document.getElementById("volval").textContent=sld.value; Audio_.init(); Audio_.setVol(sld.value/100); };
   document.getElementById("muteToggle").onclick=()=>{ Audio_.setMuted(!Audio_.muted);
