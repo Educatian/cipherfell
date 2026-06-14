@@ -1,6 +1,6 @@
 # Cipherfell — Adaptive Design & Research Instrument
 
-This document specifies the adaptive-learning and assessment design of **Cipherfell — The Warden's Eye**, an evidence-grounded browser RPG that teaches six cybersecurity mental models (authentication/MFA, encryption & key management, least privilege, OSINT/OPSEC, social engineering, integrity/hashing) without any on-screen computers. It is written for collaborators, IRB review, and methods sections.
+This document specifies the adaptive-learning and assessment design of **Cipherfell — The Warden's Eye**, an evidence-grounded browser RPG that teaches seven cybersecurity mental models (authentication/MFA, encryption & key management, least privilege, OSINT/OPSEC, social engineering, integrity/hashing, availability/backups) without any on-screen computers. It is written for collaborators, IRB review, and methods sections.
 
 ## 1. Theoretical grounding
 
@@ -15,13 +15,13 @@ The design draws on the research frontier for adaptive educational games:
 
 | ECD element | Cipherfell realization |
 |---|---|
-| **Competency model** | The six security mental models (one per act); measured by the pre/post knowledge check. |
+| **Competency model** | The seven security mental models (one per act); measured by the pre/post knowledge check. |
 | **Evidence model** | In-game telemetry: clean-solve (no hints, no missteps), hints used (manual + auto), missteps, time, and the Elo ability estimates derived from them. |
 | **Task model** | Each puzzle is parameterized into **four difficulty tiers** (Novice / Apprentice / Journeyman / Master) with a per-play **seed** that varies the specific instance (cipher text & shift, keyring grid size, OSINT options, summons lines, ledger figures & tampered page). |
 
 ## 3. Adaptive engine
 
-- **Ability.** A global ability `θ_G` and six per-concept abilities `θ_c` (logit scale), persisted in `localStorage` (`cf_thetaG`, `cf_theta`) so returning learners are met at their level (act 1 adapts from history; a new learner starts at Novice/Apprentice and ramps up).
+- **Ability.** A global ability `θ_G` and seven per-concept abilities `θ_c` (logit scale), persisted in `localStorage` (`cf_thetaG`, `cf_theta`) so returning learners are met at their level (act 1 adapts from history; a new learner starts at Novice/Apprentice and ramps up).
 - **Update (Elo).** After each puzzle, `θ ← θ + K·(outcome − P)` with `K = 0.7`, where `P = σ(θ − δ_tier)` and **outcome is the binary clean-solve** (no hints, no missteps). The binary signal is essential: a continuous "partial credit" outcome makes `E[outcome] ≠ P`, which inflates `θ` and lets difficulty drift; the binary signal yields `E[outcome] = P(success)`, so `θ` converges (verified by simulation, §5).
 - **Tier selection (ZPD).** The next act's tier is the one whose predicted success probability is nearest the ZPD target (`ZPD_OFF = 1.0`, i.e. P ≈ 0.7). Tier difficulties: `δ = [−1.5, −0.5, 0.5, 1.5]`.
 - **Calibration.** Each solved item logs its predicted P (from entry `θ`+tier) and whether it was a clean solve; the session export reports mean predicted P vs. actual clean-solve rate vs. the ZPD target, so the model can be validated empirically across participants.
@@ -47,7 +47,7 @@ Re-run with `research/analyze_sessions.py` on real exports to check the model ho
 ## 6. Measurement & data
 
 - **Consent gate** (anonymous; optional study ID). The game plays identically if declined; only consented sessions are logged.
-- **Pre/post knowledge check** — six transfer items, one per concept, options shuffled per administration; no feedback on pre (clean baseline), misconception feedback on post.
+- **Pre/post knowledge check** — seven transfer items, one per concept, options shuffled per administration; no feedback on pre (clean baseline), misconception feedback on post.
 - **Telemetry** — timestamped events: consent, pre/post answers, clue pickups, seals, hints (manual `hint`, auto `hint_auto`, offered `hint_offer`), AI-tutor calls, adaptive updates (`adapt`), win.
 - **CSV export** (client-side, one click) — sections: `# session` (ids, pre/post scores & delta, seals/hints/wrong/time/rating, seed, per-act tiers, θ_G, per-concept θ, calibration: `mean_predP`, `clean_solve_rate`, `zpd_target`), `# pre_answers`, `# post_answers`, `# events`.
 
@@ -58,7 +58,7 @@ Re-run with `research/analyze_sessions.py` on real exports to check the model ho
 - Support use vs. outcome (hints/auto-hints, AI-tutor) as covariates.
 
 ## 7. Limitations
-- Single-play within-game adaptation spans only six items; cross-play persistence is where adaptation compounds.
+- Single-play within-game adaptation spans only seven items; cross-play persistence is where adaptation compounds.
 - Tier difficulties are author-set anchors, not empirically calibrated item parameters — the calibration export is the path to data-driven re-anchoring.
 - Korean localization currently covers comprehension-/research-critical surfaces; some in-world dialogue falls back to English.
 

@@ -1,6 +1,6 @@
 # Cipherfell — The Warden's Eye
 
-> A cozy medieval-village mystery RPG that teaches **cybersecurity mental models** without a single computer on screen. No hoodies, no neon, no "matrix" text rain. You learn to *think* like a security practitioner by walking a village, gathering clues, and solving six interlocking mysteries.
+> A cozy medieval-village mystery RPG that teaches **cybersecurity mental models** without a single computer on screen. No hoodies, no neon, no "matrix" text rain. You learn to *think* like a security practitioner by walking a village, gathering clues, and solving seven interlocking mysteries.
 
 **▶ Play it now: [https://cipherfell.pages.dev](https://cipherfell.pages.dev)**
 
@@ -22,6 +22,7 @@ The real core of security is not technology. It is a handful of transferable **m
 - **Information leakage / OSINT** — "harmless public scraps, combined, become a secret."
 - **Social engineering / phishing** — "a message cannot authenticate itself; verify an unexpected, high-pressure order out-of-band."
 - **Integrity / hashing** — "don't just hide data; make tampering detectable by recomputing a checksum and comparing."
+- **Availability / backups** — "keep redundant copies in separate places so loss, fire, or ransomware can't deny access."
 
 Set those in a 13th-century walled village and the player practices the *reasoning*, not the jargon. By the end they have never touched a machine, yet they have rehearsed the exact judgment a security professional uses every day. The transfer to real-world security is made explicit in the epilogue and is mapped to recognized curriculum standards below.
 
@@ -33,7 +34,7 @@ You arrive in **Cipherfell** as its newly appointed **Warden of the Seal**, the 
 
 > **"Trust nothing you cannot prove."**
 
-Within a day, six troubles strike at once, and they are connected:
+Within a day, seven troubles strike at once, and they are connected:
 
 1. A **stranger at the gate** claims to be Aldric, the merchant gone three winters to the city.
 2. The Duke's **sealed order** arrives already opened, read by a spy.
@@ -41,8 +42,9 @@ Within a day, six troubles strike at once, and they are connected:
 4. The rival **Baron always knows** the village's plans a day early.
 5. A **forged summons** in the Duke's own name orders the night watch to abandon the gate.
 6. The **village ledger** balances perfectly, yet the stolen grain has left no trace in it.
+7. Cornered, the Baron threatens to **burn the village records** and ransom what survives.
 
-Solve all six, earn the six Warden's Seals, and the single hand behind them is exposed.
+Solve all seven, earn the seven Warden's Seals, and the single hand behind them is exposed.
 
 ---
 
@@ -69,16 +71,16 @@ Solve all six, earn the six Warden's Seals, and the single hand behind them is e
 
 ## Features
 
-- **Six-act gated investigation.** Each act unlocks the next via a Warden's Seal, so the story escalates instead of dumping everything at once.
+- **Seven-act gated investigation.** Each act unlocks the next via a Warden's Seal, so the story escalates instead of dumping everything at once.
 - **Real exploration.** Walk a scrolling, tiled medieval town (40 x 30 tiles) with a follow-camera, collision, cobbled roads, a market square, a north watchtower, a counting house, a lore-bearing Founders' Stone, and signposted landmarks.
 - **Multi-step mysteries.** A puzzle opens only after you travel the town and gather the right clues, so the RPG loop (move, talk, collect, deduce) drives the learning.
-- **Animated characters.** Four-direction walking sprites for the player and fifteen NPCs, each tagged with a role badge so they are easy to tell apart.
+- **Animated characters.** Four-direction walking sprites for the player and sixteen NPCs (recolored from CC0 sheets, two body types) each tagged with a role badge so they are easy to tell apart.
 - **Hand-authored puzzles**, one per concept: an MFA verification cross-examination, an interactive Caesar cipher wheel, a least-privilege key grid plus culprit deduction, an OSINT aggregation board, a forged-summons pretext analysis (spot the manipulation levers, then verify out-of-band), and a ledger re-tally that exposes a tampered figure by recomputing its seal.
 - **Cinematic layer.** A six-card opening sequence, one-card act-transition beats featuring the villain, and a finale, all with typed narration, letterboxing, and fades.
-- **Worldview and lore.** A bard who recounts the Cipherfell–Thornmoor feud and a readable Founders' Stone inscribed with six vows, one per quest, ground the mechanics in a coherent setting.
-- **Adaptive difficulty (Elo + ZPD).** Three difficulty tiers per puzzle with seeded per-play variation; a per-concept + global Elo model tunes each act to the learner's level and persists across plays.
+- **Worldview and lore.** A bard who recounts the Cipherfell–Thornmoor feud and a readable Founders' Stone inscribed with seven vows, one per quest, ground the mechanics in a coherent setting.
+- **Adaptive difficulty (Elo + ZPD).** Four difficulty tiers per puzzle (Novice→Master) with seeded per-play variation; a per-concept + global Elo model tunes each act to the learner's level and persists across plays.
 - **Layered learning support.** Graduated hints that auto-surface on a stall or repeated misses, diagnostic wrong-answer feedback, Apprentice-tier worked examples, an end-of-game mastery profile, and an optional keyless AI tutor (Workers AI, EN/KO) with scripted fallback.
-- **Research instrumentation.** An optional, anonymous consent gate enables a pre/post knowledge check (six transfer items, one per concept), misconception-targeted feedback, lightweight in-browser telemetry, a difficulty-calibration monitor, and a one-click CSV export — turning the game into a self-contained study instrument with no backend.
+- **Research instrumentation.** An optional, anonymous consent gate enables a pre/post knowledge check (seven transfer items, one per concept), misconception-targeted feedback, lightweight in-browser telemetry, a difficulty-calibration monitor, and a one-click CSV export — turning the game into a self-contained study instrument with no backend.
 - **Mission briefing + spotlight tutorial.** A guided onboarding that dims the screen and highlights each UI element (quest bar, mini-map, journal) with an explanation. Replayable from Help.
 - **Navigation aids.** Live mini-map (gold = current objective) and an on-screen/edge objective waypoint, so players never get lost.
 - **Game feel.** Footstep dust, clue and seal sparkle particles, and synthesized sound effects.
@@ -89,7 +91,7 @@ Solve all six, earn the six Warden's Seals, and the single hand behind them is e
 
 ---
 
-## The six lessons → cybersecurity concepts
+## The seven lessons → cybersecurity concepts
 
 | Act | In the village | The security idea |
 |---|---|---|
@@ -99,7 +101,8 @@ Solve all six, earn the six Warden's Seals, and the single hand behind them is e
 | **4. Loose Lips** | No one leaked a secret, but the tavern's shipment day plus the laundry list plus the ledger plus the chapel bell, combined, reveal a precise raid window. Plug the aggregate, not the people. | **Information leakage, OSINT, and OPSEC.** Public + public + public can equal private. Attackers aggregate open scraps (open-source intelligence). Defend the *pattern*, practice operational security and data minimization. |
 | **5. The Forged Summons** | A letter in the Duke's name orders the watch off the gate at midnight. Spot the four pretext levers (borrowed authority, manufactured urgency, enforced secrecy, a protocol-breaking request), then refuse to obey and confirm the order through a channel you already trust. | **Social engineering and phishing.** Attackers forge authority and manufacture urgency to make you act before you think. A message cannot authenticate itself; verify unexpected, high-pressure requests **out-of-band**. The pretext levers map directly to phishing red flags. |
 | **6. The Tampered Ledger** | The accounts balance, yet the stolen grain left no trace. Each ledger page carries a wax tally seal (a checksum of its figures). Re-tally every page and find the one whose sealed number no longer matches its true sum — the doctored entry. | **Integrity, checksums, and hashing.** Don't keep the data secret — make tampering *detectable*. A checksum (or cryptographic hash) over the content changes if even one figure changes; recompute and compare to a trusted value. This is how file hashes, digital signatures, and tamper-evident logs work. |
-| **Capstone** | Name the one suspect consistent with all six threads (a forged identity, access to the letters, an old master-key copy, a week of tavern gossip, a summons forged in the Duke's name, and a doctored ledger). | **Synthesis and adversarial thinking.** Correlate weak signals into a single attribution; think like the attacker to defend. |
+| **7. The Burned Records** | The Baron will burn the Archive and ransom what survives. Copy every critical record to a separate vault first; when the fire comes, restore from the backups instead of paying. | **Availability, redundancy, and backups (and ransomware).** The third pillar of the **CIA triad**. Keep redundant copies in *separate* places so loss, fire, or ransomware can't deny access; with good backups you restore instead of paying (3-2-1: several copies, different media, off-site). |
+| **Capstone** | Tie each finding to the clue that proves it, then name the one suspect consistent with all seven threads (a forged identity, access to the letters, an old master-key copy, a week of tavern gossip, a summons forged in the Duke's name, a doctored ledger, and an attempt to burn the records). | **Synthesis, evidence reasoning, and adversarial thinking.** Match evidence to claims, correlate weak signals into a single attribution; think like the attacker to defend. |
 
 ### See each mental model in play
 
@@ -130,6 +133,7 @@ Cipherfell is designed as an *introduction-level* learning object: a hook that b
 | 4. Loose Lips | Societal Security (Privacy, Cyber Ethics); Human Security (Awareness); Organizational Security (OPSEC) | Confidentiality, Risk |
 | 5. Forged Summons | Human Security (Social Engineering, Awareness and Understanding, Cyber Hygiene); System Security (verification) | Adversarial Thinking, Integrity |
 | 6. Tampered Ledger | Data Security (Data Integrity, Cryptographic hashing, Digital signatures, Message authentication) | **Integrity**, Adversarial Thinking |
+| 7. Burned Records | Organizational Security (Business Continuity, Disaster Recovery, Backups); System Security (Availability) | **Availability**, Risk |
 | Capstone | Crosscutting: **Adversarial Thinking**, Systems Thinking | CIA triad, Defense in Depth |
 
 **NIST Cybersecurity Framework (CSF) 2.0 — Functions and Categories**
@@ -142,6 +146,7 @@ Cipherfell is designed as an *introduction-level* learning object: a hook that b
 | 4. Loose Lips | Identify / Protect / Govern | ID.RA threat intelligence; PR.AT Awareness and Training; GV privacy |
 | 5. Forged Summons | Protect / Detect | PR.AT Awareness and Training (social-engineering resistance); DE.CM monitoring/verification of anomalous requests |
 | 6. Tampered Ledger | Detect / Protect | DE.CM-01 integrity monitoring; PR.DS-06 integrity-checking mechanisms (checksums, hashes, signatures) |
+| 7. Burned Records | Recover / Protect | RC.RP Recovery Plan execution; PR.DS-11 backups / data resilience |
 
 **Other mappings**
 
@@ -153,6 +158,7 @@ Cipherfell is designed as an *introduction-level* learning object: a hook that b
 | 4. Loose Lips | Threat Analysis; Privacy | D1 Security and Risk Management (OPSEC, privacy) | 2.1 Threat actors and OSINT recon; 5.x Privacy |
 | 5. Forged Summons | Recognizing social engineering; Security awareness | D1 Security and Risk Management (security awareness training); D5 (out-of-band verification) | 2.2 Social engineering (pretexting, phishing, urgency/authority); 5.6 Security awareness |
 | 6. Tampered Ledger | Data integrity; Cryptography (hashing) | D3 Security Architecture (integrity models); D8 Software Dev Security (integrity checks) | 1.4 Cryptographic solutions (hashing, digital signatures); 2.x Integrity / tamper detection |
+| 7. Burned Records | Incident Response; Continuity | D1 Security & Risk Management (BCP/DR); D7 Security Operations (backup & recovery) | 3.4 Resilience & recovery (backups); 2.5 Ransomware mitigation |
 
 **K-12 alignment**
 
@@ -170,14 +176,15 @@ After playing, a learner can:
 - **Infer** what an outside observer can deduce by aggregating public information, and **recommend** OPSEC mitigations (Analyze, Evaluate).
 - **Identify** the levers of a social-engineering pretext (authority, urgency, secrecy, protocol-breaking) and **decide** to verify a suspicious order through an independent channel (Analyze, Evaluate).
 - **Detect** tampering by recomputing a checksum and comparing it to a trusted value, and **explain** how integrity differs from confidentiality (Apply, Understand).
+- **Plan** redundant, off-site backups and **justify** restoring over paying a ransom, completing the CIA triad with availability (Create, Evaluate).
 - **Adopt** an adversarial, "verify, do not assume" mindset as a default stance (the affective goal).
 
 ### Suggested use
 
 - **Audience:** upper-elementary through high school, introductory undergraduate, and corporate security-awareness onboarding.
 - **Session:** roughly 20 minutes for a full play-through; suitable as a lesson hook, a flipped-classroom pre-activity, or an awareness-week installation.
-- **Debrief:** the epilogue restates each village lesson with its real security name. Pair it with a discussion that names the framework terms (MFA, Kerckhoffs, least privilege, OSINT/OPSEC, social engineering / phishing, integrity / hashing, zero trust).
-- **Research use:** an optional consent gate enables a built-in pre/post knowledge check (six items) and anonymous telemetry, exportable as CSV — usable as a self-contained usability/learning-effect study instrument.
+- **Debrief:** the epilogue restates each village lesson with its real security name. Pair it with a discussion that names the framework terms (MFA, Kerckhoffs, least privilege, OSINT/OPSEC, social engineering / phishing, integrity / hashing, availability / backups, the CIA triad, zero trust).
+- **Research use:** an optional consent gate enables a built-in pre/post knowledge check (seven items) and anonymous telemetry, exportable as CSV — usable as a self-contained usability/learning-effect study instrument.
 
 ---
 
@@ -185,11 +192,11 @@ After playing, a learner can:
 
 Cipherfell is also an evidence-grounded **adaptive learning instrument**. The design follows the research frontier on adaptive educational games: dynamic difficulty adjustment (DDA), Elo-based learner modeling, and Evidence-Centered Design / stealth assessment kept inside the learner's Zone of Proximal Development (ZPD) / flow band.
 
-**Adaptive difficulty (Elo + ZPD).** Each of the six puzzles is parameterized into three tiers — *Apprentice / Journeyman / Master* — and a seeded RNG varies the specific instance every play (cipher text & shift, keyring grid size, OSINT options, summons lines, ledger figures & tampered page). A lightweight **Elo** model tracks a global ability and a per-concept ability; after each puzzle it updates on the **binary clean-solve** signal (no hints, no missteps = standard, drift-free Elo). The next act's tier is chosen so the predicted success probability sits near the ZPD target (~0.7). Ability **persists across plays** (localStorage), so returning learners are met at their level (act 1 adapts from history); a fresh learner starts at Apprentice and ramps up.
+**Adaptive difficulty (Elo + ZPD).** Each of the seven puzzles is parameterized into four tiers — *Novice / Apprentice / Journeyman / Master* — and a seeded RNG varies the specific instance every play (cipher text & shift, keyring grid size, OSINT options, summons lines, ledger figures & tampered page, records to back up). A lightweight **Elo** model tracks a global ability and a per-concept ability; after each puzzle it updates on the **binary clean-solve** signal (no hints, no missteps = standard, drift-free Elo). The next act's tier is chosen so the predicted success probability sits near the ZPD target (~0.7). Ability **persists across plays** (localStorage), so returning learners are met at their level (act 1 adapts from history); a fresh learner starts at Novice/Apprentice and ramps up. The four-tier range was set by Monte-Carlo so weak and strong learners both stay in the ZPD band.
 
 **Layered learning support (scaffolding).** Each puzzle offers graduated, three-step hints; if a learner stalls (~18 s) or misses twice, support **auto-surfaces** (Shute-style proactive scaffolding) without a click. Wrong answers get **specific, diagnostic feedback** (e.g. the exact role→door errors in the keyring), and the Apprentice tier adds a brief **worked example**. An optional **keyless AI tutor** (Cloudflare Workers AI, English & Korean, graceful fallback to scripted hints) gives concept-aware formative nudges that never reveal the answer.
 
-**Mastery feedback.** The epilogue shows a per-concept **mastery profile** (ability → %) across the six competencies and flags the weakest for revisiting.
+**Mastery feedback.** The epilogue shows a per-concept **mastery profile** (ability → %) across the seven competencies and flags the weakest for revisiting.
 
 **Telemetry & calibration.** With consent, the game logs consent, pre/post answers, clue pickups, seals, hints (manual and auto), and adaptive events, each timestamped. A one-click **CSV export** includes the per-play seed, per-act tiers, global and per-concept ability, and a **calibration block** (mean predicted P vs. actual clean-solve rate vs. the ZPD target) so the difficulty model can be validated empirically across participants. Monte-Carlo simulation was used to verify the Elo update converges (no θ drift) and to keep achieved success within a healthy ZPD band.
 
