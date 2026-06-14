@@ -363,6 +363,10 @@ const fresh=()=>({
   won:false, hints:0, wrong:0, t0:0, playMs:0,
   // research layer
   consent:null, pid:"", pre:{done:false,ans:[],score:0}, post:{done:false,ans:[],score:0}, log:[],
+  // adaptive engine: per-play seed, per-concept Elo ability, global ability, chosen tier per act
+  seed:(Math.floor(Math.random()*2147483647))||12345,
+  theta:{auth:0,crypto:0,lp:0,osint:0,social:0,integ:0}, thetaG:0,
+  tier:{1:1}, _snap:{hints:0,wrong:0},
 });
 let S=fresh();
 function save(){ try{ S.playMs=(S.playMs||0); localStorage.setItem(SAVEKEY,JSON.stringify(S)); }catch(e){} }
@@ -379,6 +383,54 @@ function addClue(id,name,iconKey,emoji){
 function clue(id){return !!S.clues[id];}
 function logEv(type,extra){ if(S.consent!=="yes")return; if(!S.log)S.log=[]; if(S.log.length>1500)return;
   S.log.push(Object.assign({t:Math.round(S.playMs||0),act:S.act,seals:S.seals,type:type},extra||{})); }
+
+/* ============================================================ ADAPTIVE ENGINE (seeded variants + per-concept Elo + ZPD tier) */
+function strHash(s){ let h=2166136261>>>0; for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);} return h>>>0; }
+function mulberry32(a){ return function(){ a=a+0x6D2B79F5|0; let x=Math.imul(a^a>>>15,1|a); x=x+Math.imul(x^x>>>7,61|x)^x; return ((x^x>>>14)>>>0)/4294967296; }; }
+function pz(name){ return mulberry32((((S.seed||1)>>>0) ^ strHash(name))>>>0); }
+function rpick(r,a){ return a[Math.floor(r()*a.length)]; }
+function rshuf(r,a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));const t=a[i];a[i]=a[j];a[j]=t;} return a; }
+const ACT_CONCEPT={1:"auth",2:"crypto",3:"lp",4:"osint",5:"social",6:"integ"};
+const TIERS=[-0.85,0,0.85];                                  // easy / med / hard difficulty (logit)
+function tierOf(act){ return (S.tier&&S.tier[act]!=null)?S.tier[act]:1; }
+function pSucc(theta,tier){ return 1/(1+Math.exp(-(theta-TIERS[tier]))); }
+function pickTier(theta){ const target=theta-1.0986; let best=0,bd=1e9;   // target P(success)=0.75
+  for(let i=0;i<TIERS.length;i++){ const d=Math.abs(TIERS[i]-target); if(d<bd){bd=d;best=i;} } return best; }
+function adaptOutcome(act){                                  // call when a puzzle is solved
+  const sn=S._snap||{hints:0,wrong:0}; const dh=Math.max(0,S.hints-sn.hints), dw=Math.max(0,S.wrong-sn.wrong);
+  S._snap={hints:S.hints,wrong:S.wrong};
+  const out=Math.max(0.1, 1 - 0.3*dh - 0.34*dw);            // solved; quality scaled by hints/missteps
+  const c=ACT_CONCEPT[act], tier=tierOf(act), K=0.6;
+  S.thetaG=(S.thetaG||0)+K*(out-pSucc(S.thetaG||0,tier));
+  if(!S.theta)S.theta={}; S.theta[c]=(S.theta[c]||0)+K*(out-pSucc(S.theta[c]||0,tier));
+  if(!S.tier)S.tier={}; if(act<6)S.tier[act+1]=pickTier(S.thetaG);   // next act sits in the learner's ZPD
+  logEv("adapt",{act:act,c:c,tier:tier,dh:dh,dw:dw,out:+out.toFixed(2),thetaG:+(S.thetaG).toFixed(2),theta:+(S.theta[c]).toFixed(2),next:act<6?S.tier[act+1]:null});
+}
+const TIERNAME=["Apprentice","Journeyman","Master"], TIERNAME_KO=["견습","숙련","명인"];
+function tierLabel(act){ const i=tierOf(act); return LANG==="ko"?TIERNAME_KO[i]:TIERNAME[i]; }
+const HINTS={
+ q2:[{en:"Try every turn of the wheel; only one makes real words.",ko:"바퀴를 한 칸씩 다 돌려보라; 진짜 단어가 되는 칸은 하나뿐이다."},
+     {en:"Short words help: a 3-letter word is often THE. Align that first.",ko:"짧은 단어가 단서다: 세 글자 단어는 흔히 THE. 그걸 먼저 맞춰라."},
+     {en:"The shift is fixed for the whole message — find it once and the rest follows.",ko:"이동값은 전체에 하나로 고정 — 한 번 찾으면 나머지는 따라온다."}],
+ q3:[{en:"Each role should hold exactly one key — its own.",ko:"각 역할은 정확히 하나, 자기 문 열쇠만 가져야 한다."},
+     {en:"Check the Archive ledger for who owns which door.",ko:"어느 역할이 어느 문인지 문서고 장부를 확인하라."},
+     {en:"Grant the minimum: strip every key a role doesn't strictly need.",ko:"최소만 부여: 꼭 필요하지 않은 열쇠는 모두 떼어내라."}],
+ q4:[{en:"Pin the scraps together and read them as one.",ko:"조각들을 나란히 붙여 하나로 읽어라."},
+     {en:"Imagine you are the raider: when, how guarded, how much?",ko:"습격자라 상상하라: 언제, 얼마나 지켜지고, 얼마나 많은가?"},
+     {en:"Shipment day + a lone wagon + the captain away = an undefended target.",ko:"수송일 + 수레 한 대 + 부재중 대장 = 무방비 표적."}],
+ q5:[{en:"Flag pressure, not facts: which lines push you to act?",ko:"사실이 아니라 압박을 표시하라: 어느 줄이 당신을 움직이려 하나?"},
+     {en:"Look for borrowed authority, urgency, secrecy, and rule-breaking.",ko:"빌린 권위·긴급·비밀·규칙위반을 찾아라."},
+     {en:"Wages and weather are ordinary — leave them unflagged.",ko:"급료와 날씨는 평범하다 — 표시하지 마라."}],
+ q6:[{en:"Re-tally first — sum each page's figures yourself.",ko:"먼저 다시 합산하라 — 각 쪽의 숫자를 직접 더하라."},
+     {en:"Compare your sum to the sealed tally; one will not match.",ko:"당신의 합을 봉인된 값과 비교하라; 하나가 안 맞는다."},
+     {en:"The mismatched page is the doctored one.",ko:"일치하지 않는 쪽이 조작된 쪽이다."}],
+};
+function mountHints(host,hints){ if(!host||!hints)return; let i=0; const L=o=>LANG==="ko"?o.ko:o.en;
+  const lab=()=>(LANG==="ko"?"💡 힌트":"💡 Hint")+" ("+i+"/"+hints.length+")";
+  const btn=document.createElement("button"); btn.className="btn ghost"; btn.style.marginTop="10px"; btn.textContent=lab();
+  const out=document.createElement("div");
+  btn.onclick=()=>{ if(i>=hints.length)return; out.innerHTML+="<div class='takeaway' style='margin-top:6px'>"+L(hints[i])+"</div>"; i++; S.hints++; logEv("hint",{act:S.act,n:i}); btn.textContent=lab(); if(i>=hints.length){btn.disabled=true;btn.style.opacity=.5;} };
+  host.appendChild(btn); host.appendChild(out); }
 
 /* ============================================================ CANVAS */
 const cv=document.getElementById("cv"), ctx=cv.getContext("2d");
@@ -858,7 +910,7 @@ function talkNPC(n){
     case "bard": BARD(); break;
   }
 }
-function gainSeal(act,nextToast){ S.seals=Math.max(S.seals,act); S.act=Math.min(6,act+1); logEv("seal",{act:act,hints:S.hints,wrong:S.wrong}); save(); refreshHud(); Audio_.sfx("seal"); spawnSparkle(S.px,S.py,"255,220,120",30);
+function gainSeal(act,nextToast){ S.seals=Math.max(S.seals,act); S.act=Math.min(6,act+1); adaptOutcome(act); logEv("seal",{act:act,hints:S.hints,wrong:S.wrong}); save(); refreshHud(); Audio_.sfx("seal"); spawnSparkle(S.px,S.py,"255,220,120",30);
   if(act>=6){ toast("All six seals earned — name the hand at the Notice Board."); }
   else { toast(nextToast||"Warden's Seal earned. A new door has opened."); pendingBeat=act; } }
 
@@ -996,27 +1048,34 @@ function gWin(){
 }
 
 /* ============================================================ ACT 2 — CIPHER (confidentiality) */
-const C_PLAIN="MEET THE BARONS MAN AT DUSK", C_SHIFT=3;
+const C_POOL=[["MEET AT DUSK","PAY THE SPY","OPEN THE GATE"],
+ ["MEET THE BARONS MAN AT DUSK","BURN THIS LETTER AFTER READING"],
+ ["THE TUNNEL OPENS BENEATH THE NORTH WALL TONIGHT","SEND ALL THE DUKES GOLD TO THORNMOOR BY DAWN"]];
+const E_POOL=[["GRAIN IS SAFE","HOLD THE GATE","ALL IS WELL"],
+ ["THE GRAIN IS SAFE TONIGHT","DOUBLE THE WATCH AT DAWN"],
+ ["TRUST ONLY THE HERALDS SEALED WORD HENCEFORTH","THE DUKE RIDES FOR THE CAPITAL AT MIDDAY"]];
+function q2cfg(){ const T=tierOf(2), r=pz("q2"); return {plain:rpick(r,C_POOL[T]),shift:1+Math.floor(r()*25),ePlain:rpick(r,E_POOL[T]),eKey:1+Math.floor(r()*25),T:T}; }
 function caesar(s,k){return s.replace(/[A-Z]/g,c=>String.fromCharCode((c.charCodeAt(0)-65+k+26)%26+65));}
 function STUDY(){
   if(S.q2.solved){ say("captain","Warden's Study","The Duke's order reached the Captain; the spy got nonsense. The wheel did its work."); return; }
-  const ct=caesar(C_PLAIN,C_SHIFT);
-  showModal(`<h2>The Warden's Study — the Cipher Wheel</h2>
+  const cfg=q2cfg(), ct=caesar(cfg.plain,cfg.shift);
+  showModal(`<h2>The Warden's Study — the Cipher Wheel <span class="small">· ${tierLabel(2)}</span></h2>
    <p>Your spies snatched a coded note off the Baron's runner. A brass <b>cipher wheel</b> turns every letter by the same amount (a <i>Caesar</i> shift). Find the turn that makes it read as words.</p>
    ${A.cipher?`<div style="text-align:center"><img src="${PROP.cipher}" style="width:104px;border-radius:10px;border:2px solid #2c2114"></div>`:""}
    <div class="small">Intercepted note:</div><div class="cipher-disp">${ct}</div>
    <div class="wheelrow"><button class="btn ghost" id="sd">◀ turn</button><div>shift <div class="shiftnum" id="sv">0</div></div><button class="btn ghost" id="su">turn ▶</button></div>
    <div class="small">Reads as:</div><div class="cipher-disp" id="pt" style="color:#9fd28a">${ct}</div>
-   <div id="m2"></div><div id="n2"></div>`);
+   <div id="hh2"></div><div id="m2"></div><div id="n2"></div>`);
+  mountHints(document.getElementById("hh2"),HINTS.q2);
   let sh=0; const pt=document.getElementById("pt"),sv=document.getElementById("sv");
   function upd(){ const g=caesar(ct,(26-sh)%26); pt.textContent=g; sv.textContent=sh;
-    if(g===C_PLAIN){ document.getElementById("m2").innerHTML="<div class='takeaway fadein'><b>Decoded.</b> “MEET THE BARON'S MAN AT DUSK.” So the spy has an inside contact. Now seal the Duke's reply so only the Captain can read it.</div>";
+    if(g===cfg.plain){ document.getElementById("m2").innerHTML="<div class='takeaway fadein'><b>Decoded.</b> “"+cfg.plain+".” The spy has an inside contact. Now seal the Duke's reply so only the Captain can read it.</div>";
       document.getElementById("n2").innerHTML=`<button class="btn good" id="enc">Encode the Duke's reply ▶</button>`;
       document.getElementById("enc").onclick=encode; if(!S.q2.decoded){S.q2.decoded=true;addClue("c_decoded","Decoded enemy note","letter","✉️");} } }
   document.getElementById("su").onclick=()=>{sh=(sh+1)%26;upd();}; document.getElementById("sd").onclick=()=>{sh=(sh+25)%26;upd();}; upd();
 }
 function encode(){
-  const PLAIN="THE GRAIN IS SAFE TONIGHT", KEY=7;
+  const cfg=q2cfg(), PLAIN=cfg.ePlain, KEY=cfg.eKey;
   showModal(`<h2>Encode the Duke's Reply</h2>
    <p>The Captain's wheel is set to <b>${KEY}</b>. Turn yours to match, and the message is safe to send across the open square.</p>
    <div class="small">The Duke's words:</div><div class="cipher-disp">${PLAIN}</div>
@@ -1041,8 +1100,14 @@ function CHAPEL(){
 }
 
 /* ============================================================ ACT 3 — KEYRING (least privilege) */
-const ROLES=["Granary-hand","Scribe","Captain","Steward"], DOORZ=["Granary","Archive","Armory","Strongbox"];
-const MIN={"Granary-hand":["Granary"],"Scribe":["Archive"],"Captain":["Armory"],"Steward":["Strongbox"]};
+const ROLE_POOL=["Granary-hand","Scribe","Captain","Steward","Reeve"];
+const DOOR_POOL=["Granary","Archive","Armory","Strongbox","Counting House"];
+function q3cfg(){ const T=tierOf(3), n=[3,4,5][T], r=pz("q3");
+  const idx=rshuf(r,[0,1,2,3,4]).slice(0,n);
+  const roles=idx.map(i=>ROLE_POOL[i]), doorsTrue=idx.map(i=>DOOR_POOL[i]);
+  const min={}; roles.forEach((rl,k)=>min[rl]=doorsTrue[k]);
+  const doors=rshuf(r,doorsTrue);                 // shuffle columns so the diagonal isn't trivial
+  return {roles:roles,doors:doors,min:min,T:T}; }
 function GRANARY(){
   if(S.q3.solved){ say("steward","Steward Pell","Fewer keys, fewer worries! Now I can see at a glance who could reach the grain — just the one soul."); return; }
   if(!S.q3.assigned){
@@ -1055,18 +1120,19 @@ function GRANARY(){
 }
 function ARCHIVE3(){ say(null,"The Archive","Old key-ledgers here show the Strongbox holds the Steward's accounts, the Armory is the Captain's, the Archive the Scribe's, and the Granary the hand's. Each role needs only its own.",[{t:"Noted",f:closeDlg}]); }
 function q3Assign(){
-  closeDlg(); let chosen={}; ROLES.forEach(r=>chosen[r]=new Set());
-  let h=`<h2>Re-cut the Keyring — give each role only what its job needs</h2>
+  closeDlg(); const cfg=q3cfg(), ROLES=cfg.roles, DOORZ=cfg.doors, MIN=cfg.min; let chosen={}; ROLES.forEach(r=>chosen[r]=new Set());
+  let h=`<h2>Re-cut the Keyring <span class="small">· ${tierLabel(3)}</span></h2>
    ${A.keyring?`<div style="text-align:center"><img src="${PROP.keyring}" style="width:96px;border-radius:10px;border:2px solid #2c2114"></div>`:""}
-   <p class="small">Tap to grant a key. The steward's "everyone gets everything" is the opposite of what you want. (Hint at the Archive.)</p>
+   <p class="small">Tap to grant a key. Give each role only the door its job needs. The steward's "everyone gets everything" is the opposite of what you want. (Hint at the Archive.)</p>
    <div class="grid" style="grid-template-columns:repeat(${DOORZ.length+1},1fr);align-items:center"><div></div>${DOORZ.map(d=>`<div class="small" style="text-align:center"><b>${d}</b></div>`).join("")}`;
   ROLES.forEach(r=>{ h+=`<div class="small"><b>${r}</b></div>`; DOORZ.forEach(d=>{h+=`<div class="cell" data-r="${r}" data-d="${d}">·</div>`;}); });
-  h+=`</div><div id="m3"></div><div class="row"><button class="btn good" id="ck">Lock it in</button></div>`;
+  h+=`</div><div id="hh3"></div><div id="m3"></div><div class="row"><button class="btn good" id="ck">Lock it in</button></div>`;
   showModal(h);
+  mountHints(document.getElementById("hh3"),HINTS.q3);
   modalBody.querySelectorAll(".cell[data-r]").forEach(c=>c.onclick=()=>{const r=c.dataset.r,d=c.dataset.d;
     if(chosen[r].has(d)){chosen[r].delete(d);c.classList.remove("on");c.textContent="·";}else{chosen[r].add(d);c.classList.add("on");c.textContent="🔑";}});
   document.getElementById("ck").onclick=()=>{ let extra=0,missing=0;
-    for(const r of ROLES){const want=new Set(MIN[r]); for(const d of DOORZ){const g=chosen[r].has(d),need=want.has(d); if(g&&!need)extra++; if(!g&&need)missing++;}}
+    for(const r of ROLES){const want=new Set([MIN[r]]); for(const d of DOORZ){const g=chosen[r].has(d),need=want.has(d); if(g&&!need)extra++; if(!g&&need)missing++;}}
     const m=document.getElementById("m3");
     if(extra===0&&missing===0){ S.q3.assigned=true; addClue("c_keys","Least-privilege keyring","keyring","🔑"); save();
       m.innerHTML="<div class='takeaway fadein'><b>Least privilege set.</b> Each role holds exactly one key. Now a single theft opens a single door. Speak to the Steward again to find the thief.</div>"+`<button class="btn good" id="g3">Now — who took the grain? ▶</button>`;
@@ -1108,14 +1174,21 @@ function CHAPEL4(){
 }
 
 /* ============================================================ ACT 5 — FORGED SUMMONS (social engineering / phishing) */
-const SUMMONS=[
- {red:true,  t:"“By the Duke's own hand and seal, obey at once.”"},
- {red:true,  t:"“At the stroke of midnight — there is no time to confirm.”"},
- {red:true,  t:"“Tell no one of this order.”"},
- {red:true,  t:"“Abandon your post; leave the north gate unmanned.”"},
- {red:false, t:"“Report to the Captain at dawn to draw your wages.”"},
- {red:false, t:"“The harvest has been kind this year.”"},
-];
+const RED_POOL=[
+ {red:true,t:"“By the Duke's own hand and seal, obey at once.”"},
+ {red:true,t:"“At the stroke of midnight — there is no time to confirm.”"},
+ {red:true,t:"“Tell no one of this order.”"},
+ {red:true,t:"“Abandon your post; leave the north gate unmanned.”"},
+ {red:true,t:"“Burn this letter the very moment it is read.”"},
+ {red:true,t:"“Question this and you answer to the Duke himself.”"}];
+const BENIGN_POOL=[
+ {red:false,t:"“Report to the Captain at dawn to draw your wages.”"},
+ {red:false,t:"“The harvest has been kind this year.”"},
+ {red:false,t:"“The chapel bell will ring for matins as usual.”"},
+ {red:false,t:"“Pay the night-baker for the morning bread.”"}];
+function q5cfg(){ const T=tierOf(5), nR=[3,4,5][T], nB=[1,2,3][T], r=pz("q5");
+  const lines=rshuf(r, rshuf(r,RED_POOL).slice(0,nR).concat(rshuf(r,BENIGN_POOL).slice(0,nB)));
+  return {lines:lines, red:nR, T:T}; }
 function WATCH(){
   if(S.q5.solved){ say("tomas","Gate-Guard Tomas","I held the post on your word, Warden — parchment be damned. Come dawn the gate stood shut, and not a soul of Thornmoor slipped through."); return; }
   if(!clue("c_summons")){ say("tomas","Gate-Guard Tomas",
@@ -1124,20 +1197,21 @@ function WATCH(){
   watchSpot();
 }
 function watchSpot(){
-  const chosen=new Set();
-  let h=`<h2>The North Watchtower — judge the summons</h2>
+  const cfg=q5cfg(), LINES=cfg.lines, chosen=new Set();
+  let h=`<h2>The North Watchtower — judge the summons <span class="small">· ${tierLabel(5)}</span></h2>
    ${A.summons?`<div style="text-align:center"><img src="${PROP.summons}" style="width:128px;border-radius:10px;border:2px solid #2c2114"></div>`:""}
    <p>Tomas hands you the letter. It <i>looks</i> official — yet the Herald carries no such order. <b>Tap every line that is a manipulation tactic</b>, not an ordinary fact.</p>
    <div class="grid" style="grid-template-columns:1fr">`;
-  SUMMONS.forEach((c,i)=>{ h+=`<div class="cell" data-i="${i}" style="text-align:left">${c.t}</div>`; });
-  h+=`</div><div id="m5"></div><div class="row"><button class="btn good" id="ck5">These are the red flags</button></div>`;
+  LINES.forEach((c,i)=>{ h+=`<div class="cell" data-i="${i}" style="text-align:left">${c.t}</div>`; });
+  h+=`</div><div id="hh5"></div><div id="m5"></div><div class="row"><button class="btn good" id="ck5">These are the red flags</button></div>`;
   showModal(h);
+  mountHints(document.getElementById("hh5"),HINTS.q5);
   modalBody.querySelectorAll(".cell[data-i]").forEach(c=>c.onclick=()=>{ const i=+c.dataset.i;
     if(chosen.has(i)){chosen.delete(i);c.classList.remove("on");}else{chosen.add(i);c.classList.add("on");} });
   document.getElementById("ck5").onclick=()=>{ const m=document.getElementById("m5");
-    let miss=0,over=0; SUMMONS.forEach((c,i)=>{ if(c.red&&!chosen.has(i))miss++; if(!c.red&&chosen.has(i))over++; });
+    let miss=0,over=0; LINES.forEach((c,i)=>{ if(c.red&&!chosen.has(i))miss++; if(!c.red&&chosen.has(i))over++; });
     if(miss===0&&over===0){ S.q5.spotted=true; addClue("c_pretext","The pretext tactics, named","gossip","🚩"); save();
-      m.innerHTML="<div class='takeaway fadein'><b>All four levers, named.</b> Borrowed <b>authority</b>, manufactured <b>urgency</b>, enforced <b>secrecy</b>, and a request that <b>breaks protocol</b> — the toolkit of every pretext, from a forged summons to a phishing letter. Now: what do you do?</div>"+watchActionHTML();
+      m.innerHTML="<div class='takeaway fadein'><b>All "+cfg.red+" levers, named.</b> Borrowed <b>authority</b>, manufactured <b>urgency</b>, enforced <b>secrecy</b>, and a request that <b>breaks protocol</b> — the toolkit of every pretext, from a forged summons to a phishing letter. Now: what do you do?</div>"+watchActionHTML();
       wireWatchAction(); }
     else if(miss>0){ S.hints++; m.innerHTML="<div class='takeaway fadein'>One lever still unmarked. Look for pressure to act <i>now</i>, a claim of <i>authority</i>, a demand for <i>silence</i>, or an order that <i>breaks the rules</i>.</div>"; }
     else { S.hints++; m.innerHTML="<div class='takeaway fadein'>You've flagged a harmless line. Not everything is a trick — wages and weather are ordinary. Flag only the <b>manipulation</b>.</div>"; }
@@ -1156,12 +1230,14 @@ function wireWatchAction(){ modalBody.querySelectorAll("[data-w]").forEach(b=>b.
 }); }
 
 /* ============================================================ ACT 6 — TAMPERED LEDGER (integrity / hashing) */
-const LEDGER=[
- {name:"Tithes", figs:[12,8,5],  seal:25},   // 25 ✓
- {name:"Grain",  figs:[40,18,9], seal:82},   // sums to 67; sealed 82 ✗ (grain lowered 55→40 to hide 15)
- {name:"Wool",   figs:[14,6,20], seal:40},   // 40 ✓
- {name:"Ale",    figs:[9,11,7],  seal:27},   // 27 ✓
-];
+const LEDGER_NAMES=["Tithes","Grain","Wool","Ale","Salt","Timber"];
+function q6cfg(){ const T=tierOf(6), n=[3,4,5][T], mag=[12,25,45][T], r=pz("q6");
+  const names=rshuf(r,LEDGER_NAMES).slice(0,n);
+  const pages=names.map(nm=>{ const k=2+Math.floor(r()*2); const figs=[]; for(let j=0;j<k;j++)figs.push(3+Math.floor(r()*mag));
+    return {name:nm,figs:figs,seal:figs.reduce((a,b)=>a+b,0)}; });
+  const ti=Math.floor(r()*n), tp=pages[ti], delta=2+Math.floor(r()*9);
+  tp.figs=tp.figs.slice(); tp.figs[0]=Math.max(1,tp.figs[0]-delta);   // lower a figure but keep the old seal -> mismatch
+  return {pages:pages, ti:ti, delta:delta, T:T}; }
 const ltally=f=>f.reduce((a,b)=>a+b,0);
 function COUNTING(){
   if(S.q6.solved){ say("clerk","Reeve Odell","The books balance to the mark again, Warden. A false figure can hide from the eye, but never from the tally."); return; }
@@ -1173,28 +1249,30 @@ function COUNTING(){
   ledgerPuzzle();
 }
 function ledgerPuzzle(){
-  closeDlg(); let revealed=false;
-  const rows=LEDGER.map((p,i)=>`<div class="cell" data-p="${i}" style="text-align:left;display:flex;justify-content:space-between;align-items:center;gap:10px">
+  closeDlg(); const cfg=q6cfg(), PAGES=cfg.pages; let revealed=false;
+  const rows=PAGES.map((p,i)=>`<div class="cell" data-p="${i}" style="text-align:left;display:flex;justify-content:space-between;align-items:center;gap:10px">
      <span><b>${p.name}</b> &nbsp; <span class="small">${p.figs.join(" + ")}</span></span>
      <span>sealed tally <b style="font-family:monospace">${p.seal}</b> <span class="recomp" data-r="${i}"></span></span></div>`).join("");
-  showModal(`<h2>The Counting House — re-tally the sealed ledger</h2>
+  showModal(`<h2>The Counting House — re-tally the sealed ledger <span class="small">· ${tierLabel(6)}</span></h2>
    ${A.ledger?`<div style="text-align:center"><img src="${PROP.ledger}" style="width:104px;border-radius:10px;border:2px solid #2c2114"></div>`:""}
    <p>Each page's <b>tally seal</b> should equal the sum of its figures. <b>Re-tally</b>, then click the page whose sealed number does not match — the doctored one.</p>
    <div class="grid" style="grid-template-columns:1fr">${rows}</div>
+   <div id="hh6"></div>
    <div class="row"><button class="btn good" id="retally">Re-tally every page</button></div>
    <div id="m6"></div>`);
+  mountHints(document.getElementById("hh6"),HINTS.q6);
   document.getElementById("retally").onclick=()=>{ revealed=true;
-    LEDGER.forEach((p,i)=>{ const t=ltally(p.figs), ok=t===p.seal;
+    PAGES.forEach((p,i)=>{ const t=ltally(p.figs), ok=t===p.seal;
       const el=modalBody.querySelector(`.recomp[data-r="${i}"]`);
       el.innerHTML = ok?`= <b style="color:#5a7a3a;font-family:monospace">${t}</b> ✓`:`= <b style="color:#b5391f;font-family:monospace">${t}</b> ✗`; });
     document.getElementById("m6").innerHTML="<div class='small'>Now name the page whose seal does not match its true tally.</div>";
   };
   modalBody.querySelectorAll(".cell[data-p]").forEach(c=>c.onclick=()=>{
     if(!revealed){ S.hints++; document.getElementById("m6").innerHTML="<div class='takeaway fadein'>Re-tally first — you cannot spot a forged seal without recomputing the true one.</div>"; return; }
-    const i=+c.dataset.p, p=LEDGER[i], ok=ltally(p.figs)===p.seal, m=document.getElementById("m6");
+    const i=+c.dataset.p, p=PAGES[i], ok=ltally(p.figs)===p.seal, m=document.getElementById("m6");
     if(!ok){ S.q6.solved=true; addClue("c_integrity","The broken tally seal","ledger","🔏"); gainSeal(6);
-      m.innerHTML="<div class='takeaway fadein'><b>Caught.</b> The <b>Grain</b> page was sealed at 82 (55 + 18 + 9), but its figures now sum to 67 — fifteen measures of grain quietly erased to hide the theft. The forger could change the figure, but could not re-forge a matching seal on every page.<br><br><b>Security idea: Integrity, checksums &amp; hashing.</b> You do not keep the data secret — you make tampering <i>detectable</i>. A checksum (or cryptographic hash) over the content changes if even one figure changes; recompute it and compare to the stored value to prove nothing was altered. This is how file hashes, digital signatures, and tamper-evident logs work.</div>"+`<button class="btn good" id="w6">Restore the true figure ▶</button>`;
-      document.getElementById("w6").onclick=()=>{ closeModal(); say("clerk","Reeve Odell","Fifteen measures, just as the granary lost. I'll re-seal the page true and keep a second tally apart, so no single hand can change both. The books cannot lie to you now, Warden.",[{t:"Six threads mended — name the hand at the Board.",f:closeDlg}]); };
+      m.innerHTML="<div class='takeaway fadein'><b>Caught.</b> The <b>"+p.name+"</b> page was sealed at "+p.seal+", but its figures now sum to "+ltally(p.figs)+" — "+cfg.delta+" measures quietly erased to hide the theft. The forger could change the figure, but could not re-forge a matching seal on every page.<br><br><b>Security idea: Integrity, checksums &amp; hashing.</b> You do not keep the data secret — you make tampering <i>detectable</i>. A checksum (or cryptographic hash) over the content changes if even one figure changes; recompute it and compare to the stored value to prove nothing was altered. This is how file hashes, digital signatures, and tamper-evident logs work.</div>"+`<button class="btn good" id="w6">Restore the true figure ▶</button>`;
+      document.getElementById("w6").onclick=()=>{ closeModal(); say("clerk","Reeve Odell","The grain's loss, just as the granary showed. I'll re-seal the page true and keep a second tally apart, so no single hand can change both. The books cannot lie to you now, Warden.",[{t:"Six threads mended — name the hand at the Board.",f:closeDlg}]); };
     } else { S.wrong++; m.innerHTML="<div class='takeaway fadein'>That page's seal matches its tally — it is honest. Look for the one where the re-tally shows ✗.</div>"; }
   });
 }
@@ -1234,13 +1312,16 @@ function boardOpen(){
 }
 function assetURL(k){ return PROP[k]||PORT[k]||("assets/world/"+k+".png"); }
 function q4Combine(){
+  const opts=rshuf(pz("q4"),[
+    `<button class="btn" data-a="a">Nothing useful — idle gossip</button>`,
+    `<button class="btn" data-a="b">A lone wagon of grain leaves Thursday, guard captain away — easy to raid</button>`,
+    `<button class="btn" data-a="c">The village is wealthy this year</button>`]).join("");
   showModal(`<h2>The Notice Board — piece the scraps together</h2>
    <p>Four harmless notes, pinned side by side. The Baron's man reads them <i>together</i>. What can he now infer that no one ever told him?</p>
    <div>${["tavern","chapel","laundry","ledger"].map(k=>`<span class="chip"><i>${FRAG[k].e}</i>${FRAG[k].n}</span>`).join("")}</div>
    <h3>So the Baron concludes…</h3>
-   <div class="row"><button class="btn" data-a="a">Nothing useful — idle gossip</button>
-   <button class="btn" data-a="b">A lone wagon of grain leaves Thursday, guard captain away — easy to raid</button>
-   <button class="btn" data-a="c">The village is wealthy this year</button></div><div id="m4"></div>`);
+   <div class="row">${opts}</div><div id="hh4"></div><div id="m4"></div>`);
+  mountHints(document.getElementById("hh4"),HINTS.q4);
   modalBody.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{ const m=document.getElementById("m4");
     if(b.dataset.a==="b"){ addClue("c_osint","The aggregated leak","gossip","🧩");
       m.innerHTML="<div class='takeaway fadein'><b>Exactly.</b> Shipment day + one wagon + captain away + full-granary bell = a precise, undefended target. <b>No one leaked a secret; the <i>sum</i> was the secret.</b><br><br>Now — how do you stop it?</div>"+
@@ -1355,8 +1436,12 @@ function consentScreen(onDone){ const ko=LANG==="ko", L=(k,e)=>ko?k:e;
 }
 function csvEsc(v){ return '"'+String(v).replace(/"/g,'""')+'"'; }
 function csvExport(){
+  const th=S.theta||{}; const tiers=[1,2,3,4,5,6].map(a=>tierOf(a)).join("|");
   const meta=[["pid",S.pid||""],["consent",S.consent||""],["won",S.won?1:0],["pre_score",S.pre.score],["post_score",S.post.score],
-    ["delta",S.post.score-S.pre.score],["seals",S.seals],["hints",S.hints],["wrong",S.wrong],["play_ms",Math.round(S.playMs||0)],["rating",rating()]];
+    ["delta",S.post.score-S.pre.score],["seals",S.seals],["hints",S.hints],["wrong",S.wrong],["play_ms",Math.round(S.playMs||0)],["rating",rating()],
+    ["seed",S.seed||""],["tiers_act1to6",tiers],["thetaG",(S.thetaG||0).toFixed(3)],
+    ["theta_auth",(th.auth||0).toFixed(3)],["theta_crypto",(th.crypto||0).toFixed(3)],["theta_lp",(th.lp||0).toFixed(3)],
+    ["theta_osint",(th.osint||0).toFixed(3)],["theta_social",(th.social||0).toFixed(3)],["theta_integ",(th.integ||0).toFixed(3)]];
   let out="# session\nfield,value\n"+meta.map(r=>r[0]+","+csvEsc(r[1])).join("\n")+"\n\n# pre_answers\nq,concept,picked,correct\n";
   S.pre.ans.forEach(a=>out+=`${a.q+1},${csvEsc(KC[a.q].c)},${a.picked},${a.correct?1:0}\n`);
   out+="\n# post_answers\nq,concept,picked,correct\n";
