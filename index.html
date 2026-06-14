@@ -157,10 +157,10 @@
   <h1>CIPHERFELL</h1>
   <div class="sub">The Warden's Eye</div>
   <p>A village mystery where you learn to <b>think like a guardian of secrets</b> —
-     no machines, no jargon. Walk the town, gather clues, solve six troubles, name the hand behind them.</p>
+     no machines, no jargon. Walk the town, gather clues, solve seven troubles, name the hand behind them.</p>
   <div>
     <span class="tag">Who are you, really?</span><span class="tag">Secrets in plain sight</span>
-    <span class="tag">The wrong key</span><span class="tag">Loose lips</span><span class="tag">A summons unproven</span><span class="tag">The doctored ledger</span>
+    <span class="tag">The wrong key</span><span class="tag">Loose lips</span><span class="tag">A summons unproven</span><span class="tag">The doctored ledger</span><span class="tag">The burned records</span>
   </div>
   <div style="margin-top:14px"><button class="btn" id="startBtn">Enter Cipherfell</button>
     <button class="btn ghost" id="continueBtn" style="display:none">Continue</button></div>
@@ -199,17 +199,18 @@ const PORT={ aldric:"assets/npc_aldric.webp", impostor:"assets/npc_impostor.webp
   steward:"assets/npc_steward.webp", tavernkeeper:"assets/npc_tavernkeeper.webp",
   captain:"assets/npc_captain.webp", herald:"assets/npc_herald.webp", baron:"assets/cine_baron.webp",
   tomas:"assets/npc_tomas.webp", courier:"assets/npc_courier.webp",
-  bard:"assets/npc_bard.webp", sister:"assets/npc_sister.webp", clerk:"assets/npc_clerk.webp" };
+  bard:"assets/npc_bard.webp", sister:"assets/npc_sister.webp", clerk:"assets/npc_clerk.webp",
+  archivist:"assets/npc_archivist.webp" };
 const CINE={ village:"assets/cover.webp", night:"assets/cine_night.webp",
   commission:"assets/cine_commission.webp", baron:"assets/cine_baron.webp", finale:"assets/cine_finale.webp",
-  summons:"assets/cine_summons.webp", tamper:"assets/cine_tamper.webp",
+  summons:"assets/cine_summons.webp", tamper:"assets/cine_tamper.webp", fire:"assets/cine_fire.webp",
   keyart:"assets/keyart.webp", dawn:"assets/cine_dawn.webp",
   a1:"assets/splash_act1.webp", a2:"assets/splash_act2.webp", a3:"assets/splash_act3.webp",
   a4:"assets/splash_act4.webp", a5:"assets/splash_act5.webp", a6:"assets/splash_act6.webp" };
 const PROP={ signet_real:"assets/prop_signet_real.webp", signet_forged:"assets/prop_signet_forged.webp",
   letter:"assets/prop_letter.webp", cipher:"assets/prop_cipher.webp",
   keyring:"assets/prop_keyring.webp", gossip:"assets/prop_gossip.webp", logo:"assets/logo.webp",
-  summons:"assets/prop_summons.webp", ledger:"assets/prop_ledger.webp" };
+  summons:"assets/prop_summons.webp", ledger:"assets/prop_ledger.webp", backup:"assets/prop_backup.webp" };
 const WORLD=["house","castle","arch","granary","silo","monument","fountain","stall",
   "crate","barrel","chest","tree","bush","grass","dirt","water","fence","hero",
   "path","gflower","pebble","tuft","sign"];
@@ -248,7 +249,9 @@ const KO={
  "Reconsider":"다시 생각한다", "Step back":"물러난다", "A fine tale.":"좋은 이야기로군.",
  // --- title screen (set via applyI18n) ---
  "_sub":"감시자의 눈",
- "_desc":"<b>비밀의 수호자처럼 사고하는</b> 법을 배우는 마을 미스터리 — 기계도, 전문용어도 없다. 마을을 걷고 단서를 모아 여섯 사건을 풀고, 그 배후를 지목하라.",
+ "_desc":"<b>비밀의 수호자처럼 사고하는</b> 법을 배우는 마을 미스터리 — 기계도, 전문용어도 없다. 마을을 걷고 단서를 모아 일곱 사건을 풀고, 그 배후를 지목하라.",
+ "The Baron's last threat: the village records. Secure them at the <b>Archive</b> before they are lost.":"남작의 마지막 위협: 마을의 기록이다. 사라지기 전에 <b>문서고</b>에서 지켜내라.",
+ "Cornered, the Baron's hand plays its last card — not theft, but <b>destruction</b>. If he cannot own Cipherfell's records, he will <b>burn</b> them, and ransom what survives. Can the village lose its memory in a single night?":"궁지에 몰린 남작의 손이 마지막 패를 던진다 — 절도가 아니라 <b>파괴</b>. 사이퍼펠의 기록을 가질 수 없다면 <b>불태우고</b>, 남은 것으로 몸값을 요구하리라. 마을은 하룻밤에 그 기억을 잃을 것인가?",
  "_tagWho":"당신은 정말 누구인가?", "_tagSecret":"빤히 보이는 비밀", "_tagKey":"잘못된 열쇠",
  "_tagLips":"새는 입", "_tagSummons":"증명되지 않은 소환장", "_tagLedger":"조작된 장부",
  "_enter":"사이퍼펠로 들어가기", "_continue":"이어하기",
@@ -267,7 +270,7 @@ const KO={
  "The Baron asks one thing of them: <b>learn everything, and take it.</b>":"남작이 그들에게 명한 것은 하나: <b>모든 것을 알아내어, 빼앗아라.</b>",
  "So the Duke names <b>you</b> the new Warden of the Seal: a ring, a warrant, and one rule.":"그리하여 공작이 <b>당신</b>을 새 인장 감시자로 임명한다: 반지 하나, 영장 하나, 그리고 규칙 하나.",
  "<b>Trust nothing you cannot prove.</b>":"<b>증명할 수 없는 것은 무엇도 믿지 말라.</b>",
- "By dawn, six troubles wait. A stranger at the gate. A letter already read. Grain gone from a locked store. A summons in the Duke's name that is not his. Figures that do not add up. And the Baron, always a step ahead.":"동이 트면 여섯 사건이 기다린다. 성문의 낯선 자. 이미 읽힌 편지. 잠긴 창고에서 사라진 곡물. 공작의 것이 아닌 공작 명의의 소환장. 맞지 않는 숫자들. 그리고 늘 한 발 앞선 남작.",
+ "By dawn, seven troubles wait. A stranger at the gate. A letter already read. Grain gone from a locked store. A summons in the Duke's name that is not his. Figures that do not add up. Records he would sooner burn than lose. And the Baron, always a step ahead.":"동이 트면 일곱 사건이 기다린다. 성문의 낯선 자. 이미 읽힌 편지. 잠긴 창고에서 사라진 곡물. 공작의 것이 아닌 공작 명의의 소환장. 맞지 않는 숫자들. 잃느니 차라리 태우려는 기록. 그리고 늘 한 발 앞선 남작.",
  // --- cinematics: beats ---
  "One mask torn away. But a <b>forged seal</b> means someone inside helped him. The Baron's reach runs deeper than a single impostor.":"가면 하나를 벗겼다. 허나 <b>위조된 인장</b>은 안에서 도운 자가 있다는 뜻. 남작의 손길은 사칭자 하나보다 깊다.",
  "His letters are safe now. Yet grain still vanishes from a <b>locked</b> store. A key, where no key should be.":"이제 편지는 안전하다. 허나 <b>잠긴</b> 창고에서 곡물은 여전히 사라진다. 있어선 안 될 열쇠가 어딘가에 있다.",
@@ -366,12 +369,13 @@ const fresh=()=>({
   q4:{frag:{},solved:false},
   q5:{spotted:false,solved:false},
   q6:{tallied:false,solved:false},
+  q7:{backed:false,solved:false},
   won:false, hints:0, wrong:0, t0:0, playMs:0,
   // research layer
   consent:null, pid:"", pre:{done:false,ans:[],score:0}, post:{done:false,ans:[],score:0}, log:[],
   // adaptive engine: per-play seed, per-concept Elo ability, global ability, chosen tier per act
   seed:(Math.floor(Math.random()*2147483647))||12345,
-  theta:{auth:0,crypto:0,lp:0,osint:0,social:0,integ:0}, thetaG:0,
+  theta:{auth:0,crypto:0,lp:0,osint:0,social:0,integ:0,avail:0}, thetaG:0,
   tier:{}, _snap:{hints:0,wrong:0},      // act tiers chosen adaptively (ZPD) at play time
   calib:{n:0,sp:0,sc:0},                 // calibration: n items, sum predicted P, sum clean-solves
 });
@@ -382,6 +386,8 @@ function loadSave(){ try{ const d=JSON.parse(localStorage.getItem(SAVEKEY)); if(
   if(!S.q5)S.q5={spotted:false,solved:false};
   if(!S.q6)S.q6={tallied:false,solved:false};
   if(S.q5&&S.q5.solved&&!S.q6.solved&&!S.won&&S.act<6)S.act=6;
+  if(!S.q7)S.q7={backed:false,solved:false};
+  if(S.q6&&S.q6.solved&&!S.q7.solved&&!S.won&&S.act<7)S.act=7;
   if(S.q4&&S.q4.solved&&!S.q5.solved&&!S.won&&S.act<5)S.act=5; } }catch(e){} }
 
 function addClue(id,name,iconKey,emoji){
@@ -397,7 +403,7 @@ function mulberry32(a){ return function(){ a=a+0x6D2B79F5|0; let x=Math.imul(a^a
 function pz(name){ return mulberry32((((S.seed||1)>>>0) ^ strHash(name))>>>0); }
 function rpick(r,a){ return a[Math.floor(r()*a.length)]; }
 function rshuf(r,a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));const t=a[i];a[i]=a[j];a[j]=t;} return a; }
-const ACT_CONCEPT={1:"auth",2:"crypto",3:"lp",4:"osint",5:"social",6:"integ"};
+const ACT_CONCEPT={1:"auth",2:"crypto",3:"lp",4:"osint",5:"social",6:"integ",7:"avail"};
 const TIERS=[-1.5,-0.5,0.5,1.5];                             // Novice / Apprentice / Journeyman / Master (logit)
 const ZPD_OFF=1.0, ELO_K=0.7;                               // ZPD difficulty target (P≈0.7); learning rate
 function tierOf(act){ return (S.tier&&S.tier[act]!=null)?S.tier[act]:pickTier(S.thetaG||0); }
@@ -423,6 +429,9 @@ function adaptOutcome(act){                                  // call when a puzz
 const TIERNAME=["Novice","Apprentice","Journeyman","Master"], TIERNAME_KO=["입문","견습","숙련","명인"];
 function tierLabel(act){ const i=tierOf(act); return LANG==="ko"?TIERNAME_KO[i]:TIERNAME[i]; }
 const HINTS={
+ q1:[{en:"Identity rests on three independent factors — what he KNOWS, HAS, and IS. Test more than one.",ko:"신원은 세 독립 요소에 있다 — 그가 아는 것·가진 것·그 자체인 것. 둘 이상 확인하라."},
+     {en:"A friendly manner proves nothing — check the passphrase, the signet, and the scar the smith named.",ko:"친근한 태도는 증거가 못 된다 — 암호문구·인장·대장장이가 말한 흉터를 확인하라."},
+     {en:"Never rule on a single factor; that is how impostors walk in. Confirm at least two before judging.",ko:"단일 요소로 판결하지 마라; 그렇게 사칭자가 들어온다. 판단 전 최소 둘을 확인하라."}],
  q2:[{en:"Try every turn of the wheel; only one makes real words.",ko:"바퀴를 한 칸씩 다 돌려보라; 진짜 단어가 되는 칸은 하나뿐이다."},
      {en:"Short words help: a 3-letter word is often THE. Align that first.",ko:"짧은 단어가 단서다: 세 글자 단어는 흔히 THE. 그걸 먼저 맞춰라."},
      {en:"The shift is fixed for the whole message — find it once and the rest follows.",ko:"이동값은 전체에 하나로 고정 — 한 번 찾으면 나머지는 따라온다."}],
@@ -438,6 +447,9 @@ const HINTS={
  q6:[{en:"Re-tally first — sum each page's figures yourself.",ko:"먼저 다시 합산하라 — 각 쪽의 숫자를 직접 더하라."},
      {en:"Compare your sum to the sealed tally; one will not match.",ko:"당신의 합을 봉인된 값과 비교하라; 하나가 안 맞는다."},
      {en:"The mismatched page is the doctored one.",ko:"일치하지 않는 쪽이 조작된 쪽이다."}],
+ q7:[{en:"A copy in the same building burns with it — keep copies somewhere separate.",ko:"같은 건물 안의 사본은 함께 탄다 — 별도의 장소에 사본을 둬라."},
+     {en:"Back up EVERY critical record, not just some.",ko:"일부가 아니라 모든 핵심 기록을 백업하라."},
+     {en:"If you have backups, never pay a ransom — just restore.",ko:"백업이 있으면 몸값을 내지 말고 복원하라."}],
 };
 let _curHints=null;
 function mountHints(host,hints){ if(!host||!hints){_curHints=null;return;} let i=0,w=0,aiAuto=false; const L=o=>LANG==="ko"?o.ko:o.en;
@@ -526,6 +538,8 @@ const NPCS=[
  {id:"courier", name:"A Hooded Courier",icon:"🪶",port:"courier", sheet:"bald", look:"hue-rotate(265deg) saturate(.7) brightness(.72)", tx:15,ty:9, wander:1, see:()=>S.act>=5&&!S.q5.solved},
  // Act 6 — the tampered ledger
  {id:"reeve",   name:"Reeve Odell",  icon:"🧮",port:"clerk", sheet:"bald", look:"sepia(.45) hue-rotate(200deg) saturate(.9)", tx:28,ty:6.5, see:()=>S.act>=6&&!S.q6.solved},
+ // Act 7 — the burned records
+ {id:"archivist",name:"Archivist Wynn",icon:"📚",port:"archivist", look:"sepia(.5) saturate(.8) brightness(.95)", tx:22.5,ty:27.5, see:()=>S.act>=7&&!S.q7.solved},
  // worldview / lore
  {id:"bard",    name:"Old Faro the Bard",icon:"🎻",port:"bard", look:"hue-rotate(45deg) saturate(1.6) contrast(1.15) brightness(1.05)", tx:8,ty:14, see:()=>true},
 ];
@@ -667,6 +681,7 @@ function npcHot(n){ // show ! when this npc advances the current act
   if(S.act===4&&!S.q4.solved) return ["keeper","sister"].includes(n.id);
   if(S.act===5&&!S.q5.solved) return clue("c_summons")?n.id==="tomas":n.id==="herald";
   if(S.act===6&&!S.q6.solved) return n.id==="reeve";
+  if(S.act===7&&!S.q7.solved) return n.id==="archivist";
   return false;
 }
 function drawDecal(k,dx,dy){ const im=img(k); if(!im)return; const s=TS*0.8,o=(TS-s)/2; ctx.drawImage(im,dx+o,dy+o,s,s); }
@@ -698,13 +713,14 @@ function currentObjective(){
   if(S.won)return null;
   const bp=id=>{const b=B.find(x=>x.id===id);return b?{x:(b.tx+b.w/2)*TS,y:(b.ty+b.h)*TS,name:b.name}:null;};
   const board={x:23*TS,y:16*TS,name:"Notice Board"};
-  if(S.seals>=6&&!S.won)return board;
+  if(S.seals>=7&&!S.won)return board;
   if(S.act===1&&!S.q1.solved){ if(!S.q1.are)return bp("smithy"); if(!S.q1.know)return bp("tavern"); if(!S.q1.have)return bp("archive"); return bp("gate"); }
   if(S.act===2&&!S.q2.solved)return bp("study");
   if(S.act===3&&!S.q3.solved)return bp("granary");
   if(S.act===4&&!S.q4.solved){ if(!S.q4.frag.tavern)return bp("tavern"); if(!S.q4.frag.chapel)return bp("chapel"); return board; }
   if(S.act===5&&!S.q5.solved){ if(!clue("c_summons"))return {x:20.5*TS,y:16*TS,name:"The Herald"}; return bp("watch"); }
   if(S.act===6&&!S.q6.solved)return bp("counting");
+  if(S.act===7&&!S.q7.solved)return bp("archive");
   return null;
 }
 function drawWaypoint(){ const o=currentObjective(); if(!o)return; const sx=o.x-cam.x, sy=o.y-cam.y, bob=Math.sin((last||0)/250)*5;
@@ -865,12 +881,13 @@ function questText(){
    [4,"The Baron knows our plans. Gather talk at <b>Tankard</b> &amp; <b>Chapel</b>, piece it at the Board."],
    [5,"A summons in the Duke's name orders the gate stripped. Ask the <b>Herald</b>, then judge it at the <b>North Watchtower</b>."],
    [6,"The granary's loss is hidden in the books. Re-tally the sealed ledger at the <b>Counting House</b> to find the doctored page."],
+   [7,"The Baron's last threat: the village records. Secure them at the <b>Archive</b> before they are lost."],
   ];
-  const cur=L.find(l=>l[0]===S.act)||L[5];
-  const pre = LANG==="ko" ? ("<b>"+S.act+"막 / 6:</b> ") : ("<b>Act "+S.act+" / 6:</b> ");
+  const cur=L.find(l=>l[0]===S.act)||L[6];
+  const pre = LANG==="ko" ? ("<b>"+S.act+"막 / 7:</b> ") : ("<b>Act "+S.act+" / 7:</b> ");
   return pre+t(cur[1]);
 }
-function sealStr(){ let s=""; for(let i=0;i<6;i++)s+=i<S.seals?"🟡":"⚪"; return s; }
+function sealStr(){ let s=""; for(let i=0;i<7;i++)s+=i<S.seals?"🟡":"⚪"; return s; }
 function refreshHud(){ document.getElementById("questbar").innerHTML=questText()+"<div id='seals'>"+t("Warden's Seals: ")+sealStr()+"</div>"; }
 document.getElementById("journalBtn").onclick=openJournal;
 document.getElementById("helpBtn").onclick=openHelp;
@@ -904,7 +921,7 @@ function openSettings(){ Audio_.init(); const v=Math.round((Audio_.vol||0.45)*10
 function openJournal(){ if(scene!=="play")return; boardOpen(); }
 function openHelp(){ const ko=LANG==="ko", L=(k,e)=>ko?k:e; showModal(`<h2>${L("플레이 방법","How to play")}</h2>
   <p>${L("<b>이동</b> WASD / 방향키 / 조이스틱 / 게임패드. 무언가 빛나면(<b>!</b> 표시) E / Space / 대화 버튼으로 <b>상호작용</b>.","<b>Move</b> WASD / arrows / joystick / gamepad. <b>Interact</b> with E / Space / Talk when something lights up (look for the <b>!</b>).")}</p>
-  <p>${L("여섯 사건이 사이퍼펠을 덮친다. 한 막씩 풀린다. 각 사건은 퍼즐이 열리기 전에 <b>마을을 걸으며 단서를 모아야</b> 한다. 사건마다 <b>감시자의 인장</b>을 얻고, 분수 옆 <b>게시판</b>에서 범인을 지목하라.","Six troubles grip Cipherfell, unlocked one act at a time. Each needs you to <b>walk the town and gather clues</b> before its puzzle opens. Earn a <b>Warden's Seal</b> for each, then name the culprit at the <b>Notice Board</b> by the fountain.")}</p>
+  <p>${L("일곱 사건이 사이퍼펠을 덮친다. 한 막씩 풀린다. 각 사건은 퍼즐이 열리기 전에 <b>마을을 걸으며 단서를 모아야</b> 한다. 사건마다 <b>감시자의 인장</b>을 얻고, 분수 옆 <b>게시판</b>에서 범인을 지목하라.","Seven troubles grip Cipherfell, unlocked one act at a time. Each needs you to <b>walk the town and gather clues</b> before its puzzle opens. Earn a <b>Warden's Seal</b> for each, then name the culprit at the <b>Notice Board</b> by the fountain.")}</p>
   <div class="takeaway"><b>${L("진짜 교훈:","The real lesson:")}</b> ${L("모든 퍼즐은 보안 개념의 변장이다 — 신원 증명, 비밀 지키기, 접근 제한, 작은 사실들이 쌓이는 것 알아채기, 위조된 명령에 저항하기. 도구가 아니라 <i>사고방식</i>을 훈련한다.","every puzzle is a security idea in disguise — proving identity, keeping secrets, limiting access, noticing how small facts add up, and resisting a forged order. You train the <i>mindset</i>, not tools.")}</div>
   <p class="small">${L("진행은 자동 저장됩니다. 탭을 닫았나요? 타이틀에서 <b>이어하기</b>를 누르세요.","Progress saves automatically. Closed the tab? Press <b>Continue</b> on the title.")}</p>
   <div class="row"><button class="btn ghost" id="replayTut">${L("↺ 튜토리얼 다시 보기","↺ Replay tutorial")}</button></div>`);
@@ -947,6 +964,7 @@ function talkNPC(n){
     case "sister": say("sister","The Sister","Our bell rings early when the granary's full — a little blessing. Everyone knows our bells.",[{t:"Interesting…",f:()=>{ if(S.act>=4){q4Frag("chapel");q4Frag("laundry");} closeDlg(); }}]); break;
     case "tomas": WATCH(); break;
     case "reeve": COUNTING(); break;
+    case "archivist": ARCHIVE(); break;
     case "courier": say("courier","A Hooded Courier", S.q5.solved?
        "<i>(The courier is gone — slipped out the moment the post held firm.)</i>":
        "A summons for the watch, Warden — straight from the Duke, on my honour. Best it's obeyed at once; <i>great</i> men dislike waiting. No need to trouble the Herald over it.",
@@ -954,8 +972,8 @@ function talkNPC(n){
     case "bard": BARD(); break;
   }
 }
-function gainSeal(act,nextToast){ S.seals=Math.max(S.seals,act); S.act=Math.min(6,act+1); adaptOutcome(act); logEv("seal",{act:act,hints:S.hints,wrong:S.wrong}); save(); refreshHud(); Audio_.sfx("seal"); spawnSparkle(S.px,S.py,"255,220,120",30);
-  if(act>=6){ toast("All six seals earned — name the hand at the Notice Board."); }
+function gainSeal(act,nextToast){ S.seals=Math.max(S.seals,act); S.act=Math.min(7,act+1); adaptOutcome(act); logEv("seal",{act:act,hints:S.hints,wrong:S.wrong}); save(); refreshHud(); Audio_.sfx("seal"); spawnSparkle(S.px,S.py,"255,220,120",30);
+  if(act>=7){ toast("All seven seals earned — name the hand at the Notice Board."); }
   else { toast(nextToast||"Warden's Seal earned. A new door has opened."); pendingBeat=act; } }
 
 /* ============================================================ INTRO */
@@ -974,7 +992,7 @@ function openingCine(){
     {img:CINE.baron,      text:"The Baron asks one thing of them: <b>learn everything, and take it.</b>"},
     {img:CINE.commission, text:"So the Duke names <b>you</b> the new Warden of the Seal: a ring, a warrant, and one rule."},
     {img:CINE.commission, text:"<b>Trust nothing you cannot prove.</b>"},
-    {img:CINE.a1,         text:"By dawn, six troubles wait. A stranger at the gate. A letter already read. Grain gone from a locked store. A summons in the Duke's name that is not his. Figures that do not add up. And the Baron, always a step ahead."},
+    {img:CINE.a1,         text:"By dawn, seven troubles wait. A stranger at the gate. A letter already read. Grain gone from a locked store. A summons in the Duke's name that is not his. Figures that do not add up. Records he would sooner burn than lose. And the Baron, always a step ahead."},
   ], ()=>{ enterPlay(); if(!maybeTutorial()) toast("Follow the gold marker. Press E / Talk to interact."); }, {bgm:"cine"}); });
 }
 /* act-transition narrative beats */
@@ -984,6 +1002,7 @@ const BEATS={
  3:[{img:CINE.a4,      text:"A stolen key. An old copy. Three threads, one hand. And the Baron always knew <b>when</b> to strike. Who keeps telling him?"}],
  4:[{img:CINE.a5,      text:"Now a letter rides in under the <b>Duke's own name</b>, ordering the north gate stripped at midnight. If the watch obeys, Thornmoor walks in unopposed. But does a seal make an order <b>true</b>?"}],
  5:[{img:CINE.a6,      text:"Five threads cut — yet the granary's loss never appears in the <b>accounts</b>. Someone altered the ledger itself to hide the theft. But a tampered figure leaves a <b>broken seal</b>. Find it, and the cover-up unravels."}],
+ 6:[{img:CINE.fire,    text:"Cornered, the Baron's hand plays its last card — not theft, but <b>destruction</b>. If he cannot own Cipherfell's records, he will <b>burn</b> them, and ransom what survives. Can the village lose its memory in a single night?"}],
 };
 let pendingBeat=0;
 function actBeat(act){ const sc=BEATS[act]; if(!sc){return;}
@@ -1003,7 +1022,7 @@ function HERALD(){
      "<div class='takeaway'>A grand seal and a great name are not proof — they are exactly what a forger borrows. Go judge the letter at the <b>Watchtower</b>, and remember: an order can be confirmed only through a channel you already <b>trust</b>.</div>",
      [{t:"To the Watchtower",f:closeDlg}]); return;
   }
-  say("herald","The Herald","Six troubles, one hand. Mend each thread — the town's trust (your Seals) opens the way.",[{t:"Onward",f:closeDlg}]); }
+  say("herald","The Herald","Seven troubles, one hand. Mend each thread — the town's trust (your Seals) opens the way.",[{t:"Onward",f:closeDlg}]); }
 
 /* ============================================================ ACT 1 — IMPOSTOR (authentication) */
 function SMITHY(){
@@ -1026,6 +1045,7 @@ function TAVERN(){
   else say("tavernkeeper","Goodwife Esa","The word is 'barley <b>gate</b>'. 'Moon' is the gossiped version.");
 }
 function ARCHIVE(){
+  if(S.act>=7) return RECORDS();
   if(S.act>=3 && !S.q3.solved) return ARCHIVE3();
   if(!S.q1.have){ S.q1.have=true; addClue("c_have","Aldric's true seal on record (something he HAS)","signet_real","💍"); save();
     const real=A.signet_real?`<div class="chip"><i style="background:#cdbb8e url(${PROP.signet_real}) center/cover"></i>Aldric's TRUE seal (archive record)</div>`:"";
@@ -1043,11 +1063,23 @@ function GATE(){
   ch.push({t:(q.have?"✔ ":"")+"Inspect his signet",cls:q.have?"":"ghost",f:gHave});
   ch.push({t:(q.are?"✔ ":"")+"Demand his right thumb",cls:q.are?"":"ghost",f:gAre});
   ch.push({t:"⚖ Make a ruling ("+n+"/3 factors)",cls:"good",f:gRule});
+  ch.push({t:(LANG==="ko"?"💡 힌트":"💡 Hint"),cls:"ghost",f:gHint});
   ch.push({t:"Leave",cls:"ghost",f:closeDlg});
   say("impostor","The Stranger at the Gate",
    "Warden, at last! It's me — Aldric, home from the city after three winters! Wave me through, there's a good fellow. "+
    "<span class='small'>(He smiles a great deal.)</span>",ch);
 }
+let _q1h=0;
+function gHint(){ const h=HINTS.q1, i=Math.min(_q1h,h.length-1), txt=(LANG==="ko"?h[i].ko:h[i].en); _q1h++; S.hints++; logEv("hint",{act:1,n:_q1h});
+  const back=LANG==="ko"?"계속 살펴본다":"Keep looking";
+  const ch=[{t:back,f:GATE}]; if(AI_ON)ch.unshift({t:(LANG==="ko"?"✨ AI 튜터에게 묻기":"✨ Ask the AI tutor"),f:gAiHint});
+  say("herald",(LANG==="ko"?"감시자의 직감":"A Warden's instinct"),"💡 "+txt,ch); }
+function gAiHint(){ say("herald",(LANG==="ko"?"감시자의 직감":"A Warden's instinct"),(LANG==="ko"?"✨ AI 튜터가 생각 중…":"✨ AI tutor is thinking…"),[{t:(LANG==="ko"?"계속 살펴본다":"Keep looking"),f:GATE}]);
+  logEv("ai_tutor",{act:1});
+  fetch("/api/tutor",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({concept:"authentication and multi-factor authentication",mistake:"unsure how to tell the impostor at the gate from the real merchant",lang:LANG})})
+    .then(r=>r.json()).then(j=>{ const x=((j&&j.text)||"").trim();
+      const el=document.getElementById("dlgTxt"); if(el)el.innerHTML = x?("✨ "+x):(LANG==="ko"?"✨ AI 튜터를 지금은 쓸 수 없습니다 — 위 힌트를 참고하세요.":"✨ AI tutor isn't available — use the hint above."); })
+    .catch(()=>{ const el=document.getElementById("dlgTxt"); if(el)el.innerHTML=(LANG==="ko"?"✨ AI 튜터 연결 실패 — 힌트를 참고하세요.":"✨ AI tutor unavailable — use the hint above."); }); }
 function gKnow(){
   if(!S.q1.know){ say("impostor","The Stranger","A passphrase? I— it's 'barley moon', surely? "+
      "<div class='takeaway'>You don't <b>know</b> the real word yet. Ask at the <b>Tankard</b> first.</div>",[{t:"Back",f:GATE}]); return; }
@@ -1322,19 +1354,64 @@ function ledgerPuzzle(){
   modalBody.querySelectorAll(".cell[data-p]").forEach(c=>c.onclick=()=>{
     if(!revealed){ S.hints++; document.getElementById("m6").innerHTML="<div class='takeaway fadein'>Re-tally first — you cannot spot a forged seal without recomputing the true one.</div>"; return; }
     const i=+c.dataset.p, p=PAGES[i], ok=ltally(p.figs)===p.seal, m=document.getElementById("m6");
-    if(!ok){ S.q6.solved=true; addClue("c_integrity","The broken tally seal","ledger","🔏"); gainSeal(6);
+    if(!ok){ S.q6.solved=true; addClue("c_integrity","The broken tally seal","ledger","🔏"); gainSeal(6,"Seal 6 earned — the Baron's last threat falls on the records. To the Archive.");
       m.innerHTML="<div class='takeaway fadein'><b>Caught.</b> The <b>"+p.name+"</b> page was sealed at "+p.seal+", but its figures now sum to "+ltally(p.figs)+" — "+cfg.delta+" measures quietly erased to hide the theft. The forger could change the figure, but could not re-forge a matching seal on every page.<br><br><b>Security idea: Integrity, checksums &amp; hashing.</b> You do not keep the data secret — you make tampering <i>detectable</i>. A checksum (or cryptographic hash) over the content changes if even one figure changes; recompute it and compare to the stored value to prove nothing was altered. This is how file hashes, digital signatures, and tamper-evident logs work.</div>"+`<button class="btn good" id="w6">Restore the true figure ▶</button>`;
-      document.getElementById("w6").onclick=()=>{ closeModal(); say("clerk","Reeve Odell","The grain's loss, just as the granary showed. I'll re-seal the page true and keep a second tally apart, so no single hand can change both. The books cannot lie to you now, Warden.",[{t:"Six threads mended — name the hand at the Board.",f:closeDlg}]); };
+      document.getElementById("w6").onclick=()=>{ closeModal(); say("clerk","Reeve Odell","The grain's loss, just as the granary showed. I'll re-seal the page true and keep a second tally apart, so no single hand can change both. The books cannot lie to you now, Warden.",[{t:"Six threads mended — one trouble remains.",f:closeDlg}]); };
     } else { S.wrong++; hintOnWrong(); m.innerHTML="<div class='takeaway fadein'>That page's seal matches its tally — it is honest. Look for the one where the re-tally shows ✗.</div>"; }
   });
 }
+
+/* ============================================================ ACT 7 — THE BURNED RECORDS (availability / backups / ransomware) */
+const REC_POOL=["the Charter","the Tithe rolls","the Census","the Muster roll","the Land deeds"];
+function q7cfg(){ const T=tierOf(7), n=[2,3,4,5][T], r=pz("q7"); return {recs:rshuf(r,REC_POOL).slice(0,n), T:T}; }
+function RECORDS(){
+  if(S.q7.solved){ say("archivist","Archivist Wynn","The flames took the shelves, Warden — but not our memory. Every record lives on in the outland vault. We lost nothing, and paid nothing."); return; }
+  if(!clue("c_records")){ addClue("c_records","The village records at risk","backup","📚"); save();
+    say("archivist","Archivist Wynn",
+     "Warden, the Baron's last spite: if he cannot <i>own</i> Cipherfell, he will <b>burn its records</b> — the Charter, the rolls, all of it — and ransom whatever survives. One fire, and the village forgets itself. "+
+     "<div class='takeaway'>I keep a vault in the outlands. Tell me what to <b>copy</b> there before the night comes.</div>",
+     [{t:"Secure the records",cls:"good",f:recordsPuzzle},{t:"Later",f:closeDlg}]); return; }
+  recordsPuzzle();
+}
+function recordsPuzzle(){
+  closeDlg(); const cfg=q7cfg(), RECS=cfg.recs; const backed=new Set();
+  let h=`<h2>The Archive — secure the records <span class="small">· ${tierLabel(7)}</span></h2>
+   ${A.backup?`<div style="text-align:center"><img src="${PROP.backup}" style="width:112px;border-radius:10px;border:2px solid #2c2114"></div>`:""}
+   <p>Fire is coming to the Archive. Tap each record to keep a <b>copy in the separate outland vault</b> — so even if the originals burn, the village keeps them.</p>
+   <div class="grid" style="grid-template-columns:1fr">`;
+  RECS.forEach((rc,i)=>{ h+=`<div class="cell" data-i="${i}" style="text-align:left">${rc} &nbsp;<span class="small bk" data-bk="${i}"></span></div>`; });
+  h+=`</div><div id="hh7"></div><div id="m7"></div><div class="row"><button class="btn good" id="ck7">Send the copies to the vault</button></div>`;
+  showModal(h);
+  mountHints(document.getElementById("hh7"),HINTS.q7);
+  modalBody.querySelectorAll(".cell[data-i]").forEach(c=>c.onclick=()=>{ const i=+c.dataset.i;
+    if(backed.has(i)){backed.delete(i);c.classList.remove("on");}else{backed.add(i);c.classList.add("on");}
+    modalBody.querySelector(`.bk[data-bk="${i}"]`).textContent=backed.has(i)?"→ copied to vault":""; });
+  document.getElementById("ck7").onclick=()=>{ const m=document.getElementById("m7");
+    const unprot=RECS.filter((_,i)=>!backed.has(i));
+    if(unprot.length===0){ S.q7.backed=true; addClue("c_backups","Off-site record backups","backup","🗄️"); save();
+      m.innerHTML="<div class='takeaway fadein'><b>All copied.</b> Every record now lives in two places. That night, the Archive burns — and the Baron's man sends his demand…</div>"+recordsActionHTML();
+      wireRecordsAction(); }
+    else { S.wrong++; hintOnWrong(); m.innerHTML="<div class='takeaway fadein'><b>Still only in the Archive:</b> "+unprot.join(", ")+". A copy must survive <i>elsewhere</i> — back up <b>every</b> critical record.</div>"; }
+  };
+}
+function recordsActionHTML(){ return `<h3>The ransom</h3><p class="small">The Archive is ash. A note arrives: "Pay me, and I return what I saved from the fire."</p><div class="row">
+  <button class="btn" data-x="pay">Pay the ransom for the records</button>
+  <button class="btn" data-x="redo">Rebuild them from memory</button>
+  <button class="btn good" data-x="restore">Restore from the vault copies</button></div><div id="m7b"></div>`; }
+function wireRecordsAction(){ modalBody.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>{ const mb=document.getElementById("m7b");
+  if(b.dataset.x==="restore"){ S.q7.solved=true; addClue("c_avail","Resilience through backups","backup","🛡️"); gainSeal(7);
+    mb.innerHTML="<div class='takeaway fadein'><b>Right.</b> You never even open his note. The vault copies are carried back; by morning the records stand whole, and the Baron's man gets nothing.<br><br><b>Security idea: Availability, redundancy &amp; backups.</b> The third pillar of the <b>CIA triad</b> — confidentiality, integrity, and now <b>availability</b>. Keep redundant copies in <i>separate</i> places so loss, fire, or <b>ransomware</b> can't destroy access. With good backups you never pay the ransom — you restore. (Think 3-2-1: several copies, different media, kept off-site.)</div>"+`<button class="btn good" id="w7">Restore the records ▶</button>`;
+    document.getElementById("w7").onclick=()=>{ closeModal(); say("archivist","Archivist Wynn","Carried back from the vault, every one. Let him burn what he likes — a thing kept in two places cannot be taken by destroying one.",[{t:"Seven threads mended — name the hand at the Board.",f:closeDlg}]); }; }
+  else if(b.dataset.x==="pay"){ S.wrong++; hintOnWrong(); mb.innerHTML="<div class='takeaway fadein'>Never. Paying funds the enemy and guarantees nothing — he may keep the records, or burn them anyway. You prepared for exactly this; use what you built.</div>"; }
+  else { S.wrong++; hintOnWrong(); mb.innerHTML="<div class='takeaway fadein'>Memory is lossy and slow — charters and tallies cannot be reconjured whole. The point of a backup is that you don't have to.</div>"; }
+}); }
 
 /* ============================================================ WORLDVIEW / LORE */
 function BARD(){ say("bard","Old Faro the Bard",
   "Sit a moment, Warden, and hear how Cipherfell came to be.<br><br>Two houses raised this valley: the Duke's line, who sealed every bargain in honest wax, and the lords of <b>Thornmoor</b>, who preferred a blade to a handshake. When the old Baron lost the valley <i>at law</i>, he swore his heirs would take by cunning what they could not win by right.<br><br>So his grandson sends no army — only whispers, forgeries, and borrowed faces. The Duke answered the only way that holds: he named a <b>Warden of the Seal</b>, and bid them trust nothing they cannot prove. That, friend, is <b>you</b>.",
   [{t:"A fine tale.",f:closeDlg}]); }
 function LORE(){ say(null,"The Founders' Stone",
-  "Worn letters, cut deep into the rock:<br><br><i>“Here stands Cipherfell, founded in the Year of the Open Hand. Let no gate open to a stranger's word, no letter be read by the wrong eye, no key be cut for idle hands, no secret be left in plain sight, no summons be obeyed unproven, and no figure be changed without its seal. Guard these six vows, and the valley keeps itself.”</i><br><br><span class='small'>Six vows — one for each of the Warden's troubles.</span>",
+  "Worn letters, cut deep into the rock:<br><br><i>“Here stands Cipherfell, founded in the Year of the Open Hand. Let no gate open to a stranger's word, no letter be read by the wrong eye, no key be cut for idle hands, no secret be left in plain sight, no summons be obeyed unproven, no figure be changed without its seal, and no record be kept in one place alone. Guard these seven vows, and the valley keeps itself.”</i><br><br><span class='small'>Seven vows — one for each of the Warden's troubles.</span>",
   [{t:"Step back",f:closeDlg}]); }
 
 /* ============================================================ NOTICE / CASE BOARD (journal + Q4 combine + capstone) */
@@ -1345,7 +1422,7 @@ function boardOpen(){
   let chips=""; const list=Object.values(S.clues);
   if(!list.length)chips="<p class='small'>No clues yet. Follow the <b>!</b> markers and talk to people.</p>";
   for(const c of list){ const ic=A[c.iconKey]?`style="background:#cdbb8e url(${assetURL(c.iconKey)}) center/cover"`:""; chips+=`<span class="chip"><i ${ic}>${A[c.iconKey]?"":(c.emoji||"•")}</i>${c.name}</span>`; }
-  const prog=[["Impostor",S.q1.solved],["Sealed Letter",S.q2.solved],["Keyring",S.q3.solved],["Loose Lips",S.q4.solved],["Forged Summons",S.q5.solved],["Tampered Ledger",S.q6.solved]];
+  const prog=[["Impostor",S.q1.solved],["Sealed Letter",S.q2.solved],["Keyring",S.q3.solved],["Loose Lips",S.q4.solved],["Forged Summons",S.q5.solved],["Tampered Ledger",S.q6.solved],["Burned Records",S.q7.solved]];
   let pr=prog.map(p=>`<span class="tag">${p[1]?"✔ ":""}${p[0]}</span>`).join("");
   let body=`<h2>The Notice &amp; Case Board</h2><div>${pr} &nbsp; Seals: ${sealStr()}</div><h3>Clues gathered</h3><div>${chips}</div>`;
   // act4 combine
@@ -1355,7 +1432,7 @@ function boardOpen(){
     else body+=`<p class="small" style="margin-top:10px">You've pinned <b>${have}/4</b> scraps. Visit the <b>Tankard</b> and <b>Chapel</b> to gather the rest.</p>`;
   }
   // capstone
-  if(S.seals>=6 && !S.won) body+=`<div class="row" style="margin-top:12px"><button class="btn good" id="capstone">⚖ Name the hand behind it all ▶</button></div>`;
+  if(S.seals>=7 && !S.won) body+=`<div class="row" style="margin-top:12px"><button class="btn good" id="capstone">⚖ Name the hand behind it all ▶</button></div>`;
   if(S.won) body+=`<div class="row" style="margin-top:12px"><button class="btn" id="epi">See the Warden's lessons ▶</button></div>`;
   showModal(body);
   const cb=document.getElementById("combine"); if(cb)cb.onclick=q4Combine;
@@ -1387,21 +1464,34 @@ function q4Combine(){
       const why=b.dataset.a==="a"?"Not idle — pinned together, these scraps point to one specific moment and place.":"It isn't about wealth — the scraps describe a <i>target and a timing</i>, not riches.";
       m.innerHTML="<div class='takeaway fadein'>"+why+" Imagine you are the raider: when does the grain move, how guarded, how much?</div>"; } });
 }
-function capstone(){
-  showModal(`<h2>The Warden's Eye — name the hand</h2>
-   <p>Four threads, one weave. The culprit must satisfy <b>every</b> clue at once:</p>
-   <ul><li>Wore a <b>forged identity</b> to get inside.</li><li>Could <b>read the Duke's letters</b> — trusted near them.</li>
-   <li>Used an <b>old master-key copy</b> to reach the grain.</li><li><b>Aggregated tavern gossip</b> to time the raid.</li>
-   <li>Forged a <b>summons in the Duke's name</b> to strip the gate.</li>
-   <li><b>Altered the ledger</b> to hide the stolen grain.</li></ul>
-   <div class="row"><button class="btn" data-s="steward">Steward Pell</button><button class="btn" data-s="impostor">The false "Aldric"</button>
-   <button class="btn" data-s="captain">Captain Mara</button><button class="btn" data-s="peddler">The Peddler</button></div><div id="mc"></div>`);
-  modalBody.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>{ const m=document.getElementById("mc");
+const CAP_EV=[
+  {q:"Which clue proves the culprit got <b>inside under a false name</b>?", opts:["A forged signet at the gate","The Caesar cipher wheel","The chapel bell rings early"], a:0},
+  {q:"Which clue proves the granary loss was <b>hidden</b>, not merely taken?", opts:["A week of tavern gossip","A broken tally seal in the ledger","An old master-key copy"], a:1},
+  {q:"Which clue proves the records would <b>survive</b> the Baron's fire?", opts:["Off-site backup copies in the vault","The forged summons","The aggregated leak"], a:0},
+];
+function capstoneNames(){
+  const m=document.getElementById("mc");
+  m.innerHTML=`<h3>Now — name the hand</h3><div class="row"><button class="btn" data-s="steward">Steward Pell</button><button class="btn" data-s="impostor">The false "Aldric"</button>
+   <button class="btn" data-s="captain">Captain Mara</button><button class="btn" data-s="peddler">The Peddler</button></div><div id="mc2"></div>`;
+  m.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>{ const m2=document.getElementById("mc2");
     if(b.dataset.s==="impostor"){ S.won=true; logEv("won",{hints:S.hints,wrong:S.wrong,ms:Math.round(S.playMs||0)}); save();
-      m.innerHTML="<div class='takeaway fadein'><b>The Warden's Eye sees true.</b> The false Aldric was the Baron of Thornmoor's agent: a forged seal got him through the gate, a trusted 'merchant' lingered near the Duke's letters, an old master-key copy emptied the granary, a week in the Tankard let him time the raid, a summons in the Duke's name nearly stripped the watch, and a doctored ledger hid the loss. Every other suspect fails at least one thread.</div>"+`<button class="btn good" id="cd">The Duke will hear of this ▶</button>`;
+      m2.innerHTML="<div class='takeaway fadein'><b>The Warden's Eye sees true.</b> The false Aldric was the Baron of Thornmoor's agent: a forged seal got him through the gate, a trusted 'merchant' lingered near the Duke's letters, an old master-key copy emptied the granary, a week in the Tankard let him time the raid, a summons in the Duke's name nearly stripped the watch, a doctored ledger hid the loss, and a last fire tried to burn what he could not keep. Every other suspect fails at least one thread.</div>"+`<button class="btn good" id="cd">The Duke will hear of this ▶</button>`;
       Audio_.sfx("seal"); document.getElementById("cd").onclick=()=>{refreshHud();endingCine();}; }
-    else { S.wrong++; const why={steward:"careless with keys, but never forged an identity nor read the letters.",captain:"holds the armory and was provably <i>away</i> — can't be the inside reader and raider.",peddler:"a loud gossip, but passed no gate in disguise and copied no seal."}[b.dataset.s];
-      m.innerHTML="<div class='takeaway fadein'>That one fails a thread: "+why+" The culprit must fit <b>all four</b>.</div>"; } });
+    else { S.wrong++; const why={steward:"careless with keys, but never forged an identity nor read the letters.",captain:"holds the armory and was provably <i>away</i> — cannot be the inside reader and raider.",peddler:"a loud gossip, but passed no gate in disguise and copied no seal."}[b.dataset.s];
+      m2.innerHTML="<div class='takeaway fadein'>That one fails a thread: "+why+" The culprit must fit <b>all seven</b>.</div>"; } });
+}
+function capstone(){
+  showModal(`<h2>The Warden's Eye — weave the threads</h2>
+   <p>Seven threads, one hand. First prove you can tie each <b>finding to the clue</b> that shows it:</p>
+   ${CAP_EV.map((e,qi)=>`<div style="margin-top:10px"><div>${qi+1}. ${e.q}</div>${e.opts.map((o,oi)=>`<label class="cell" style="display:block;text-align:left;margin-top:4px;cursor:pointer"><input type="radio" name="cap${qi}" value="${oi}" style="margin-right:8px">${o}</label>`).join("")}</div>`).join("")}
+   <div id="capm" class="small" style="margin-top:8px;color:#b5391f"></div><div class="row"><button class="btn good" id="capEv">Confirm the evidence ▶</button></div><div id="mc"></div>`);
+  document.getElementById("capEv").onclick=()=>{
+    for(let qi=0;qi<CAP_EV.length;qi++){ if(!modalBody.querySelector(`input[name="cap${qi}"]:checked`)){ document.getElementById("capm").textContent="Tie every finding to its clue first."; return; } }
+    let ok=true; CAP_EV.forEach((e,qi)=>{ if(+modalBody.querySelector(`input[name="cap${qi}"]:checked`).value!==e.a)ok=false; });
+    if(!ok){ S.wrong++; document.getElementById("capm").textContent="Not quite — each finding has one clue that truly proves it. Look again."; return; }
+    document.getElementById("capm").style.color="#46562f"; document.getElementById("capm").textContent="Evidence in order. The threads point to one hand.";
+    document.getElementById("capEv").style.display="none"; capstoneNames();
+  };
 }
 function rating(){ const ko=LANG==="ko", pen=S.hints+S.wrong; if(pen<=1)return ko?"★★★ 명감시자":"★★★ Master Warden"; if(pen<=4)return ko?"★★ 예리한 눈":"★★ Sharp-eyed"; return ko?"★ 수련 감시자":"★ Warden-in-training"; }
 function epilogue(){ if(S.consent==="yes" && !S.post.done){ kcRun("post", epilogueResults); } else epilogueResults(); }
@@ -1409,7 +1499,7 @@ function epilogueResults(){ const ko=LANG==="ko", L=(k,e)=>ko?k:e;
   const mins=Math.max(1,Math.round((S.playMs||0)/60000));
   const delta=S.post.score-S.pre.score, dstr=(delta>=0?"+":"")+delta;
   // adaptive mastery profile (per-concept ability θ -> %)
-  const CL=[["auth","Authentication","인증"],["crypto","Encryption","암호화"],["lp","Least privilege","최소 권한"],["osint","OSINT / OPSEC","OSINT"],["social","Social engineering","사회공학"],["integ","Integrity","무결성"]];
+  const CL=[["auth","Authentication","인증"],["crypto","Encryption","암호화"],["lp","Least privilege","최소 권한"],["osint","OSINT / OPSEC","OSINT"],["social","Social engineering","사회공학"],["integ","Integrity","무결성"],["avail","Availability","가용성"]];
   const mpct=th=>Math.round(100/(1+Math.exp(-(th||0))));
   let lowest=CL[0], lo=1e9; CL.forEach(c=>{ const v=(S.theta&&S.theta[c[0]])||0; if(v<lo){lo=v;lowest=c;} });
   const bars=CL.map(c=>{ const p=mpct((S.theta&&S.theta[c[0]])||0); const col=p>=70?"#6b7f4e":p>=45?"#d8a43e":"#b5663b";
@@ -1427,8 +1517,10 @@ function epilogueResults(){ const ko=LANG==="ko", L=(k,e)=>ko?k:e;
    <div class="takeaway"><b>${L("새는 입 → 정보 누출, OSINT &amp; OPSEC.","Loose Lips → Information leakage, OSINT &amp; OPSEC.")}</b> ${L("공개된 조각도 모이면 비밀이 된다. 패턴을 지켜라.","Public scraps, aggregated, become a secret. Defend the pattern.")}</div>
    <div class="takeaway"><b>${L("위조 소환장 → 사회공학 &amp; 피싱.","The Forged Summons → Social engineering &amp; phishing.")}</b> ${L("권위와 긴급함은 지렛대일 뿐 증거가 아니다. 메시지는 스스로를 증명하지 못한다 — 별도의 신뢰 경로로 확인하라.","Authority and urgency are levers, not proof. A message can't authenticate itself — verify through a separate, trusted channel.")}</div>
    <div class="takeaway"><b>${L("조작된 장부 → 무결성, 체크섬 &amp; 해싱.","The Tampered Ledger → Integrity, checksums &amp; hashing.")}</b> ${L("데이터를 숨기지만 말고 변조를 탐지 가능하게 하라. 봉인(해시)을 다시 계산해 비교하라 — 숫자 하나만 바뀌어도 일치가 깨진다.","Don't just hide data — make tampering detectable. Recompute the seal (hash) and compare; one changed figure breaks the match.")}</div>
+   <div class="takeaway"><b>${L("불탄 기록 → 가용성, 이중화 &amp; 백업.","The Burned Records → Availability, redundancy &amp; backups.")}</b> ${L("CIA 삼각형의 마지막 기둥. 사본을 별도 장소에 두어 화재·랜섬웨어에도 접근을 잃지 마라 — 백업이 있으면 몸값을 내지 말고 복원하라.","The third pillar of the CIA triad. Keep copies in separate places so fire or ransomware can't deny access — with backups you restore instead of paying.")}</div>
+   <div class="takeaway" style="border-style:solid"><b>${L("이로써 CIA 삼각형 완성","The CIA triad, complete")}:</b> ${L("기밀성(암호화) · 무결성(해싱) · 가용성(백업).","Confidentiality (encryption) · Integrity (hashing) · Availability (backups).")}</div>
    ${mastery}
-   ${S.consent==="yes"&&S.post.done?`<div class="takeaway" style="border-style:solid"><b>${L("지식 점검","Your knowledge check")}:</b> ${L("이전","before")} <b>${S.pre.score}/6</b> → ${L("이후","after")} <b>${S.post.score}/6</b> &nbsp;(<b>${dstr}</b>).</div>`:""}
+   ${S.consent==="yes"&&S.post.done?`<div class="takeaway" style="border-style:solid"><b>${L("지식 점검","Your knowledge check")}:</b> ${L("이전","before")} <b>${S.pre.score}/7</b> → ${L("이후","after")} <b>${S.post.score}/7</b> &nbsp;(<b>${dstr}</b>).</div>`:""}
    <h3 style="margin-top:14px">${L("감시자 등급","Your Warden's rating")}: ${rating()}</h3>
    <p class="small">${L("힌트 사용","Hints used")}: ${S.hints} · ${L("실책","Missteps")}: ${S.wrong} · ${L("시간","Time")}: ~${mins}${L("분","min")}</p>
    <div class="row"><button class="btn good" id="rp">${L("다시 하기","Play again")}</button>${S.consent==="yes"?`<button class="btn ghost" id="csv">${L("⤓ 내 데이터 내보내기 (CSV)","⤓ Export my data (CSV)")}</button>`:""}</div>`);
@@ -1462,12 +1554,16 @@ const KC=[
   o:["Recompute a checksum / fingerprint of its contents and compare it to a trusted value.","Check that the file still opens without an error.","Make sure the document is encrypted.","Confirm the file size looks about right."], a:0,
   ck:"무결성 / 해싱", qk:"문서가 몰래 변조되지 않았는지 어떻게 알 수 있나?",
   ok:["내용의 체크섬/지문을 다시 계산해 신뢰할 수 있는 값과 비교한다.","파일이 오류 없이 열리는지 확인한다.","문서가 암호화되어 있는지 확인한다.","파일 크기가 대략 맞아 보이는지 확인한다."]},
+ {c:"Availability / backups", q:"Ransomware has locked your only copy of critical files and demands payment. The best protection beforehand was:",
+  o:["Keeping separate, off-site backups so you can restore instead of paying.","A longer password on the files.","Encrypting the files.","Renaming the files so attackers can't find them."], a:0,
+  ck:"가용성 / 백업", qk:"랜섬웨어가 유일한 사본을 잠그고 돈을 요구한다. 사전에 가장 좋은 대비책은?",
+  ok:["별도의 오프사이트 백업을 두어 돈을 내는 대신 복원할 수 있게 한다.","파일에 더 긴 비밀번호를 건다.","파일을 암호화한다.","공격자가 못 찾게 파일 이름을 바꾼다."]},
 ];
 function kcShuffle(n){ const idx=[]; for(let i=0;i<n;i++)idx.push(i); for(let i=idx.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));const t=idx[i];idx[i]=idx[j];idx[j]=t;} return idx; }
 function kcRun(phase,onDone){
   const fb=phase==="post", ko=LANG==="ko", L=(k,e)=>ko?k:e; const ord=KC.map(()=>kcShuffle(4));
   let h=`<h2>${fb?L("마지막 점검 — 무엇이 남았나","One last check — what stuck"):L("시작 전 — 간단한 점검","Before you begin — a quick check")}</h2>
-   <p class="small">${fb?L("같은 여섯 개념입니다. 당신의 생각이 어떻게 바뀌었는지 보세요.","The same six ideas. See how your thinking shifted."):L("여섯 개의 간단한 문항입니다. 최선껏 답해 주세요 — 벌점은 없으며, 게임이 무엇을 가르치는지 알아보기 위함입니다.","Six quick questions. Answer as best you can — there is no penalty; this just helps us learn what the game teaches.")}</p>`;
+   <p class="small">${fb?L("같은 일곱 개념입니다. 당신의 생각이 어떻게 바뀌었는지 보세요.","The same seven ideas. See how your thinking shifted."):L("일곱 개의 간단한 문항입니다. 최선껏 답해 주세요 — 벌점은 없으며, 게임이 무엇을 가르치는지 알아보기 위함입니다.","Seven quick questions. Answer as best you can — there is no penalty; this just helps us learn what the game teaches.")}</p>`;
   KC.forEach((k,qi)=>{ const q=ko?k.qk:k.q, opts=ko?k.ok:k.o, c=ko?k.ck:k.c;
     h+=`<div style="margin-top:12px"><div><b>${qi+1}.</b> ${q} <span class="small">(${c})</span></div>`;
     ord[qi].forEach((origIdx,oi)=>{ h+=`<label class="cell" style="display:block;text-align:left;margin-top:5px;cursor:pointer"><input type="radio" name="kc${qi}" value="${oi}" style="margin-right:8px">${opts[origIdx]}</label>`; });
@@ -1529,8 +1625,8 @@ function applyI18n(){
   if(card){
     set(card.querySelector(".sub"),"감시자의 눈","The Warden's Eye");
     const ps=card.querySelectorAll("p");
-    set(ps[0],"<b>비밀의 수호자처럼 사고하는</b> 법을 배우는 마을 미스터리 — 기계도, 전문용어도 없다. 마을을 걷고 단서를 모아 여섯 사건을 풀고, 그 배후를 지목하라.",
-      'A village mystery where you learn to <b>think like a guardian of secrets</b> —\n     no machines, no jargon. Walk the town, gather clues, solve six troubles, name the hand behind them.',true);
+    set(ps[0],"<b>비밀의 수호자처럼 사고하는</b> 법을 배우는 마을 미스터리 — 기계도, 전문용어도 없다. 마을을 걷고 단서를 모아 일곱 사건을 풀고, 그 배후를 지목하라.",
+      'A village mystery where you learn to <b>think like a guardian of secrets</b> —\n     no machines, no jargon. Walk the town, gather clues, solve seven troubles, name the hand behind them.',true);
     set(ps[ps.length-1],"이동: WASD / 방향키 / 조이스틱 / 게임패드. 상호작용: E / Space / 대화 버튼. 진행은 자동 저장됩니다.",
       'Move: WASD / arrows / joystick / gamepad. Interact: E / Space / Talk button. Your progress saves automatically.',true);
     const tags=card.querySelectorAll(".tag");

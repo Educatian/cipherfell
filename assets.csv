@@ -31,3 +31,6 @@ splash_act4,act 4 splash (OSINT),splash_act4.png,16:9,"warden pinning gossip and
 splash_act5,act 5 splash (forged summons),splash_act5.png,16:9,"warden reading a forged ducal summons by lantern at a dark watchtower gate with a wary guard, painted storybook"
 splash_act6,act 6 splash (tampered ledger),splash_act6.png,16:9,"warden re-tallying an open ledger by candlelight with a clerk, broken wax seal, painted storybook"
 cine_dawn,ending art (dawn, culprit led away),cine_dawn.png,16:9,"dawn over Cipherfell, the unmasked culprit led away past a fountain as villagers watch, painted storybook"
+npc_archivist,portrait archivist (Act7),npc_archivist.png,3:4,"bust portrait of an elderly village archivist, grey hair, spectacles, dusty robe, holding a charter protectively, anxious"
+prop_backup,prop backup record copies (Act7),prop_backup.png,1:1,"a wooden strongbox of duplicate sealed parchment record copies, a backup set, item icon on plain background"
+cine_fire,cinematic archive fire (Act6->7 beat),cine_fire.png,16:9,"medieval archive ablaze at night, scrolls burning, a hand saving a strongbox of records, cinematic storybook"
