@@ -430,17 +430,22 @@ const HINTS={
      {en:"Compare your sum to the sealed tally; one will not match.",ko:"당신의 합을 봉인된 값과 비교하라; 하나가 안 맞는다."},
      {en:"The mismatched page is the doctored one.",ko:"일치하지 않는 쪽이 조작된 쪽이다."}],
 };
-function mountHints(host,hints){ if(!host||!hints)return; let i=0; const L=o=>LANG==="ko"?o.ko:o.en;
+let _curHints=null;
+function mountHints(host,hints){ if(!host||!hints){_curHints=null;return;} let i=0,w=0; const L=o=>LANG==="ko"?o.ko:o.en;
   const lab=()=>(LANG==="ko"?"💡 힌트":"💡 Hint")+" ("+i+"/"+hints.length+")";
   const btn=document.createElement("button"); btn.className="btn ghost"; btn.style.marginTop="10px"; btn.textContent=lab();
   const out=document.createElement("div"); const prompt=document.createElement("div"); prompt.className="small"; prompt.style.marginTop="4px";
-  btn.onclick=()=>{ btn.style.animation=""; prompt.textContent=""; if(i>=hints.length)return;
-    out.innerHTML+="<div class='takeaway' style='margin-top:6px'>"+L(hints[i])+"</div>"; i++; S.hints++; logEv("hint",{act:S.act,n:i});
-    btn.textContent=lab(); if(i>=hints.length){btn.disabled=true;btn.style.opacity=.5;} };
+  function reveal(silent){ btn.style.animation=""; prompt.textContent=""; if(i>=hints.length)return;
+    out.innerHTML+="<div class='takeaway' style='margin-top:6px'>"+L(hints[i])+"</div>"; i++;
+    if(silent){ logEv("hint_auto",{act:S.act,n:i}); } else { S.hints++; logEv("hint",{act:S.act,n:i}); }
+    btn.textContent=lab(); if(i>=hints.length){btn.disabled=true;btn.style.opacity=.5;} }
+  btn.onclick=()=>reveal(false);
   host.appendChild(btn); host.appendChild(prompt); host.appendChild(out);
-  // proactive scaffolding: if the learner stalls, gently offer help (Shute-style, ZPD)
+  // proactive scaffolding (Shute-style ZPD): offer help on stall, auto-surface after repeated misses
+  _curHints={ onWrong:()=>{ w++; if(w>=2 && i<hints.length){ reveal(true); btn.style.animation="pulse 1.4s infinite"; } } };
   setTimeout(()=>{ if(i===0 && document.body.contains(btn)){ btn.style.animation="pulse 1.4s infinite";
     prompt.textContent=LANG==="ko"?"막히면 힌트를 눌러보세요.":"Stuck? A hint is here when you need it."; logEv("hint_offer",{act:S.act}); } }, 18000); }
+function hintOnWrong(){ if(_curHints)_curHints.onWrong(); }
 
 /* ============================================================ CANVAS */
 const cv=document.getElementById("cv"), ctx=cv.getContext("2d");
@@ -1236,8 +1241,8 @@ function wireWatchAction(){ modalBody.querySelectorAll("[data-w]").forEach(b=>b.
   if(b.dataset.w==="verify"){ S.q5.solved=true; addClue("c_verify","Out-of-band verification","letter","✅"); gainSeal(5,"Seal 5 earned — but the accounts themselves may lie. Seek the Counting House.");
     mb.innerHTML="<div class='takeaway fadein'><b>Right.</b> You keep the gate manned and send to the <b>Herald</b> — a channel you already trust — who confirms the Duke gave no such order. The summons is unmasked as the Baron's forgery.<br><br><b>Security idea: Social engineering &amp; phishing.</b> Attackers forge authority and manufacture urgency to make you act before you think. <b>A message can never authenticate itself.</b> Any unexpected, high-pressure request must be confirmed through a <i>separate</i>, trusted channel — never the one that delivered it.</div>"+`<button class="btn good" id="w5">Hold the gate ▶</button>`;
     document.getElementById("w5").onclick=()=>{ closeModal(); say("tomas","Gate-Guard Tomas","The post stays manned, then — and the Herald will have the truth of it by dawn. A keen eye, Warden.",[{t:"Five threads mended — one trouble remains.",f:closeDlg}]); }; }
-  else if(b.dataset.w==="obey"){ S.wrong++; mb.innerHTML="<div class='takeaway fadein'>The seal is the very thing a forger copies — you proved exactly that at the gate in Act 1. Obeying because an order <i>claims</i> authority is the whole trap.</div>"; }
-  else { S.wrong++; mb.innerHTML="<div class='takeaway fadein'>Better than obeying — but you've confirmed nothing, and Tomas may still waver. The Baron will simply forge another. <b>Verify</b>, don't merely discard.</div>"; }
+  else if(b.dataset.w==="obey"){ S.wrong++; hintOnWrong(); mb.innerHTML="<div class='takeaway fadein'>The seal is the very thing a forger copies — you proved exactly that at the gate in Act 1. Obeying because an order <i>claims</i> authority is the whole trap.</div>"; }
+  else { S.wrong++; hintOnWrong(); mb.innerHTML="<div class='takeaway fadein'>Better than obeying — but you've confirmed nothing, and Tomas may still waver. The Baron will simply forge another. <b>Verify</b>, don't merely discard.</div>"; }
 }); }
 
 /* ============================================================ ACT 6 — TAMPERED LEDGER (integrity / hashing) */
@@ -1284,7 +1289,7 @@ function ledgerPuzzle(){
     if(!ok){ S.q6.solved=true; addClue("c_integrity","The broken tally seal","ledger","🔏"); gainSeal(6);
       m.innerHTML="<div class='takeaway fadein'><b>Caught.</b> The <b>"+p.name+"</b> page was sealed at "+p.seal+", but its figures now sum to "+ltally(p.figs)+" — "+cfg.delta+" measures quietly erased to hide the theft. The forger could change the figure, but could not re-forge a matching seal on every page.<br><br><b>Security idea: Integrity, checksums &amp; hashing.</b> You do not keep the data secret — you make tampering <i>detectable</i>. A checksum (or cryptographic hash) over the content changes if even one figure changes; recompute it and compare to the stored value to prove nothing was altered. This is how file hashes, digital signatures, and tamper-evident logs work.</div>"+`<button class="btn good" id="w6">Restore the true figure ▶</button>`;
       document.getElementById("w6").onclick=()=>{ closeModal(); say("clerk","Reeve Odell","The grain's loss, just as the granary showed. I'll re-seal the page true and keep a second tally apart, so no single hand can change both. The books cannot lie to you now, Warden.",[{t:"Six threads mended — name the hand at the Board.",f:closeDlg}]); };
-    } else { S.wrong++; m.innerHTML="<div class='takeaway fadein'>That page's seal matches its tally — it is honest. Look for the one where the re-tally shows ✗.</div>"; }
+    } else { S.wrong++; hintOnWrong(); m.innerHTML="<div class='takeaway fadein'>That page's seal matches its tally — it is honest. Look for the one where the re-tally shows ✗.</div>"; }
   });
 }
 
@@ -1342,7 +1347,7 @@ function q4Combine(){
           mb.innerHTML="<div class='takeaway fadein'><b>Right.</b> You can't gag a whole town. Move shipments about, hush the bell, don't post the captain's comings and goings — defend the <i>aggregate</i>.<br><br><b>Security idea: Information leakage, OSINT &amp; OPSEC.</b> Public + public + public can equal private. Attackers aggregate open scraps. Guard the <i>pattern</i>, not only the words.</div>"+`<button class="btn good" id="w4">Plug the leak ▶</button>`;
           document.getElementById("w4").onclick=()=>{closeModal(); say("tavernkeeper","Goodwife Esa","So we guard the pattern, not just the words. Clever.",[{t:"Four threads mended — name the hand at the Board.",f:closeDlg}]);}; }
         else { S.wrong++; mb.innerHTML="<div class='takeaway fadein'>Forbidding talk never works and isn't the point — the facts were already public. Defend the <i>aggregate</i> instead.</div>"; } });
-    } else { S.wrong++; m.innerHTML="<div class='takeaway fadein'>Look again — pin the four together and imagine you're the raider. When does the grain move, how guarded, how much?</div>"; } });
+    } else { S.wrong++; hintOnWrong(); m.innerHTML="<div class='takeaway fadein'>Look again — pin the four together and imagine you're the raider. When does the grain move, how guarded, how much?</div>"; } });
 }
 function capstone(){
   showModal(`<h2>The Warden's Eye — name the hand</h2>
@@ -1365,6 +1370,17 @@ function epilogue(){ if(S.consent==="yes" && !S.post.done){ kcRun("post", epilog
 function epilogueResults(){ const ko=LANG==="ko", L=(k,e)=>ko?k:e;
   const mins=Math.max(1,Math.round((S.playMs||0)/60000));
   const delta=S.post.score-S.pre.score, dstr=(delta>=0?"+":"")+delta;
+  // adaptive mastery profile (per-concept ability θ -> %)
+  const CL=[["auth","Authentication","인증"],["crypto","Encryption","암호화"],["lp","Least privilege","최소 권한"],["osint","OSINT / OPSEC","OSINT"],["social","Social engineering","사회공학"],["integ","Integrity","무결성"]];
+  const mpct=th=>Math.round(100/(1+Math.exp(-(th||0))));
+  let lowest=CL[0], lo=1e9; CL.forEach(c=>{ const v=(S.theta&&S.theta[c[0]])||0; if(v<lo){lo=v;lowest=c;} });
+  const bars=CL.map(c=>{ const p=mpct((S.theta&&S.theta[c[0]])||0); const col=p>=70?"#6b7f4e":p>=45?"#d8a43e":"#b5663b";
+    return `<div style="display:flex;align-items:center;gap:8px;margin:3px 0"><div class="small" style="width:34%">${ko?c[2]:c[1]}</div>
+      <div style="flex:1;background:#e0d3ad;border-radius:6px;overflow:hidden;height:13px"><div style="width:${p}%;height:100%;background:${col}"></div></div>
+      <div class="small" style="width:38px;text-align:right">${p}%</div></div>`; }).join("");
+  const mastery=`<div class="takeaway"><b>${L("적응형 숙달 프로필","Your adaptive mastery profile")}</b>
+    <div style="margin-top:6px">${bars}</div>
+    <div class="small" style="margin-top:6px">${L("가장 보강이 필요한 영역","Worth revisiting most")}: <b>${ko?lowest[2]:lowest[1]}</b>. ${L("다시 플레이하면 게임이 당신의 실력에 맞춰 난이도를 조정합니다.","Play again and the game tunes its difficulty to your level.")}</div></div>`;
   showModal(`<h2>${L("에필로그 — 감시자의 교훈","Epilogue — the Warden's lessons")}</h2>
    <p>${L("당신은 기계 한 번 만지지 않았다. 허나 사이퍼펠에서 익힌 것이야말로 사람과 비밀을 지키는 기술이다:","You never touched a machine. Yet what you practiced in Cipherfell <i>is</i> the craft of keeping people and secrets safe:")}</p>
    <div class="takeaway"><b>${L("사칭자 → 인증 &amp; MFA.","The Impostor → Authentication &amp; MFA.")}</b> ${L("독립적인 여러 요소로 신원을 증명하라 — 아는 것, 가진 것, 그 자체인 것.","Prove identity with several independent factors — know, have, are.")}</div>
@@ -1373,6 +1389,7 @@ function epilogueResults(){ const ko=LANG==="ko", L=(k,e)=>ko?k:e;
    <div class="takeaway"><b>${L("새는 입 → 정보 누출, OSINT &amp; OPSEC.","Loose Lips → Information leakage, OSINT &amp; OPSEC.")}</b> ${L("공개된 조각도 모이면 비밀이 된다. 패턴을 지켜라.","Public scraps, aggregated, become a secret. Defend the pattern.")}</div>
    <div class="takeaway"><b>${L("위조 소환장 → 사회공학 &amp; 피싱.","The Forged Summons → Social engineering &amp; phishing.")}</b> ${L("권위와 긴급함은 지렛대일 뿐 증거가 아니다. 메시지는 스스로를 증명하지 못한다 — 별도의 신뢰 경로로 확인하라.","Authority and urgency are levers, not proof. A message can't authenticate itself — verify through a separate, trusted channel.")}</div>
    <div class="takeaway"><b>${L("조작된 장부 → 무결성, 체크섬 &amp; 해싱.","The Tampered Ledger → Integrity, checksums &amp; hashing.")}</b> ${L("데이터를 숨기지만 말고 변조를 탐지 가능하게 하라. 봉인(해시)을 다시 계산해 비교하라 — 숫자 하나만 바뀌어도 일치가 깨진다.","Don't just hide data — make tampering detectable. Recompute the seal (hash) and compare; one changed figure breaks the match.")}</div>
+   ${mastery}
    ${S.consent==="yes"&&S.post.done?`<div class="takeaway" style="border-style:solid"><b>${L("지식 점검","Your knowledge check")}:</b> ${L("이전","before")} <b>${S.pre.score}/6</b> → ${L("이후","after")} <b>${S.post.score}/6</b> &nbsp;(<b>${dstr}</b>).</div>`:""}
    <h3 style="margin-top:14px">${L("감시자 등급","Your Warden's rating")}: ${rating()}</h3>
    <p class="small">${L("힌트 사용","Hints used")}: ${S.hints} · ${L("실책","Missteps")}: ${S.wrong} · ${L("시간","Time")}: ~${mins}${L("분","min")}</p>
