@@ -367,6 +367,7 @@ const fresh=()=>({
   seed:(Math.floor(Math.random()*2147483647))||12345,
   theta:{auth:0,crypto:0,lp:0,osint:0,social:0,integ:0}, thetaG:0,
   tier:{}, _snap:{hints:0,wrong:0},      // act tiers chosen adaptively (ZPD) at play time
+  calib:{n:0,sp:0,sc:0},                 // calibration: n items, sum predicted P, sum clean-solves
 });
 let S=fresh();
 function save(){ try{ S.playMs=(S.playMs||0); localStorage.setItem(SAVEKEY,JSON.stringify(S)); }catch(e){} }
@@ -405,11 +406,13 @@ function adaptOutcome(act){                                  // call when a puzz
   S._snap={hints:S.hints,wrong:S.wrong};
   const out=Math.max(0.1, 1 - 0.3*dh - 0.34*dw);            // solved; quality scaled by hints/missteps
   const c=ACT_CONCEPT[act], tier=tierOf(act);
+  const pPred=pSucc(S.thetaG||0,tier), clean=(dh===0&&dw===0)?1:0;   // calibration: predicted vs clean solve
+  if(!S.calib)S.calib={n:0,sp:0,sc:0}; S.calib.n++; S.calib.sp+=pPred; S.calib.sc+=clean;
   S.thetaG=(S.thetaG||0)+ELO_K*(out-pSucc(S.thetaG||0,tier));
   if(!S.theta)S.theta={}; S.theta[c]=(S.theta[c]||0)+ELO_K*(out-pSucc(S.theta[c]||0,tier));
   if(!S.tier)S.tier={}; if(act<6)S.tier[act+1]=pickTier(S.thetaG);   // next act sits in the learner's ZPD
   persistTheta();                                            // carry ability across replays (adaptive on return)
-  logEv("adapt",{act:act,c:c,tier:tier,dh:dh,dw:dw,out:+out.toFixed(2),thetaG:+(S.thetaG).toFixed(2),theta:+(S.theta[c]).toFixed(2),next:act<6?S.tier[act+1]:null});
+  logEv("adapt",{act:act,c:c,tier:tier,dh:dh,dw:dw,out:+out.toFixed(2),pPred:+pPred.toFixed(2),clean:clean,thetaG:+(S.thetaG).toFixed(2),theta:+(S.theta[c]).toFixed(2),next:act<6?S.tier[act+1]:null});
 }
 const TIERNAME=["Apprentice","Journeyman","Master"], TIERNAME_KO=["견습","숙련","명인"];
 function tierLabel(act){ const i=tierOf(act); return LANG==="ko"?TIERNAME_KO[i]:TIERNAME[i]; }
@@ -1077,6 +1080,7 @@ function STUDY(){
   const cfg=q2cfg(), ct=caesar(cfg.plain,cfg.shift);
   showModal(`<h2>The Warden's Study — the Cipher Wheel <span class="small">· ${tierLabel(2)}</span></h2>
    <p>Your spies snatched a coded note off the Baron's runner. A brass <b>cipher wheel</b> turns every letter by the same amount (a <i>Caesar</i> shift). Find the turn that makes it read as words.</p>
+   ${tierOf(2)===0?"<p class='small'><b>Worked example:</b> at shift 1, “CAT” is written “DBU”. Turn the wheel back until the note reads as real words.</p>":""}
    ${A.cipher?`<div style="text-align:center"><img src="${PROP.cipher}" style="width:104px;border-radius:10px;border:2px solid #2c2114"></div>`:""}
    <div class="small">Intercepted note:</div><div class="cipher-disp">${ct}</div>
    <div class="wheelrow"><button class="btn ghost" id="sd">◀ turn</button><div>shift <div class="shiftnum" id="sv">0</div></div><button class="btn ghost" id="su">turn ▶</button></div>
@@ -1147,14 +1151,17 @@ function q3Assign(){
   mountHints(document.getElementById("hh3"),HINTS.q3);
   modalBody.querySelectorAll(".cell[data-r]").forEach(c=>c.onclick=()=>{const r=c.dataset.r,d=c.dataset.d;
     if(chosen[r].has(d)){chosen[r].delete(d);c.classList.remove("on");c.textContent="·";}else{chosen[r].add(d);c.classList.add("on");c.textContent="🔑";}});
-  document.getElementById("ck").onclick=()=>{ let extra=0,missing=0;
-    for(const r of ROLES){const want=new Set([MIN[r]]); for(const d of DOORZ){const g=chosen[r].has(d),need=want.has(d); if(g&&!need)extra++; if(!g&&need)missing++;}}
+  document.getElementById("ck").onclick=()=>{ const miss=[], ext=[];
+    for(const r of ROLES){ const need=MIN[r]; if(!chosen[r].has(need))miss.push(r+" → "+need);
+      for(const d of DOORZ){ if(chosen[r].has(d)&&d!==need)ext.push(r+" → "+d); } }
     const m=document.getElementById("m3");
-    if(extra===0&&missing===0){ S.q3.assigned=true; addClue("c_keys","Least-privilege keyring","keyring","🔑"); save();
+    if(miss.length===0&&ext.length===0){ S.q3.assigned=true; addClue("c_keys","Least-privilege keyring","keyring","🔑"); save();
       m.innerHTML="<div class='takeaway fadein'><b>Least privilege set.</b> Each role holds exactly one key. Now a single theft opens a single door. Speak to the Steward again to find the thief.</div>"+`<button class="btn good" id="g3">Now — who took the grain? ▶</button>`;
       document.getElementById("g3").onclick=()=>{closeModal();q3Deduce();}; }
-    else if(missing>0){ S.hints++; m.innerHTML="<div class='takeaway fadein'>A role can't do its job — a granary-hand needs the granary. Give each its <i>own</i> door (and only that).</div>"; }
-    else { S.hints++; m.innerHTML="<div class='takeaway fadein'>Too many keys — <b>"+extra+"</b> extra. Least privilege means the <i>minimum</i>; strip every key a role doesn't strictly need.</div>"; }
+    else { S.hints++; hintOnWrong(); let msg="";
+      if(miss.length)msg+="<b>Still locked out:</b> "+miss.join(", ")+" — each role needs its own door. ";
+      if(ext.length)msg+="<b>Over-granted:</b> "+ext.join(", ")+" — strip every key a role doesn't strictly need.";
+      m.innerHTML="<div class='takeaway fadein'>"+msg+"</div>"; }
   };
 }
 function q3Deduce(){
@@ -1272,6 +1279,7 @@ function ledgerPuzzle(){
   showModal(`<h2>The Counting House — re-tally the sealed ledger <span class="small">· ${tierLabel(6)}</span></h2>
    ${A.ledger?`<div style="text-align:center"><img src="${PROP.ledger}" style="width:104px;border-radius:10px;border:2px solid #2c2114"></div>`:""}
    <p>Each page's <b>tally seal</b> should equal the sum of its figures. <b>Re-tally</b>, then click the page whose sealed number does not match — the doctored one.</p>
+   ${tierOf(6)===0?"<p class='small'><b>Worked example:</b> a page reading 3 + 4 should seal at 7; if its seal says 9, that 9 is the lie.</p>":""}
    <div class="grid" style="grid-template-columns:1fr">${rows}</div>
    <div id="hh6"></div>
    <div class="row"><button class="btn good" id="retally">Re-tally every page</button></div>
@@ -1347,7 +1355,9 @@ function q4Combine(){
           mb.innerHTML="<div class='takeaway fadein'><b>Right.</b> You can't gag a whole town. Move shipments about, hush the bell, don't post the captain's comings and goings — defend the <i>aggregate</i>.<br><br><b>Security idea: Information leakage, OSINT &amp; OPSEC.</b> Public + public + public can equal private. Attackers aggregate open scraps. Guard the <i>pattern</i>, not only the words.</div>"+`<button class="btn good" id="w4">Plug the leak ▶</button>`;
           document.getElementById("w4").onclick=()=>{closeModal(); say("tavernkeeper","Goodwife Esa","So we guard the pattern, not just the words. Clever.",[{t:"Four threads mended — name the hand at the Board.",f:closeDlg}]);}; }
         else { S.wrong++; mb.innerHTML="<div class='takeaway fadein'>Forbidding talk never works and isn't the point — the facts were already public. Defend the <i>aggregate</i> instead.</div>"; } });
-    } else { S.wrong++; hintOnWrong(); m.innerHTML="<div class='takeaway fadein'>Look again — pin the four together and imagine you're the raider. When does the grain move, how guarded, how much?</div>"; } });
+    } else { S.wrong++; hintOnWrong();
+      const why=b.dataset.a==="a"?"Not idle — pinned together, these scraps point to one specific moment and place.":"It isn't about wealth — the scraps describe a <i>target and a timing</i>, not riches.";
+      m.innerHTML="<div class='takeaway fadein'>"+why+" Imagine you are the raider: when does the grain move, how guarded, how much?</div>"; } });
 }
 function capstone(){
   showModal(`<h2>The Warden's Eye — name the hand</h2>
@@ -1468,6 +1478,8 @@ function csvExport(){
   const meta=[["pid",S.pid||""],["consent",S.consent||""],["won",S.won?1:0],["pre_score",S.pre.score],["post_score",S.post.score],
     ["delta",S.post.score-S.pre.score],["seals",S.seals],["hints",S.hints],["wrong",S.wrong],["play_ms",Math.round(S.playMs||0)],["rating",rating()],
     ["seed",S.seed||""],["tiers_act1to6",tiers],["thetaG",(S.thetaG||0).toFixed(3)],
+    ["calib_n",(S.calib&&S.calib.n)||0],["mean_predP",S.calib&&S.calib.n?(S.calib.sp/S.calib.n).toFixed(3):""],
+    ["clean_solve_rate",S.calib&&S.calib.n?(S.calib.sc/S.calib.n).toFixed(3):""],["zpd_target","0.670"],
     ["theta_auth",(th.auth||0).toFixed(3)],["theta_crypto",(th.crypto||0).toFixed(3)],["theta_lp",(th.lp||0).toFixed(3)],
     ["theta_osint",(th.osint||0).toFixed(3)],["theta_social",(th.social||0).toFixed(3)],["theta_integ",(th.integ||0).toFixed(3)]];
   let out="# session\nfield,value\n"+meta.map(r=>r[0]+","+csvEsc(r[1])).join("\n")+"\n\n# pre_answers\nq,concept,picked,correct\n";
