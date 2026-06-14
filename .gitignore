@@ -8,3 +8,7 @@ _live*.png
 dist/
 .wrangler/
 index_v1_simple.html
+video/frames/
+video/*.mp4
+video/vo.mp3
+video/.elevenlabs_key

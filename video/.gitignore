@@ -1,0 +1,4 @@
+video/frames/
+video/*.mp4
+video/*.mp3
+video/.elevenlabs_key
