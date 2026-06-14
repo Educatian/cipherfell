@@ -66,7 +66,7 @@
     font-family:inherit;font-size:1em;z-index:16;display:none;box-shadow:0 4px 0 #7d3f1d;}
   #actbtn.show{display:block;}
 
-  #title{background:#15120d url(assets/cover.webp) center/cover no-repeat;}
+  #title{background:#15120d url(assets/keyart.webp) center/cover no-repeat;}
   #title .card{text-align:center;max-width:560px;background:linear-gradient(180deg,rgba(247,238,213,.97),rgba(236,217,172,.97));}
   #logo{width:138px;height:138px;margin:2px auto 6px;border-radius:50%;
     background:#e7d3a4 center/cover no-repeat;border:4px solid var(--ink);box-shadow:0 6px 18px var(--shadow);}
@@ -197,7 +197,10 @@ const PORT={ aldric:"assets/npc_aldric.webp", impostor:"assets/npc_impostor.webp
   bard:"assets/npc_bard.webp", sister:"assets/npc_sister.webp", clerk:"assets/npc_clerk.webp" };
 const CINE={ village:"assets/cover.webp", night:"assets/cine_night.webp",
   commission:"assets/cine_commission.webp", baron:"assets/cine_baron.webp", finale:"assets/cine_finale.webp",
-  summons:"assets/cine_summons.webp", tamper:"assets/cine_tamper.webp" };
+  summons:"assets/cine_summons.webp", tamper:"assets/cine_tamper.webp",
+  keyart:"assets/keyart.webp", dawn:"assets/cine_dawn.webp",
+  a1:"assets/splash_act1.webp", a2:"assets/splash_act2.webp", a3:"assets/splash_act3.webp",
+  a4:"assets/splash_act4.webp", a5:"assets/splash_act5.webp", a6:"assets/splash_act6.webp" };
 const PROP={ signet_real:"assets/prop_signet_real.webp", signet_forged:"assets/prop_signet_forged.webp",
   letter:"assets/prop_letter.webp", cipher:"assets/prop_cipher.webp",
   keyring:"assets/prop_keyring.webp", gossip:"assets/prop_gossip.webp", logo:"assets/logo.webp",
@@ -874,23 +877,23 @@ function openingCine(){
     {img:CINE.baron,      text:"The Baron asks one thing of them: <b>learn everything, and take it.</b>"},
     {img:CINE.commission, text:"So the Duke names <b>you</b> the new Warden of the Seal: a ring, a warrant, and one rule."},
     {img:CINE.commission, text:"<b>Trust nothing you cannot prove.</b>"},
-    {img:CINE.village,    text:"By dawn, six troubles wait. A stranger at the gate. A letter already read. Grain gone from a locked store. A summons in the Duke's name that is not his. Figures that do not add up. And the Baron, always a step ahead."},
+    {img:CINE.a1,         text:"By dawn, six troubles wait. A stranger at the gate. A letter already read. Grain gone from a locked store. A summons in the Duke's name that is not his. Figures that do not add up. And the Baron, always a step ahead."},
   ], ()=>{ enterPlay(); if(!maybeTutorial()) toast("Follow the gold marker. Press E / Talk to interact."); }, {bgm:"cine"}); });
 }
 /* act-transition narrative beats */
 const BEATS={
- 1:[{img:CINE.baron,   text:"One mask torn away. But a <b>forged seal</b> means someone inside helped him. The Baron's reach runs deeper than a single impostor."}],
- 2:[{img:CINE.night,   text:"His letters are safe now. Yet grain still vanishes from a <b>locked</b> store. A key, where no key should be."}],
- 3:[{img:CINE.baron,   text:"A stolen key. An old copy. Three threads, one hand. And the Baron always knew <b>when</b> to strike. Who keeps telling him?"}],
- 4:[{img:CINE.summons, text:"Now a letter rides in under the <b>Duke's own name</b>, ordering the north gate stripped at midnight. If the watch obeys, Thornmoor walks in unopposed. But does a seal make an order <b>true</b>?"}],
- 5:[{img:CINE.tamper,  text:"Five threads cut — yet the granary's loss never appears in the <b>accounts</b>. Someone altered the ledger itself to hide the theft. But a tampered figure leaves a <b>broken seal</b>. Find it, and the cover-up unravels."}],
+ 1:[{img:CINE.a2,      text:"One mask torn away. But a <b>forged seal</b> means someone inside helped him. The Baron's reach runs deeper than a single impostor."}],
+ 2:[{img:CINE.a3,      text:"His letters are safe now. Yet grain still vanishes from a <b>locked</b> store. A key, where no key should be."}],
+ 3:[{img:CINE.a4,      text:"A stolen key. An old copy. Three threads, one hand. And the Baron always knew <b>when</b> to strike. Who keeps telling him?"}],
+ 4:[{img:CINE.a5,      text:"Now a letter rides in under the <b>Duke's own name</b>, ordering the north gate stripped at midnight. If the watch obeys, Thornmoor walks in unopposed. But does a seal make an order <b>true</b>?"}],
+ 5:[{img:CINE.a6,      text:"Five threads cut — yet the granary's loss never appears in the <b>accounts</b>. Someone altered the ledger itself to hide the theft. But a tampered figure leaves a <b>broken seal</b>. Find it, and the cover-up unravels."}],
 };
 let pendingBeat=0;
 function actBeat(act){ const sc=BEATS[act]; if(!sc){return;}
   fadeOut(()=>{ fadeIn(); playCine(sc, ()=>{ scene="play"; Audio_.playBGM("town"); fadeIn(); }, {bgm:"tension"}); }); }
 function endingCine(){ closeModal();
   fadeOut(()=>{ fadeIn(); playCine([
-    {img:CINE.finale,     text:"Dawn. The false Aldric, unmasked, is led away in rope past the fountain."},
+    {img:CINE.dawn,       text:"Dawn. The false Aldric, unmasked, is led away in rope past the fountain."},
     {img:CINE.finale,     text:"The Baron's hand in Cipherfell is broken. The village wakes, and breathes."},
     {img:CINE.commission, text:"The Duke's commendation will come in time. But the village already knows: <b>the Warden's Eye watches.</b>"},
   ], ()=>{ scene="play"; Audio_.playBGM("town"); epilogue(); }, {bgm:"town"}); }); }
