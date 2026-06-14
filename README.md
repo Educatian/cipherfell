@@ -58,8 +58,8 @@ Solve all seven, earn the seven Warden's Seals, and the single hand behind them 
 | **Cinematic narrative** introduces the Baron and the stakes | **Spotlight tutorial** briefs the mission step by step |
 | ![Cipher puzzle](docs/media/04_puzzle_cipher.webp) | ![Keyring puzzle](docs/media/05_puzzle_keyring.webp) |
 | **Caesar cipher wheel** (encryption / key management) | **Least-privilege keyring** (access control) |
-| ![Case board](docs/media/06_case_board.webp) | |
-| **Case board** aggregates clues toward the final deduction | |
+| ![Case board](docs/media/06_case_board.webp) | ![Records backup puzzle](docs/media/08_puzzle_records.webp) |
+| **Case board** aggregates clues toward the final deduction | **Records backup drill** (availability) — copy every record off-site before the fire |
 
 ## Screencast / trailer
 
@@ -74,12 +74,12 @@ Solve all seven, earn the seven Warden's Seals, and the single hand behind them 
 - **Seven-act gated investigation.** Each act unlocks the next via a Warden's Seal, so the story escalates instead of dumping everything at once.
 - **Real exploration.** Walk a scrolling, tiled medieval town (40 x 30 tiles) with a follow-camera, collision, cobbled roads, a market square, a north watchtower, a counting house, a lore-bearing Founders' Stone, and signposted landmarks.
 - **Multi-step mysteries.** A puzzle opens only after you travel the town and gather the right clues, so the RPG loop (move, talk, collect, deduce) drives the learning.
-- **Animated characters.** Four-direction walking sprites for the player and sixteen NPCs (recolored from CC0 sheets, two body types) each tagged with a role badge so they are easy to tell apart.
-- **Hand-authored puzzles**, one per concept: an MFA verification cross-examination, an interactive Caesar cipher wheel, a least-privilege key grid plus culprit deduction, an OSINT aggregation board, a forged-summons pretext analysis (spot the manipulation levers, then verify out-of-band), and a ledger re-tally that exposes a tampered figure by recomputing its seal.
+- **Animated characters.** Four-direction walking sprites for the player and fifteen NPCs (recolored from CC0 sheets, two body types) each tagged with a role badge so they are easy to tell apart.
+- **Hand-authored puzzles**, one per concept: an MFA verification cross-examination, an interactive Caesar cipher wheel, a least-privilege key grid plus culprit deduction, an OSINT aggregation board, a forged-summons pretext analysis (spot the manipulation levers, then verify out-of-band), a ledger re-tally that exposes a tampered figure by recomputing its seal, and a records-backup drill that forces off-site copies before fire and ransomware strike.
 - **Cinematic layer.** A six-card opening sequence, one-card act-transition beats featuring the villain, and a finale, all with typed narration, letterboxing, and fades.
 - **Worldview and lore.** A bard who recounts the Cipherfell–Thornmoor feud and a readable Founders' Stone inscribed with seven vows, one per quest, ground the mechanics in a coherent setting.
 - **Adaptive difficulty (Elo + ZPD).** Four difficulty tiers per puzzle (Novice→Master) with seeded per-play variation; a per-concept + global Elo model tunes each act to the learner's level and persists across plays.
-- **Layered learning support.** Graduated hints that auto-surface on a stall or repeated misses, diagnostic wrong-answer feedback, Apprentice-tier worked examples, an end-of-game mastery profile, and an optional keyless AI tutor (Workers AI, EN/KO) with scripted fallback.
+- **Layered learning support.** Graduated hints that auto-surface on a stall or repeated misses, diagnostic wrong-answer feedback, Novice-tier worked examples, an end-of-game mastery profile, and an optional keyless AI tutor (Workers AI, EN/KO) with scripted fallback.
 - **Research instrumentation.** An optional, anonymous consent gate enables a pre/post knowledge check (seven transfer items, one per concept), misconception-targeted feedback, lightweight in-browser telemetry, a difficulty-calibration monitor, and a one-click CSV export — turning the game into a self-contained study instrument with no backend.
 - **Mission briefing + spotlight tutorial.** A guided onboarding that dims the screen and highlights each UI element (quest bar, mini-map, journal) with an explanation. Replayable from Help.
 - **Navigation aids.** Live mini-map (gold = current objective) and an on-screen/edge objective waypoint, so players never get lost.
@@ -114,6 +114,8 @@ Solve all seven, earn the seven Warden's Seals, and the single hand behind them 
 | **3. Least privilege** — re-cut the keyring so each role holds only its own door. | **4. OSINT / OPSEC** — aggregate harmless public scraps into a precise raid window. |
 | ![Social engineering](docs/media/concept_05_social_engineering.gif) | ![Integrity / hashing](docs/media/concept_06_integrity.gif) |
 | **5. Social engineering** — spot the pretext levers in a forged summons, then verify out-of-band. | **6. Integrity / hashing** — re-tally each ledger page to expose the doctored figure. |
+| ![Availability / backups](docs/media/concept_07_availability.gif) | |
+| **7. Availability / backups** — copy every record off-site before the fire, then restore instead of paying the ransom. | |
 
 ---
 
@@ -194,7 +196,7 @@ Cipherfell is also an evidence-grounded **adaptive learning instrument**. The de
 
 **Adaptive difficulty (Elo + ZPD).** Each of the seven puzzles is parameterized into four tiers — *Novice / Apprentice / Journeyman / Master* — and a seeded RNG varies the specific instance every play (cipher text & shift, keyring grid size, OSINT options, summons lines, ledger figures & tampered page, records to back up). A lightweight **Elo** model tracks a global ability and a per-concept ability; after each puzzle it updates on the **binary clean-solve** signal (no hints, no missteps = standard, drift-free Elo). The next act's tier is chosen so the predicted success probability sits near the ZPD target (~0.7). Ability **persists across plays** (localStorage), so returning learners are met at their level (act 1 adapts from history); a fresh learner starts at Novice/Apprentice and ramps up. The four-tier range was set by Monte-Carlo so weak and strong learners both stay in the ZPD band.
 
-**Layered learning support (scaffolding).** Each puzzle offers graduated, three-step hints; if a learner stalls (~18 s) or misses twice, support **auto-surfaces** (Shute-style proactive scaffolding) without a click. Wrong answers get **specific, diagnostic feedback** (e.g. the exact role→door errors in the keyring), and the Apprentice tier adds a brief **worked example**. An optional **keyless AI tutor** (Cloudflare Workers AI, English & Korean, graceful fallback to scripted hints) gives concept-aware formative nudges that never reveal the answer.
+**Layered learning support (scaffolding).** Each puzzle offers graduated, three-step hints; if a learner stalls (~18 s) or misses twice, support **auto-surfaces** (Shute-style proactive scaffolding) without a click. Wrong answers get **specific, diagnostic feedback** (e.g. the exact role→door errors in the keyring), and the Novice tier adds a brief **worked example**. An optional **keyless AI tutor** (Cloudflare Workers AI, English & Korean, graceful fallback to scripted hints) gives concept-aware formative nudges that never reveal the answer.
 
 **Mastery feedback.** The epilogue shows a per-concept **mastery profile** (ability → %) across the seven competencies and flags the weakest for revisiting.
 
