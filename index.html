@@ -394,7 +394,7 @@ function rpick(r,a){ return a[Math.floor(r()*a.length)]; }
 function rshuf(r,a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));const t=a[i];a[i]=a[j];a[j]=t;} return a; }
 const ACT_CONCEPT={1:"auth",2:"crypto",3:"lp",4:"osint",5:"social",6:"integ"};
 const TIERS=[-0.7,0,0.7];                                    // easy / med / hard difficulty (logit)
-const ZPD_OFF=0.708, ELO_K=0.7;                             // target P(success)≈0.67 (ZPD); learning rate
+const ZPD_OFF=1.0, ELO_K=0.7;                               // ZPD difficulty target (P≈0.7); learning rate
 function tierOf(act){ return (S.tier&&S.tier[act]!=null)?S.tier[act]:pickTier(S.thetaG||0); }
 function pSucc(theta,tier){ return 1/(1+Math.exp(-(theta-TIERS[tier]))); }
 function pickTier(theta){ const target=theta-ZPD_OFF; let best=0,bd=1e9;
@@ -405,7 +405,7 @@ function seedThetaFromStore(){ try{ const tg=localStorage.getItem("cf_thetaG"); 
 function adaptOutcome(act){                                  // call when a puzzle is solved
   const sn=S._snap||{hints:0,wrong:0}; const dh=Math.max(0,S.hints-sn.hints), dw=Math.max(0,S.wrong-sn.wrong);
   S._snap={hints:S.hints,wrong:S.wrong};
-  const out=Math.max(0.1, 1 - 0.3*dh - 0.34*dw);            // solved; quality scaled by hints/missteps
+  const out=(dh===0&&dw===0)?1:0;                           // binary clean-solve = correct Elo signal (no drift)
   const c=ACT_CONCEPT[act], tier=tierOf(act);
   const pPred=pSucc(S.thetaG||0,tier), clean=(dh===0&&dw===0)?1:0;   // calibration: predicted vs clean solve
   if(!S.calib)S.calib={n:0,sp:0,sc:0}; S.calib.n++; S.calib.sp+=pPred; S.calib.sc+=clean;
