@@ -76,7 +76,9 @@ Solve all six, earn the six Warden's Seals, and the single hand behind them is e
 - **Hand-authored puzzles**, one per concept: an MFA verification cross-examination, an interactive Caesar cipher wheel, a least-privilege key grid plus culprit deduction, an OSINT aggregation board, a forged-summons pretext analysis (spot the manipulation levers, then verify out-of-band), and a ledger re-tally that exposes a tampered figure by recomputing its seal.
 - **Cinematic layer.** A six-card opening sequence, one-card act-transition beats featuring the villain, and a finale, all with typed narration, letterboxing, and fades.
 - **Worldview and lore.** A bard who recounts the Cipherfell–Thornmoor feud and a readable Founders' Stone inscribed with six vows, one per quest, ground the mechanics in a coherent setting.
-- **Research instrumentation.** An optional, anonymous consent gate enables a pre/post knowledge check (six transfer items, one per concept), misconception-targeted feedback, lightweight in-browser telemetry, and a one-click CSV export — turning the game into a self-contained study instrument with no backend.
+- **Adaptive difficulty (Elo + ZPD).** Three difficulty tiers per puzzle with seeded per-play variation; a per-concept + global Elo model tunes each act to the learner's level and persists across plays.
+- **Layered learning support.** Graduated hints that auto-surface on a stall or repeated misses, diagnostic wrong-answer feedback, Apprentice-tier worked examples, an end-of-game mastery profile, and an optional keyless AI tutor (Workers AI, EN/KO) with scripted fallback.
+- **Research instrumentation.** An optional, anonymous consent gate enables a pre/post knowledge check (six transfer items, one per concept), misconception-targeted feedback, lightweight in-browser telemetry, a difficulty-calibration monitor, and a one-click CSV export — turning the game into a self-contained study instrument with no backend.
 - **Mission briefing + spotlight tutorial.** A guided onboarding that dims the screen and highlights each UI element (quest bar, mini-map, journal) with an explanation. Replayable from Help.
 - **Navigation aids.** Live mini-map (gold = current objective) and an on-screen/edge objective waypoint, so players never get lost.
 - **Game feel.** Footstep dust, clue and seal sparkle particles, and synthesized sound effects.
@@ -179,13 +181,30 @@ After playing, a learner can:
 
 ---
 
+## Adaptive learning & research instrumentation
+
+Cipherfell is also an evidence-grounded **adaptive learning instrument**. The design follows the research frontier on adaptive educational games: dynamic difficulty adjustment (DDA), Elo-based learner modeling, and Evidence-Centered Design / stealth assessment kept inside the learner's Zone of Proximal Development (ZPD) / flow band.
+
+**Adaptive difficulty (Elo + ZPD).** Each of the six puzzles is parameterized into three tiers — *Apprentice / Journeyman / Master* — and a seeded RNG varies the specific instance every play (cipher text & shift, keyring grid size, OSINT options, summons lines, ledger figures & tampered page). A lightweight **Elo** model tracks a global ability and a per-concept ability; after each puzzle it updates on the **binary clean-solve** signal (no hints, no missteps = standard, drift-free Elo). The next act's tier is chosen so the predicted success probability sits near the ZPD target (~0.7). Ability **persists across plays** (localStorage), so returning learners are met at their level (act 1 adapts from history); a fresh learner starts at Apprentice and ramps up.
+
+**Layered learning support (scaffolding).** Each puzzle offers graduated, three-step hints; if a learner stalls (~18 s) or misses twice, support **auto-surfaces** (Shute-style proactive scaffolding) without a click. Wrong answers get **specific, diagnostic feedback** (e.g. the exact role→door errors in the keyring), and the Apprentice tier adds a brief **worked example**. An optional **keyless AI tutor** (Cloudflare Workers AI, English & Korean, graceful fallback to scripted hints) gives concept-aware formative nudges that never reveal the answer.
+
+**Mastery feedback.** The epilogue shows a per-concept **mastery profile** (ability → %) across the six competencies and flags the weakest for revisiting.
+
+**Telemetry & calibration.** With consent, the game logs consent, pre/post answers, clue pickups, seals, hints (manual and auto), and adaptive events, each timestamped. A one-click **CSV export** includes the per-play seed, per-act tiers, global and per-concept ability, and a **calibration block** (mean predicted P vs. actual clean-solve rate vs. the ZPD target) so the difficulty model can be validated empirically across participants. Monte-Carlo simulation was used to verify the Elo update converges (no θ drift) and to keep achieved success within a healthy ZPD band.
+
+**Localization.** A KO/EN toggle (Settings) localizes the comprehension- and research-critical surfaces (UI, objectives, cinematics, consent, knowledge checks, epilogue), with English fallback for untranslated strings.
+
+---
+
 ## Tech stack and architecture
 
 - **One self-contained `index.html`** — HTML/CSS plus a vanilla-JS canvas engine. No framework, no build, no bundler.
 - **Rendering:** a tile-grid town drawn from 16 px CC0 stamps at 3x, a follow-camera with AABB collision, four-direction sprite animation, a depth-sorted entity pass, and a particle system.
-- **Systems:** dialogue with portraits, a quest/act state machine with seal gating, puzzle modals, a case-board journal, a fade-transition and cinematic engine, a WebAudio sound manager, a mini-map and waypoint, and a spotlight tutorial.
-- **Persistence:** `localStorage` autosave (position, seals, clues, quest flags, settings).
-- **Deploy:** Cloudflare Pages (`dist/`).
+- **Systems:** dialogue with portraits, a quest/act state machine with seal gating, puzzle modals, a case-board journal, a fade-transition and cinematic engine, a WebAudio sound manager, a mini-map and waypoint, a spotlight tutorial, a seeded-Elo adaptive engine, an i18n layer, and a telemetry/CSV layer.
+- **Persistence:** `localStorage` autosave (position, seals, clues, quest flags, settings) plus cross-play adaptive ability (`cf_theta`/`cf_thetaG`).
+- **AI tutor backend:** optional `_worker.js` (Cloudflare Pages advanced mode) exposing a keyless `/api/tutor` over Workers AI (`AI` binding) with a HuggingFace fallback; the client degrades to scripted hints when absent.
+- **Deploy:** Cloudflare Pages (`dist/`); `wrangler.toml` declares the Workers AI binding.
 
 ### Run locally
 
