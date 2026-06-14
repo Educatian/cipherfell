@@ -393,7 +393,7 @@ function pz(name){ return mulberry32((((S.seed||1)>>>0) ^ strHash(name))>>>0); }
 function rpick(r,a){ return a[Math.floor(r()*a.length)]; }
 function rshuf(r,a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));const t=a[i];a[i]=a[j];a[j]=t;} return a; }
 const ACT_CONCEPT={1:"auth",2:"crypto",3:"lp",4:"osint",5:"social",6:"integ"};
-const TIERS=[-0.7,0,0.7];                                    // easy / med / hard difficulty (logit)
+const TIERS=[-1.5,-0.5,0.5,1.5];                             // Novice / Apprentice / Journeyman / Master (logit)
 const ZPD_OFF=1.0, ELO_K=0.7;                               // ZPD difficulty target (P≈0.7); learning rate
 function tierOf(act){ return (S.tier&&S.tier[act]!=null)?S.tier[act]:pickTier(S.thetaG||0); }
 function pSucc(theta,tier){ return 1/(1+Math.exp(-(theta-TIERS[tier]))); }
@@ -415,7 +415,7 @@ function adaptOutcome(act){                                  // call when a puzz
   persistTheta();                                            // carry ability across replays (adaptive on return)
   logEv("adapt",{act:act,c:c,tier:tier,dh:dh,dw:dw,out:+out.toFixed(2),pPred:+pPred.toFixed(2),clean:clean,thetaG:+(S.thetaG).toFixed(2),theta:+(S.theta[c]).toFixed(2),next:act<6?S.tier[act+1]:null});
 }
-const TIERNAME=["Apprentice","Journeyman","Master"], TIERNAME_KO=["견습","숙련","명인"];
+const TIERNAME=["Novice","Apprentice","Journeyman","Master"], TIERNAME_KO=["입문","견습","숙련","명인"];
 function tierLabel(act){ const i=tierOf(act); return LANG==="ko"?TIERNAME_KO[i]:TIERNAME[i]; }
 const HINTS={
  q2:[{en:"Try every turn of the wheel; only one makes real words.",ko:"바퀴를 한 칸씩 다 돌려보라; 진짜 단어가 되는 칸은 하나뿐이다."},
@@ -1086,10 +1086,12 @@ function gWin(){
 }
 
 /* ============================================================ ACT 2 — CIPHER (confidentiality) */
-const C_POOL=[["MEET AT DUSK","PAY THE SPY","OPEN THE GATE"],
+const C_POOL=[["RUN NOW","PAY THE SPY","OPEN THE GATE"],
+ ["MEET AT DUSK","BURN THIS NOTE","GUARD THE WALL"],
  ["MEET THE BARONS MAN AT DUSK","BURN THIS LETTER AFTER READING"],
  ["THE TUNNEL OPENS BENEATH THE NORTH WALL TONIGHT","SEND ALL THE DUKES GOLD TO THORNMOOR BY DAWN"]];
-const E_POOL=[["GRAIN IS SAFE","HOLD THE GATE","ALL IS WELL"],
+const E_POOL=[["ALL IS WELL","HOLD FAST","STAY LOW"],
+ ["GRAIN IS SAFE","HOLD THE GATE","WATCH TONIGHT"],
  ["THE GRAIN IS SAFE TONIGHT","DOUBLE THE WATCH AT DAWN"],
  ["TRUST ONLY THE HERALDS SEALED WORD HENCEFORTH","THE DUKE RIDES FOR THE CAPITAL AT MIDDAY"]];
 function q2cfg(){ const T=tierOf(2), r=pz("q2"); return {plain:rpick(r,C_POOL[T]),shift:1+Math.floor(r()*25),ePlain:rpick(r,E_POOL[T]),eKey:1+Math.floor(r()*25),T:T}; }
@@ -1141,7 +1143,7 @@ function CHAPEL(){
 /* ============================================================ ACT 3 — KEYRING (least privilege) */
 const ROLE_POOL=["Granary-hand","Scribe","Captain","Steward","Reeve"];
 const DOOR_POOL=["Granary","Archive","Armory","Strongbox","Counting House"];
-function q3cfg(){ const T=tierOf(3), n=[3,4,5][T], r=pz("q3");
+function q3cfg(){ const T=tierOf(3), n=[2,3,4,5][T], r=pz("q3");
   const idx=rshuf(r,[0,1,2,3,4]).slice(0,n);
   const roles=idx.map(i=>ROLE_POOL[i]), doorsTrue=idx.map(i=>DOOR_POOL[i]);
   const min={}; roles.forEach((rl,k)=>min[rl]=doorsTrue[k]);
@@ -1228,7 +1230,7 @@ const BENIGN_POOL=[
  {red:false,t:"“The harvest has been kind this year.”"},
  {red:false,t:"“The chapel bell will ring for matins as usual.”"},
  {red:false,t:"“Pay the night-baker for the morning bread.”"}];
-function q5cfg(){ const T=tierOf(5), nR=[3,4,5][T], nB=[1,2,3][T], r=pz("q5");
+function q5cfg(){ const T=tierOf(5), nR=[2,3,4,5][T], nB=[1,1,2,3][T], r=pz("q5");
   const lines=rshuf(r, rshuf(r,RED_POOL).slice(0,nR).concat(rshuf(r,BENIGN_POOL).slice(0,nB)));
   return {lines:lines, red:nR, T:T}; }
 function WATCH(){
@@ -1273,7 +1275,7 @@ function wireWatchAction(){ modalBody.querySelectorAll("[data-w]").forEach(b=>b.
 
 /* ============================================================ ACT 6 — TAMPERED LEDGER (integrity / hashing) */
 const LEDGER_NAMES=["Tithes","Grain","Wool","Ale","Salt","Timber"];
-function q6cfg(){ const T=tierOf(6), n=[3,4,5][T], mag=[12,25,45][T], r=pz("q6");
+function q6cfg(){ const T=tierOf(6), n=[2,3,4,5][T], mag=[8,16,28,45][T], r=pz("q6");
   const names=rshuf(r,LEDGER_NAMES).slice(0,n);
   const pages=names.map(nm=>{ const k=2+Math.floor(r()*2); const figs=[]; for(let j=0;j<k;j++)figs.push(3+Math.floor(r()*mag));
     return {name:nm,figs:figs,seal:figs.reduce((a,b)=>a+b,0)}; });
