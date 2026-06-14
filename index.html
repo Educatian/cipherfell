@@ -142,7 +142,8 @@ const PROP={ signet_real:"assets/prop_signet_real.webp", signet_forged:"assets/p
   letter:"assets/prop_letter.webp", cipher:"assets/prop_cipher.webp",
   keyring:"assets/prop_keyring.webp", gossip:"assets/prop_gossip.webp", logo:"assets/logo.webp" };
 const WORLD=["house","castle","arch","granary","silo","monument","fountain","stall",
-  "crate","barrel","chest","tree","bush","grass","dirt","water","fence","hero"];
+  "crate","barrel","chest","tree","bush","grass","dirt","water","fence","hero",
+  "path","gflower","pebble","tuft","sign"];
 const A={}; let toLoad=0, loadedN=0;
 function load(key,src){ toLoad++; const i=new Image();
   i.onload=()=>{A[key]=i;loadedN++;done();}; i.onerror=()=>{loadedN++;done();}; i.src=src; }
@@ -185,24 +186,41 @@ const TREES=[];
   extra.forEach(e=>TREES.push(e)); })();
 // dirt path rectangles (tile coords) connecting hubs
 const PATHS=[
- [18,5,4,9],   // gate -> square (vertical)
- [9,15,24,3],  // horizontal main street
- [6,12,3,4],[6,15,1,6],   // tavern + down to smithy
- [33,12,2,8],  // chapel down to study
- [15,17,2,7],  // square down to granary
- [22,16,1,7],  // square down to archive
- [17,15,8,4],  // square plaza
+ [18,5,4,10],          // gatehouse -> central plaza
+ [16,13,9,6],          // central cobbled plaza (fountain + board + square)
+ [6,15,28,3],          // main east-west street
+ [6,12,3,4],           // tavern spur
+ [32,12,3,4],          // chapel spur
+ [6,17,2,8],[5,24,4,2],   // smithy spur + forecourt
+ [32,17,2,8],[32,24,4,2], // study spur + forecourt
+ [15,17,2,10],         // granary spur
+ [22,17,2,10],         // archive spur
 ];
 
-/* solids built at load */
-let SOLIDS=[]; let DOORS=[];
+/* solids + ground grid built at load */
+let SOLIDS=[]; let DOORS=[]; let GROUND=[]; let OCC=[];
 function buildSolids(){
   SOLIDS=[]; DOORS=[];
   for(const b of B){ SOLIDS.push({x:b.tx*TS,y:b.ty*TS,w:b.w*TS,h:b.h*TS});
     DOORS.push({b,dx:(b.tx+b.w/2)*TS,dy:(b.ty+b.h)*TS}); }
   for(const d of DEC){ if(d.solid)SOLIDS.push({x:d.tx*TS,y:d.ty*TS,w:d.w*TS,h:d.h*TS}); }
   for(const t of TREES){ SOLIDS.push({x:t[0]*TS+TS*0.2,y:t[1]*TS+TS*0.2,w:TS*0.6,h:TS*0.6}); }
+  buildGround();
 }
+function buildGround(){
+  GROUND=Array.from({length:MAPH},()=>Array(MAPW).fill('g'));
+  OCC=Array.from({length:MAPH},()=>Array(MAPW).fill(0));
+  for(const p of PATHS) for(let y=p[1];y<p[1]+p[3];y++) for(let x=p[0];x<p[0]+p[2];x++)
+    if(GROUND[y]&&GROUND[y][x]!==undefined)GROUND[y][x]='p';
+  // cobble doormat directly under each building door
+  for(const b of B){ const cx=Math.round(b.tx+b.w/2); for(let x=cx-1;x<=cx;x++){ const y=b.ty+b.h;
+    if(GROUND[y]&&GROUND[y][x]!==undefined)GROUND[y][x]='p'; } }
+  // mark building/decor footprints occupied (no grass decals there)
+  const occ=(tx,ty,w,h)=>{ for(let y=ty;y<ty+h;y++)for(let x=tx;x<tx+w;x++) if(OCC[y]&&OCC[y][x]!==undefined)OCC[y][x]=1; };
+  for(const b of B) occ(b.tx,b.ty,b.w,b.h); for(const d of DEC) occ(d.tx,d.ty,d.w,d.h);
+  for(const t of TREES) occ(t[0],t[1],1,1);
+}
+function thash(x,y){ let h=(x*73856093 ^ y*19349663)>>>0; return (h%10007)/10007; }
 
 /* ============================================================ STATE + SAVE */
 const SAVEKEY="cipherfell_save_v2";
@@ -266,17 +284,17 @@ function pollGP(){ const gs=navigator.getGamepads?navigator.getGamepads():[]; gp
 
 /* ============================================================ NPCs */
 const NPCS=[
- {id:"stranger",name:"The Stranger",port:"impostor",hue:0,   tx:19.5,ty:6, see:()=>S.act>=1&&!S.q1.solved},
- {id:"aldric",  name:"Aldric",      port:"aldric",  hue:25,  tx:21,ty:6,   see:()=>S.q1.solved},
- {id:"smith",   name:"Bryn the Smith",port:"captain",hue:300,tx:6.5,ty:24, see:()=>true},
- {id:"keeper",  name:"Goodwife Esa",port:"tavernkeeper",hue:140,tx:6.5,ty:12,see:()=>true},
- {id:"steward", name:"Steward Pell",port:"steward",hue:210, tx:15.5,ty:27, see:()=>true},
- {id:"captain", name:"Captain Mara",port:"captain",hue:0,   tx:33.5,ty:12, see:()=>true},
- {id:"herald",  name:"The Herald",  port:"herald", hue:50,  tx:20.5,ty:16, see:()=>true},
+ {id:"stranger",name:"The Stranger",icon:"🕵️",port:"impostor",hue:0,   tx:19.5,ty:6, see:()=>S.act>=1&&!S.q1.solved},
+ {id:"aldric",  name:"Aldric",      icon:"🧓",port:"aldric",  hue:25,  tx:21,ty:6,   see:()=>S.q1.solved},
+ {id:"smith",   name:"Bryn the Smith",icon:"⚒️",port:"captain",hue:300,tx:6.5,ty:24, see:()=>true},
+ {id:"keeper",  name:"Goodwife Esa",icon:"🍺",port:"tavernkeeper",hue:140,tx:6.5,ty:12,see:()=>true},
+ {id:"steward", name:"Steward Pell",icon:"🔑",port:"steward",hue:210, tx:15.5,ty:27, see:()=>true},
+ {id:"captain", name:"Captain Mara",icon:"⚔️",port:"captain",hue:0,   tx:33.5,ty:12, see:()=>true},
+ {id:"herald",  name:"The Herald",  icon:"📜",port:"herald", hue:50,  tx:20.5,ty:16, see:()=>true},
  // ambient + red herrings
- {id:"peddler", name:"A Peddler",   port:null, hue:270, tx:24,ty:17, wander:1, see:()=>true},
- {id:"child",   name:"A Child",     port:null, hue:90,  tx:16,ty:12, wander:1, see:()=>true},
- {id:"sister",  name:"The Sister",  port:null, hue:175, tx:33,ty:11, see:()=>S.act>=4||S.q4.frag.chapel},
+ {id:"peddler", name:"A Peddler",   icon:"🎒",port:null, hue:270, tx:24,ty:17, wander:1, see:()=>true},
+ {id:"child",   name:"A Child",     icon:"🧒",port:null, hue:90,  tx:16,ty:12, wander:1, see:()=>true},
+ {id:"sister",  name:"The Sister",  icon:"⛪",port:null, hue:175, tx:33,ty:11, see:()=>S.act>=4||S.q4.frag.chapel},
 ];
 NPCS.forEach(n=>{ n.x=n.tx*TS; n.y=n.ty*TS; n.dir="down"; n.wx=n.x; n.wy=n.y; n.wt=0; n.frame=0; n.at=0; });
 
@@ -335,28 +353,30 @@ function tileXY(stamp,tx,ty,w,h,tint){
 }
 function render(){
   if(scene!=="play"){ drawTitleBg(); return; }
-  // ground
-  const gx0=Math.floor(cam.x/TS),gy0=Math.floor(cam.y/TS),gx1=Math.ceil((cam.x+VW)/TS),gy1=Math.ceil((cam.y+VH)/TS);
-  const grass=img("grass"),dirt=img("dirt");
+  // ground (grid-driven: grass / cobble path) + deterministic detail decals
+  const gx0=Math.max(0,Math.floor(cam.x/TS)),gy0=Math.max(0,Math.floor(cam.y/TS)),
+        gx1=Math.min(MAPW,Math.ceil((cam.x+VW)/TS)),gy1=Math.min(MAPH,Math.ceil((cam.y+VH)/TS));
+  const grass=img("grass"),path=img("path");
   for(let ty=gy0;ty<gy1;ty++)for(let tx=gx0;tx<gx1;tx++){
-    const dx=tx*TS-cam.x,dy=ty*TS-cam.y;
+    const dx=tx*TS-cam.x,dy=ty*TS-cam.y, g=GROUND[ty]?GROUND[ty][tx]:'g';
     if(grass)ctx.drawImage(grass,dx,dy,TS,TS); else{ctx.fillStyle="#6b8a4a";ctx.fillRect(dx,dy,TS,TS);}
+    if(g==='p'){ if(path)ctx.drawImage(path,dx,dy,TS,TS); else{ctx.fillStyle="#c8a875";ctx.fillRect(dx,dy,TS,TS);} }
+    else if(!(OCC[ty]&&OCC[ty][tx])){ const r=thash(tx,ty);
+      if(r<0.05) drawDecal("gflower",dx,dy); else if(r<0.085) drawDecal("tuft",dx,dy); else if(r<0.105) drawDecal("pebble",dx,dy); }
   }
-  // paths
-  for(const p of PATHS){ for(let y=p[1];y<p[1]+p[3];y++)for(let x=p[0];x<p[0]+p[2];x++){
-    const dx=x*TS-cam.x,dy=y*TS-cam.y; if(dx>VW||dy>VH||dx+TS<0||dy+TS<0)continue;
-    if(dirt)ctx.drawImage(dirt,dx,dy,TS,TS); else{ctx.fillStyle="#b59a6a";ctx.fillRect(dx,dy,TS,TS);} } }
-  // decor (non-solid behind?) draw trees first (so player can stand in front)
+  // foliage border/decor (trees drawn before entities so player can pass in front)
   for(const t of TREES) tileXY("bush",t[0],t[1],1.5,1.5);
   for(const d of DEC) tileXY(d.stamp,d.tx,d.ty,d.w,d.h);
   // buildings
   const near=nearest();
   for(const b of B){ tileXY(b.stamp,b.tx,b.ty,b.w,b.h,b.tint); }
-  // building name labels when near
-  for(const dr of DOORS){ const onScreen=true; const dx=dr.dx-cam.x,dy=(dr.b.ty)*TS-cam.y;
-    const isNear=near&&near.kind==="door"&&near.b===dr.b;
-    if(isNear){ label(dr.b.name, dr.dx-cam.x, dr.b.ty*TS-cam.y-6);
-      const lk=lockMsg(dr.b); if(lk) label("🔒 "+lk, dr.dx-cam.x, dr.b.ty*TS-cam.y-28, true);} }
+  // signpost at each door + always-on name plate (lock shown if gated)
+  const sg=img("sign");
+  for(const dr of DOORS){ const b=dr.b, sx=dr.dx-cam.x, sdy=dr.dy-cam.y;
+    if(sx<-40||sx>VW+40||sdy<-40||sdy>VH+60)continue;
+    if(sg)ctx.drawImage(sg, sx+TS*0.6, sdy-TS*0.95, TS*0.9, TS*0.9);
+    plate(b.name, sx, b.ty*TS-cam.y-2, lockMsg(b));
+    if(near&&near.kind==="door"&&near.b===b){ const lk=lockMsg(b); if(lk) label("🔒 "+lk, sx, b.ty*TS-cam.y-24, true); } }
   // npcs + player, simple y-sort
   const ents=[];
   for(const n of NPCS){ if(n.see())ents.push({y:n.y,draw:()=>drawNPC(n),n}); }
@@ -370,7 +390,7 @@ function render(){
     document.getElementById("actbtn").textContent=verb; }
   document.getElementById("actbtn").classList.toggle("show",isTouch&&!!near&&!modalOpen());
 }
-function heroSheet(dir,frame){ const row=dir==="down"?0:dir==="up"?2:1; return {sx:frame*16,sy:row*32,flip:dir==="right"}; }
+function heroSheet(dir,frame){ const row=dir==="down"?0:dir==="up"?2:1; return {sx:frame*16,sy:row*32,flip:dir==="left"}; }
 function drawPlayer(){
   const f=S._moving?(Math.floor(animT*7)%4):0; const {sx,sy,flip}=heroSheet(S.dir,f);
   const dw=16*SCALE,dh=32*SCALE, dx=S.px-cam.x-dw/2, dy=S.py-cam.y-dh+TS*0.35;
@@ -390,10 +410,16 @@ function drawNPC(n){
   if(hero){ if(flip){ctx.translate(dx+dw,dy);ctx.scale(-1,1);ctx.drawImage(hero,sx,sy,16,32,0,0,dw,dh);}
     else ctx.drawImage(hero,sx,sy,16,32,dx,dy,dw,dh);}
   ctx.restore();
-  // marker if has business
-  if(n.see()&&npcHot(n)){ ctx.save(); ctx.globalAlpha=0.6+0.4*Math.sin(animT*4||last/300);
-    ctx.fillStyle="#ffd34d"; ctx.font="bold 18px serif"; ctx.textAlign="center";
-    ctx.fillText("!", n.x-cam.x, n.y-cam.y-dh+TS*0.1); ctx.restore(); }
+  // role badge above head (always visible) + ! when this NPC advances the act
+  const hot=npcHot(n);
+  const bx=n.x-cam.x, by=n.y-cam.y-dh*0.78;
+  ctx.save(); ctx.textAlign="center"; ctx.textBaseline="middle";
+  ctx.beginPath(); ctx.arc(bx,by,12,0,7); ctx.fillStyle="rgba(20,14,8,.82)"; ctx.fill();
+  ctx.lineWidth=2.5; ctx.strokeStyle=hot?"#ffd34d":"#e7d3a4"; ctx.stroke();
+  ctx.font="15px 'Segoe UI Emoji',serif"; ctx.fillStyle="#fff"; ctx.fillText(n.icon||"•", bx, by+1);
+  if(hot){ const b=2*Math.sin((last||0)/180); ctx.fillStyle="#ffd34d"; ctx.font="bold 16px serif";
+    ctx.fillText("!", bx+15, by-9+b); }
+  ctx.restore();
 }
 function npcHot(n){ // show ! when this npc advances the current act
   if(S.won)return false;
@@ -403,6 +429,11 @@ function npcHot(n){ // show ! when this npc advances the current act
   if(S.act===4&&!S.q4.solved) return ["keeper","sister"].includes(n.id);
   return false;
 }
+function drawDecal(k,dx,dy){ const im=img(k); if(!im)return; const s=TS*0.8,o=(TS-s)/2; ctx.drawImage(im,dx+o,dy+o,s,s); }
+function plate(txt,cx,cy,lock){ ctx.font="12px Georgia,serif";ctx.textAlign="center";ctx.textBaseline="alphabetic";
+  const w=ctx.measureText(txt).width+12; ctx.save();ctx.globalAlpha=0.9;
+  ctx.fillStyle=lock?"rgba(120,40,20,.82)":"rgba(40,28,16,.68)"; roundRect(cx-w/2,cy-15,w,17,6);ctx.fill();
+  ctx.globalAlpha=1;ctx.fillStyle="#f3e7c9";ctx.fillText((lock?"🔒 ":"")+txt,cx,cy-3);ctx.restore(); }
 function label(txt,cx,cy,warn){ ctx.font="bold 14px Georgia,serif";ctx.textAlign="center";
   const w=ctx.measureText(txt).width+14; ctx.fillStyle=warn?"rgba(150,40,20,.85)":"rgba(20,14,8,.78)";
   roundRect(cx-w/2,cy-20,w,22,7);ctx.fill(); ctx.fillStyle="#fff";ctx.fillText(txt,cx,cy-5); }
