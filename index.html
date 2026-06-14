@@ -503,25 +503,26 @@ function pollGP(){ const gs=navigator.getGamepads?navigator.getGamepads():[]; gp
   if(act&&!gpActPrev)tryInteract(); gpActPrev=act; }
 
 /* ============================================================ NPCs */
+// look = per-NPC recolor of the existing CC0 sprite; sheet = body (hero|bald); scale for size variety
 const NPCS=[
- {id:"stranger",name:"The Stranger",icon:"🕵️",port:"impostor",hue:0,   tx:19.5,ty:6, see:()=>S.act>=1&&!S.q1.solved},
- {id:"aldric",  name:"Aldric",      icon:"🧓",port:"aldric",  hue:25,  tx:21,ty:6,   see:()=>S.q1.solved},
- {id:"smith",   name:"Bryn the Smith",icon:"⚒️",port:"captain",hue:300,tx:6.5,ty:24, see:()=>true},
- {id:"keeper",  name:"Goodwife Esa",icon:"🍺",port:"tavernkeeper",hue:140,tx:6.5,ty:12,see:()=>true},
- {id:"steward", name:"Steward Pell",icon:"🔑",port:"steward",hue:210, tx:15.5,ty:27, see:()=>true},
- {id:"captain", name:"Captain Mara",icon:"⚔️",port:"captain",hue:0,   tx:33.5,ty:12, see:()=>true},
- {id:"herald",  name:"The Herald",  icon:"📜",port:"herald", hue:50,  tx:20.5,ty:16, see:()=>true},
+ {id:"stranger",name:"The Stranger",icon:"🕵️",port:"impostor",look:"hue-rotate(15deg) saturate(.7) brightness(.82)", tx:19.5,ty:6, see:()=>S.act>=1&&!S.q1.solved},
+ {id:"aldric",  name:"Aldric",      icon:"🧓",port:"aldric",  look:"sepia(.35) saturate(1.2) brightness(1.05)", tx:21,ty:6,   see:()=>S.q1.solved},
+ {id:"smith",   name:"Bryn the Smith",icon:"⚒️",port:"captain",sheet:"bald", look:"hue-rotate(310deg) saturate(1.4) contrast(1.15)", tx:6.5,ty:24, see:()=>true},
+ {id:"keeper",  name:"Goodwife Esa",icon:"🍺",port:"tavernkeeper",look:"hue-rotate(140deg) saturate(1.25) brightness(1.08)", tx:6.5,ty:12,see:()=>true},
+ {id:"steward", name:"Steward Pell",icon:"🔑",port:"steward",sheet:"bald", look:"hue-rotate(205deg) saturate(.9)", tx:15.5,ty:27, see:()=>true},
+ {id:"captain", name:"Captain Mara",icon:"⚔️",port:"captain",look:"hue-rotate(350deg) saturate(1.2) brightness(.92) contrast(1.2)", tx:33.5,ty:12, see:()=>true},
+ {id:"herald",  name:"The Herald",  icon:"📜",port:"herald", look:"hue-rotate(50deg) saturate(1.4) brightness(1.12)", tx:20.5,ty:16, see:()=>true},
  // ambient + red herrings
- {id:"peddler", name:"A Peddler",   icon:"🎒",port:null, hue:270, tx:24,ty:17, wander:1, see:()=>true},
- {id:"child",   name:"A Child",     icon:"🧒",port:null, hue:90,  tx:16,ty:12, wander:1, see:()=>true},
- {id:"sister",  name:"The Sister",  icon:"⛪",port:"sister", hue:175, tx:33,ty:11, see:()=>S.act>=4||S.q4.frag.chapel},
+ {id:"peddler", name:"A Peddler",   icon:"🎒",port:null, look:"hue-rotate(270deg) saturate(1.15) brightness(.95)", tx:24,ty:17, wander:1, see:()=>true},
+ {id:"child",   name:"A Child",     icon:"🧒",port:null, look:"hue-rotate(90deg) saturate(1.4) brightness(1.15)", scale:0.78, tx:16,ty:12, wander:1, see:()=>true},
+ {id:"sister",  name:"The Sister",  icon:"⛪",port:"sister", look:"hue-rotate(180deg) saturate(.5) brightness(1.15)", tx:33,ty:11, see:()=>S.act>=4||S.q4.frag.chapel},
  // Act 5 — the forged summons
- {id:"tomas",   name:"Gate-Guard Tomas",icon:"🛡️",port:"tomas",hue:330,tx:9.5,ty:7.5,see:()=>S.act>=5&&!S.q5.solved},
- {id:"courier", name:"A Hooded Courier",icon:"🪶",port:"courier", hue:265, tx:15,ty:9, wander:1, see:()=>S.act>=5&&!S.q5.solved},
+ {id:"tomas",   name:"Gate-Guard Tomas",icon:"🛡️",port:"tomas",look:"hue-rotate(330deg) saturate(.95) brightness(.95) contrast(1.1)", tx:9.5,ty:7.5,see:()=>S.act>=5&&!S.q5.solved},
+ {id:"courier", name:"A Hooded Courier",icon:"🪶",port:"courier", sheet:"bald", look:"hue-rotate(265deg) saturate(.7) brightness(.72)", tx:15,ty:9, wander:1, see:()=>S.act>=5&&!S.q5.solved},
  // Act 6 — the tampered ledger
- {id:"reeve",   name:"Reeve Odell",  icon:"🧮",port:"clerk", hue:200, tx:28,ty:6.5, see:()=>S.act>=6&&!S.q6.solved},
+ {id:"reeve",   name:"Reeve Odell",  icon:"🧮",port:"clerk", sheet:"bald", look:"sepia(.45) hue-rotate(200deg) saturate(.9)", tx:28,ty:6.5, see:()=>S.act>=6&&!S.q6.solved},
  // worldview / lore
- {id:"bard",    name:"Old Faro the Bard",icon:"🎻",port:"bard", hue:45, tx:8,ty:14, see:()=>true},
+ {id:"bard",    name:"Old Faro the Bard",icon:"🎻",port:"bard", look:"hue-rotate(45deg) saturate(1.6) contrast(1.15) brightness(1.05)", tx:8,ty:14, see:()=>true},
 ];
 NPCS.forEach(n=>{ n.x=n.tx*TS; n.y=n.ty*TS; n.dir="down"; n.wx=n.x; n.wy=n.y; n.wt=0; n.frame=0; n.at=0; });
 
@@ -623,26 +624,25 @@ function render(){
   document.getElementById("actbtn").classList.toggle("show",isTouch&&!!near&&!modalOpen());
   drawWaypoint(); drawMinimap();
 }
-function heroSheet(dir,frame){ const row=dir==="down"?0:dir==="up"?2:1; return {sx:frame*16,sy:row*32,flip:dir==="left"}; }
-function drawPlayer(){
-  const f=S._moving?(Math.floor(animT*7)%4):0; const {sx,sy,flip}=heroSheet(S.dir,f);
-  const dw=16*SCALE,dh=32*SCALE, dx=S.px-cam.x-dw/2, dy=S.py-cam.y-dh+TS*0.35;
-  ctx.save(); ctx.beginPath();ctx.ellipse(S.px-cam.x,S.py-cam.y+2,dw*0.28,dh*0.07,0,0,7);ctx.fillStyle="rgba(15,10,4,.3)";ctx.fill();
-  const hero=img("hero");
-  if(hero){ if(flip){ctx.translate(dx+dw,dy);ctx.scale(-1,1);ctx.drawImage(hero,sx,sy,16,32,0,0,dw,dh);}
-    else ctx.drawImage(hero,sx,sy,16,32,dx,dy,dw,dh); }
+// character sheets (existing CC0 assets); rows = which 32px band per facing
+const SHEETS={ hero:{img:"hero", rows:{down:0,left:1,up:2}}, bald:{img:"npc_bald", rows:{down:0,left:1,up:3}} };
+function spriteFrame(sh,dir,frame){ const r=(dir==="down")?sh.rows.down:(dir==="up")?sh.rows.up:sh.rows.left; return {sx:frame*16,sy:r*32,flip:dir==="left"}; }
+function npcLook(n){ return n.look || ("hue-rotate("+(n.hue||0)+"deg)"); }   // per-NPC recolor from existing sprite
+function drawChar(sheetKey,dir,frame,cx,cy,scale,filter){
+  const sh=SHEETS[sheetKey]||SHEETS.hero, im=img(sh.img); const {sx,sy,flip}=spriteFrame(sh,dir,frame);
+  const dw=16*SCALE*(scale||1),dh=32*SCALE*(scale||1), dx=cx-dw/2, dy=cy-dh+TS*0.35*(scale||1);
+  ctx.save(); ctx.beginPath();ctx.ellipse(cx,cy+2,dw*0.28,dh*0.07,0,0,7);ctx.fillStyle="rgba(15,10,4,.3)";ctx.fill();
+  if(filter)ctx.filter=filter;
+  if(im){ if(flip){ctx.translate(dx+dw,dy);ctx.scale(-1,1);ctx.drawImage(im,sx,sy,16,32,0,0,dw,dh);}
+    else ctx.drawImage(im,sx,sy,16,32,dx,dy,dw,dh); }
   else{ctx.fillStyle="#b5663b";ctx.fillRect(dx,dy,dw,dh);}
   ctx.restore();
 }
+function drawPlayer(){ const f=S._moving?(Math.floor(animT*7)%4):0; drawChar("hero",S.dir,f,S.px-cam.x,S.py-cam.y,1,null); }
 function drawNPC(n){
-  const f=n._m?(Math.floor(n.at*7)%4):0; const {sx,sy,flip}=heroSheet(n.dir,f);
-  const dw=16*SCALE,dh=32*SCALE, dx=n.x-cam.x-dw/2, dy=n.y-cam.y-dh+TS*0.35;
-  ctx.save(); ctx.beginPath();ctx.ellipse(n.x-cam.x,n.y-cam.y+2,dw*0.28,dh*0.07,0,0,7);ctx.fillStyle="rgba(15,10,4,.28)";ctx.fill();
-  ctx.filter=`hue-rotate(${n.hue}deg)`+(n.id==="child"?" brightness(1.05) saturate(1.2)":"");
-  const hero=img("hero");
-  if(hero){ if(flip){ctx.translate(dx+dw,dy);ctx.scale(-1,1);ctx.drawImage(hero,sx,sy,16,32,0,0,dw,dh);}
-    else ctx.drawImage(hero,sx,sy,16,32,dx,dy,dw,dh);}
-  ctx.restore();
+  const f=n._m?(Math.floor(n.at*7)%4):0;
+  drawChar(n.sheet||"hero", n.dir, f, n.x-cam.x, n.y-cam.y, n.scale||1, npcLook(n));
+  const dw=16*SCALE*(n.scale||1),dh=32*SCALE*(n.scale||1);
   // role badge above head (always visible) + ! when this NPC advances the act
   const hot=npcHot(n);
   const bx=n.x-cam.x, by=n.y-cam.y-dh*0.78;
