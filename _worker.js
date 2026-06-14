@@ -3,7 +3,7 @@
 // Backends tried in order: (1) Cloudflare Workers AI binding `AI` (free tier),
 // (2) HuggingFace Inference (free token in secret `HF_TOKEN`). If neither is
 // configured, /api/tutor returns empty text and the game falls back to scripted hints.
-const HF_MODEL = "meta-llama/Llama-3.1-8B-Instruct";
+const HF_MODEL = "Qwen/Qwen2.5-7B-Instruct"; // non-gated, served on HF free router
 
 export default {
   async fetch(request, env) {
