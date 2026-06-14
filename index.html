@@ -125,6 +125,7 @@
   <div><div id="questbar">…</div></div>
   <div class="row" style="pointer-events:auto;gap:6px;align-items:flex-start;">
     <button class="hudbtn" id="soundBtn" title="Sound on/off">🔊</button>
+    <button class="hudbtn" id="setBtn" title="Settings">⚙</button>
     <button class="hudbtn" id="journalBtn">Case</button>
     <button class="hudbtn" id="helpBtn">?</button>
   </div>
@@ -279,7 +280,7 @@ function hasSave(){ try{return !!localStorage.getItem(SAVEKEY);}catch(e){return 
 function loadSave(){ try{ const d=JSON.parse(localStorage.getItem(SAVEKEY)); if(d){S=Object.assign(fresh(),d);} }catch(e){} }
 
 function addClue(id,name,iconKey,emoji){
-  if(S.clues[id])return; S.clues[id]={name,iconKey,emoji}; toast("Clue added: "+name); Audio_.sfx("clue"); save();
+  if(S.clues[id])return; S.clues[id]={name,iconKey,emoji}; toast("Clue added: "+name); Audio_.sfx("clue"); spawnSparkle(S.px,S.py); save();
 }
 function clue(id){return !!S.clues[id];}
 
@@ -369,6 +370,8 @@ function update(dt){
       if(!blocked(nx,n.y))n.x=nx; if(!blocked(n.x,ny))n.y=ny;
       n.dir=Math.abs(dx)>Math.abs(dy)?(dx<0?"left":"right"):(dy<0?"up":"down"); n.at+=dt; n._m=true; }
     else n._m=false; }
+  if(moving){ S._dustT=(S._dustT||0)-dt; if(S._dustT<=0){ spawnDust(S.px,S.py+TS*0.12); S._dustT=0.16; } }
+  updateParts(dt);
   updateCam();
 }
 function tryInteract(){ if(scene!=="play"||modalOpen())return; const t=nearest(); if(t)t.run(); }
@@ -420,6 +423,7 @@ function render(){
   for(const n of NPCS){ if(n.see())ents.push({y:n.y,draw:()=>drawNPC(n),n}); }
   ents.push({y:S.py,draw:drawPlayer});
   ents.sort((a,b)=>a.y-b.y); ents.forEach(e=>e.draw());
+  drawParts();
   // npc name when near
   if(near&&near.kind==="npc") label(near.n.name, near.n.x-cam.x, near.n.y-cam.y-TS*2.2);
   if(near&&near.kind==="board") label("Notice / Case Board", (22+1)*TS-cam.x, 13*TS-cam.y-6);
@@ -427,6 +431,7 @@ function render(){
   if(near){ const verb=near.kind==="npc"?"Talk":"Look"; promptBar("▶ "+(isTouch?verb:"E — "+verb));
     document.getElementById("actbtn").textContent=verb; }
   document.getElementById("actbtn").classList.toggle("show",isTouch&&!!near&&!modalOpen());
+  drawWaypoint(); drawMinimap();
 }
 function heroSheet(dir,frame){ const row=dir==="down"?0:dir==="up"?2:1; return {sx:frame*16,sy:row*32,flip:dir==="left"}; }
 function drawPlayer(){
@@ -481,6 +486,49 @@ function promptBar(txt){ ctx.font="bold 16px Georgia,serif";ctx.textAlign="cente
 function roundRect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
 function drawTitleBg(){ ctx.fillStyle="#2f3b54";ctx.fillRect(0,0,VW,VH); }
 
+/* ===================== PARTICLES (juice) ===================== */
+const PARTS=[];
+function spawnDust(x,y){ for(let i=0;i<2;i++)PARTS.push({x:x+(Math.random()*8-4),y,vx:Math.random()*20-10,vy:-(8+Math.random()*10),life:.42,max:.42,size:3+Math.random()*2,col:"214,194,150",grav:34}); }
+function spawnSparkle(x,y,col,n){ col=col||"255,211,77"; n=n||14; for(let i=0;i<n;i++){ const a=Math.random()*Math.PI*2,s=30+Math.random()*80;
+  PARTS.push({x,y:y-22,vx:Math.cos(a)*s,vy:Math.sin(a)*s-20,life:.7+Math.random()*.45,max:1.15,size:2+Math.random()*3,col,grav:64}); } }
+function updateParts(dt){ for(let i=PARTS.length-1;i>=0;i--){ const p=PARTS[i]; p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=p.grav*dt;p.life-=dt; if(p.life<=0)PARTS.splice(i,1); }
+  if(PARTS.length>260)PARTS.splice(0,PARTS.length-260); }
+function drawParts(){ for(const p of PARTS){ const a=Math.max(0,p.life/p.max); ctx.globalAlpha=a; ctx.fillStyle=`rgb(${p.col})`;
+  ctx.beginPath();ctx.arc(p.x-cam.x,p.y-cam.y,p.size,0,7);ctx.fill(); } ctx.globalAlpha=1; }
+
+/* ===================== OBJECTIVE + WAYPOINT + MINIMAP ===================== */
+function currentObjective(){
+  if(S.won)return null;
+  const bp=id=>{const b=B.find(x=>x.id===id);return b?{x:(b.tx+b.w/2)*TS,y:(b.ty+b.h)*TS,name:b.name}:null;};
+  const board={x:23*TS,y:16*TS,name:"Notice Board"};
+  if(S.seals>=4&&!S.won)return board;
+  if(S.act===1&&!S.q1.solved){ if(!S.q1.are)return bp("smithy"); if(!S.q1.know)return bp("tavern"); if(!S.q1.have)return bp("archive"); return bp("gate"); }
+  if(S.act===2&&!S.q2.solved)return bp("study");
+  if(S.act===3&&!S.q3.solved)return bp("granary");
+  if(S.act===4&&!S.q4.solved){ if(!S.q4.frag.tavern)return bp("tavern"); if(!S.q4.frag.chapel)return bp("chapel"); return board; }
+  return null;
+}
+function drawWaypoint(){ const o=currentObjective(); if(!o)return; const sx=o.x-cam.x, sy=o.y-cam.y, bob=Math.sin((last||0)/250)*5;
+  if(sx>16&&sx<VW-16&&sy>48&&sy<VH-56){ ctx.save(); ctx.fillStyle="rgba(216,164,62,.95)"; ctx.strokeStyle="#7d3f1d"; ctx.lineWidth=2;
+    const ty=sy-60+bob; ctx.beginPath(); ctx.moveTo(sx,ty+15);ctx.lineTo(sx-9,ty);ctx.lineTo(sx+9,ty);ctx.closePath(); ctx.fill();ctx.stroke(); ctx.restore();
+  } else { const cx=VW/2,cy=VH/2, ang=Math.atan2(o.y-cam.y-cy,o.x-cam.x-cx), ex=cx+Math.cos(ang)*(VW/2-48), ey=cy+Math.sin(ang)*(VH/2-48);
+    ctx.save(); ctx.translate(ex,ey); ctx.rotate(ang); ctx.fillStyle="rgba(216,164,62,.95)"; ctx.strokeStyle="#7d3f1d"; ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(16,0);ctx.lineTo(-8,-11);ctx.lineTo(-8,11);ctx.closePath();ctx.fill();ctx.stroke(); ctx.restore();
+    ctx.save(); ctx.font="bold 12px Georgia,serif"; ctx.textAlign="center"; const tw=ctx.measureText(o.name).width+14, ly=ey+(Math.sin(ang)>0?-26:20);
+    ctx.fillStyle="rgba(20,14,8,.82)"; roundRect(ex-tw/2,ly-13,tw,18,6); ctx.fill(); ctx.fillStyle="#ffd98a"; ctx.fillText(o.name,ex,ly); ctx.restore(); }
+}
+function buildingDone(b){ if(b.id==="gate"||b.id==="smithy"||b.id==="archive")return S.q1.solved&&(b.id!=="archive"||S.q3.solved);
+  if(b.id==="study")return S.q2.solved; if(b.id==="granary")return S.q3.solved; if(b.id==="chapel"||b.id==="tavern")return S.q4.solved; return false; }
+function drawMinimap(){ const o=currentObjective(), pad=10, mmW=126, sc=mmW/(MAPW*TS), mmH=MAPH*TS*sc, x0=VW-mmW-pad, y0=56;
+  ctx.save(); ctx.fillStyle="rgba(20,14,8,.66)"; roundRect(x0-5,y0-5,mmW+10,mmH+10,8); ctx.fill();
+  ctx.fillStyle="#5d7544"; ctx.fillRect(x0,y0,mmW,mmH);
+  ctx.fillStyle="#b89a6a"; for(const p of PATHS)ctx.fillRect(x0+p[0]*TS*sc,y0+p[1]*TS*sc,p[2]*TS*sc,p[3]*TS*sc);
+  for(const b of B){ const isObj=o&&o.name===b.name; ctx.fillStyle=isObj?"#ffd34d":buildingDone(b)?"#6b7f4e":lockMsg(b)?"#7a6a55":"#cdab78";
+    ctx.fillRect(x0+b.tx*TS*sc,y0+b.ty*TS*sc,Math.max(2,b.w*TS*sc),Math.max(2,b.h*TS*sc)); }
+  if(o){ const pr=3+Math.sin((last||0)/200)*1.6; ctx.fillStyle="#ffd34d"; ctx.beginPath();ctx.arc(x0+o.x*sc,y0+o.y*sc,pr,0,7);ctx.fill(); }
+  ctx.fillStyle="#d24b2b"; ctx.beginPath();ctx.arc(x0+S.px*sc,y0+S.py*sc,3.2,0,7);ctx.fill(); ctx.strokeStyle="#fff";ctx.lineWidth=1;ctx.stroke();
+  ctx.restore(); }
+
 /* ============================================================ TOAST / DLG / MODAL */
 let toastT=0;
 function toast(msg){ let el=document.getElementById("toast");
@@ -504,17 +552,18 @@ document.getElementById("modalClose").onclick=closeModal;
 function closeTop(){ if(cineState){endCine();return;} if(dlg.classList.contains("show"))closeDlg(); else if(modal.classList.contains("show"))closeModal(); }
 
 /* ============================================================ AUDIO (CC0 bgm + synth sfx) */
-const Audio_={ ctx:null, cur:null, muted:false, els:{},
+const Audio_={ ctx:null, cur:null, muted:false, vol:0.45, els:{},
   init(){ if(this.ctx)return; try{this.ctx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}
-    this.muted=localStorage.getItem("cf_mute")==="1"; updateSoundBtn(); },
+    this.muted=localStorage.getItem("cf_mute")==="1"; const v=parseFloat(localStorage.getItem("cf_vol")); if(v>=0)this.vol=v; updateSoundBtn(); },
+  setVol(v){ this.vol=v; try{localStorage.setItem("cf_vol",v);}catch(e){} if(this.cur&&!this.muted&&this.els[this.cur])this.els[this.cur].volume=v; },
   resume(){ try{ if(this.ctx&&this.ctx.state==="suspended")this.ctx.resume(); }catch(e){} },
   el(name){ if(!this.els[name]){ const a=new Audio("assets/audio/bgm_"+name+".ogg"); a.loop=true; a.volume=0; this.els[name]=a; } return this.els[name]; },
   playBGM(name){ this.resume(); if(this.cur===name)return; const old=this.cur?this.els[this.cur]:null; this.cur=name;
-    const a=this.el(name); if(this.muted)return; a.play().catch(()=>{}); fadeVol(a,0,0.45,700);
+    const a=this.el(name); if(this.muted)return; a.play().catch(()=>{}); fadeVol(a,0,this.vol,700);
     if(old&&old!==a)fadeVol(old,old.volume,0,500,()=>old.pause()); },
   setMuted(m){ this.muted=m; try{localStorage.setItem("cf_mute",m?"1":"0");}catch(e){}
     if(m){ for(const k in this.els)this.els[k].pause(); }
-    else if(this.cur){ const a=this.el(this.cur); a.play().catch(()=>{}); fadeVol(a,0,0.45,400); } updateSoundBtn(); },
+    else if(this.cur){ const a=this.el(this.cur); a.play().catch(()=>{}); fadeVol(a,0,this.vol,400); } updateSoundBtn(); },
   sfx(type){ if(this.muted||!this.ctx)return; const c=this.ctx,t=c.currentTime;
     const beep=(f,dur,when,wave,gain)=>{ const o=c.createOscillator(),g=c.createGain(); o.type=wave||"sine"; o.frequency.value=f;
       o.connect(g); g.connect(c.destination); g.gain.setValueAtTime(0.0001,t+when); g.gain.linearRampToValueAtTime(gain||0.16,t+when+0.012);
@@ -579,6 +628,19 @@ function sealStr(){ let s=""; for(let i=0;i<4;i++)s+=i<S.seals?"🟡":"⚪"; ret
 function refreshHud(){ document.getElementById("questbar").innerHTML=questText()+"<div id='seals'>Warden's Seals: "+sealStr()+"</div>"; }
 document.getElementById("journalBtn").onclick=openJournal;
 document.getElementById("helpBtn").onclick=openHelp;
+document.getElementById("setBtn").onclick=openSettings;
+function openSettings(){ Audio_.init(); const v=Math.round((Audio_.vol||0.45)*100);
+  showModal(`<h2>Settings</h2>
+    <p style="margin-bottom:4px">Music volume — <b id="volval">${v}</b></p>
+    <input type="range" id="volSld" min="0" max="100" value="${v}" style="width:100%;accent-color:#b5663b">
+    <p style="margin-top:14px"><button class="btn ghost" id="muteToggle">${Audio_.muted?"🔇 Sound: Off":"🔊 Sound: On"}</button></p>
+    <div class="takeaway" style="font-size:.84em"><b>Cipherfell</b> teaches security mindsets, no computers required.
+      World/character art &amp; music: CC0 (ArMM1998, Ninja-Adventure). Story art: hand-painted. Progress saves automatically.</div>`);
+  const sld=document.getElementById("volSld");
+  sld.oninput=()=>{ document.getElementById("volval").textContent=sld.value; Audio_.init(); Audio_.setVol(sld.value/100); };
+  document.getElementById("muteToggle").onclick=()=>{ Audio_.setMuted(!Audio_.muted);
+    document.getElementById("muteToggle").textContent=Audio_.muted?"🔇 Sound: Off":"🔊 Sound: On"; };
+}
 function openJournal(){ if(scene!=="play")return; boardOpen(); }
 function openHelp(){ showModal(`<h2>How to play</h2>
   <p><b>Move</b> WASD / arrows / joystick / gamepad. <b>Interact</b> with E / Space / Talk when something lights up (look for the <b>!</b>).</p>
@@ -619,7 +681,7 @@ function talkNPC(n){
     case "sister": say(null,"The Sister","Our bell rings early when the granary's full — a little blessing. Everyone knows our bells.",[{t:"Interesting…",f:()=>{ if(S.act>=4){q4Frag("chapel");q4Frag("laundry");} closeDlg(); }}]); break;
   }
 }
-function gainSeal(act,nextToast){ S.seals=Math.max(S.seals,act); S.act=Math.min(4,act+1); save(); refreshHud(); Audio_.sfx("seal");
+function gainSeal(act,nextToast){ S.seals=Math.max(S.seals,act); S.act=Math.min(4,act+1); save(); refreshHud(); Audio_.sfx("seal"); spawnSparkle(S.px,S.py,"255,220,120",30);
   if(act>=4){ toast("All four seals earned — name the hand at the Notice Board."); }
   else { toast(nextToast||"Warden's Seal earned. A new door has opened."); pendingBeat=act; } }
 
