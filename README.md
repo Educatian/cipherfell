@@ -1,6 +1,6 @@
 # Cipherfell — The Warden's Eye
 
-> A cozy medieval-village mystery RPG that teaches **cybersecurity mental models** without a single computer on screen. No hoodies, no neon, no "matrix" text rain. You learn to *think* like a security practitioner by walking a village, gathering clues, and solving four interlocking mysteries.
+> A cozy medieval-village mystery RPG that teaches **cybersecurity mental models** without a single computer on screen. No hoodies, no neon, no "matrix" text rain. You learn to *think* like a security practitioner by walking a village, gathering clues, and solving five interlocking mysteries.
 
 **▶ Play it now: [https://cipherfell.pages.dev](https://cipherfell.pages.dev)**
 
@@ -20,6 +20,7 @@ The real core of security is not technology. It is a handful of transferable **m
 - **Confidentiality / encryption** — "can I move a secret past a hostile reader?"
 - **Least privilege / threat modeling** — "who can touch what, and how bad is it if they turn?"
 - **Information leakage / OSINT** — "harmless public scraps, combined, become a secret."
+- **Social engineering / phishing** — "a message cannot authenticate itself; verify an unexpected, high-pressure order out-of-band."
 
 Set those in a 13th-century walled village and the player practices the *reasoning*, not the jargon. By the end they have never touched a machine, yet they have rehearsed the exact judgment a security professional uses every day. The transfer to real-world security is made explicit in the epilogue and is mapped to recognized curriculum standards below.
 
@@ -27,18 +28,19 @@ Set those in a 13th-century walled village and the player practices the *reasoni
 
 ## The story
 
-You arrive in **Cipherfell** as its newly appointed **Warden of the Seal**, the officer who vouches for who-is-who and keeps the Duke's correspondence safe. The Baron of Thornmoor covets the village, and by night his agents slip through the gate wearing borrowed names and forged seals. The Duke gives you one rule:
+You arrive in **Cipherfell** as its newly appointed **Warden of the Seal**, the officer who vouches for who-is-who and keeps the Duke's correspondence safe. The **Baron of Thornmoor** covets the village; having lost it once at law, his line swore to take by cunning what it could not win by right. By night his agents slip through the gate wearing borrowed names and forged seals. The Duke gives you one rule:
 
 > **"Trust nothing you cannot prove."**
 
-Within a day, four troubles strike at once, and they are connected:
+Within a day, five troubles strike at once, and they are connected:
 
 1. A **stranger at the gate** claims to be Aldric, the merchant gone three winters to the city.
 2. The Duke's **sealed order** arrives already opened, read by a spy.
 3. Grain vanishes from a **locked granary** whose keys have quietly multiplied.
 4. The rival **Baron always knows** the village's plans a day early.
+5. A **forged summons** in the Duke's own name orders the night watch to abandon the gate.
 
-Solve all four, earn the four Warden's Seals, and the single hand behind them is exposed.
+Solve all five, earn the five Warden's Seals, and the single hand behind them is exposed.
 
 ---
 
@@ -64,12 +66,13 @@ Solve all four, earn the four Warden's Seals, and the single hand behind them is
 
 ## Features
 
-- **Four-act gated investigation.** Each act unlocks the next via a Warden's Seal, so the story escalates instead of dumping everything at once.
-- **Real exploration.** Walk a scrolling, tiled medieval town (40 x 30 tiles) with a follow-camera, collision, cobbled roads, a market square, and signposted landmarks.
+- **Five-act gated investigation.** Each act unlocks the next via a Warden's Seal, so the story escalates instead of dumping everything at once.
+- **Real exploration.** Walk a scrolling, tiled medieval town (40 x 30 tiles) with a follow-camera, collision, cobbled roads, a market square, a north watchtower, a lore-bearing Founders' Stone, and signposted landmarks.
 - **Multi-step mysteries.** A puzzle opens only after you travel the town and gather the right clues, so the RPG loop (move, talk, collect, deduce) drives the learning.
-- **Animated characters.** Four-direction walking sprites for the player and ten NPCs, each tagged with a role badge so they are easy to tell apart.
-- **Hand-authored puzzles**, one per concept: an MFA verification cross-examination, an interactive Caesar cipher wheel, a least-privilege key grid plus culprit deduction, and an OSINT aggregation board.
+- **Animated characters.** Four-direction walking sprites for the player and thirteen NPCs, each tagged with a role badge so they are easy to tell apart.
+- **Hand-authored puzzles**, one per concept: an MFA verification cross-examination, an interactive Caesar cipher wheel, a least-privilege key grid plus culprit deduction, an OSINT aggregation board, and a forged-summons pretext analysis (spot the manipulation levers, then verify out-of-band).
 - **Cinematic layer.** A six-card opening sequence, one-card act-transition beats featuring the villain, and a finale, all with typed narration, letterboxing, and fades.
+- **Worldview and lore.** A bard who recounts the Cipherfell–Thornmoor feud and a readable Founders' Stone inscribed with five vows, one per quest, ground the mechanics in a coherent setting.
 - **Mission briefing + spotlight tutorial.** A guided onboarding that dims the screen and highlights each UI element (quest bar, mini-map, journal) with an explanation. Replayable from Help.
 - **Navigation aids.** Live mini-map (gold = current objective) and an on-screen/edge objective waypoint, so players never get lost.
 - **Game feel.** Footstep dust, clue and seal sparkle particles, and synthesized sound effects.
@@ -80,15 +83,16 @@ Solve all four, earn the four Warden's Seals, and the single hand behind them is
 
 ---
 
-## The four lessons → cybersecurity concepts
+## The five lessons → cybersecurity concepts
 
 | Act | In the village | The security idea |
 |---|---|---|
-| **1. The Impostor at the Gate** | Prove the stranger is or is not the real Aldric using something he *knows* (a passphrase), *has* (a signet), and *is* (a scar the smith recognizes). The impostor passes the stealable factors and fails the unforgeable one. | **Authentication and multi-factor authentication (MFA).** Identity rests on independent factors; attackers target the weakest single one. Social engineering and pretexting. The "verify, do not assume" stance is the seed of **zero trust**. |
+| **1. The Impostor at the Gate** | Prove the stranger is or is not the real Aldric using something he *knows* (a passphrase), *has* (a signet), and *is* (a scar the smith recognizes). The impostor passes the stealable factors and fails the unforgeable one. | **Authentication and multi-factor authentication (MFA).** Identity rests on independent factors; attackers target the weakest single one. The "verify, do not assume" stance is the seed of **zero trust**. |
 | **2. The Sealed Letter** | Decode an intercepted note on a brass cipher wheel, then encode the Duke's reply. Discover a runner who wrote the key on the same parchment as the message. | **Encryption, confidentiality, and key management.** Secrecy lives in the *key*, not in hiding the method (**Kerckhoffs's principle**). Never ship the key with the ciphertext; key handling is the whole game. |
 | **3. The Keyring** | The steward gave everyone the master key "for convenience." Re-cut the keyring to the minimum each role needs, then deduce who stole grain from a now-singular access set. | **Least privilege, separation of duties, and threat modeling.** Grant minimum access, revoke stale access, shrink the blast radius. Over-broad permissions make it impossible even to reason about who could have done it. |
 | **4. Loose Lips** | No one leaked a secret, but the tavern's shipment day plus the laundry list plus the ledger plus the chapel bell, combined, reveal a precise raid window. Plug the aggregate, not the people. | **Information leakage, OSINT, and OPSEC.** Public + public + public can equal private. Attackers aggregate open scraps (open-source intelligence). Defend the *pattern*, practice operational security and data minimization. |
-| **Capstone** | Name the one suspect consistent with all four threads (a forged identity, access to the letters, an old master-key copy, and a week of tavern gossip). | **Synthesis and adversarial thinking.** Correlate weak signals into a single attribution; think like the attacker to defend. |
+| **5. The Forged Summons** | A letter in the Duke's name orders the watch off the gate at midnight. Spot the four pretext levers (borrowed authority, manufactured urgency, enforced secrecy, a protocol-breaking request), then refuse to obey and confirm the order through a channel you already trust. | **Social engineering and phishing.** Attackers forge authority and manufacture urgency to make you act before you think. A message cannot authenticate itself; verify unexpected, high-pressure requests **out-of-band**. The pretext levers map directly to phishing red flags. |
+| **Capstone** | Name the one suspect consistent with all five threads (a forged identity, access to the letters, an old master-key copy, a week of tavern gossip, and a summons forged in the Duke's name). | **Synthesis and adversarial thinking.** Correlate weak signals into a single attribution; think like the attacker to defend. |
 
 ---
 
@@ -102,10 +106,11 @@ Cipherfell is designed as an *introduction-level* learning object: a hook that b
 
 | Act | Primary KA(s) | Crosscutting concept |
 |---|---|---|
-| 1. Impostor | Human Security (Identity Management, Social Engineering); System Security (Authentication) | Confidentiality, Integrity, Adversarial Thinking |
+| 1. Impostor | Human Security (Identity Management); System Security (Authentication) | Confidentiality, Integrity, Adversarial Thinking |
 | 2. Sealed Letter | Data Security (Cryptography, Cryptanalysis, Key Management); Connection Security (secure transmission) | Confidentiality |
 | 3. Keyring | System Security (Access Control); Organizational Security (Risk Management, Governance) | Risk, Systems Thinking |
 | 4. Loose Lips | Societal Security (Privacy, Cyber Ethics); Human Security (Awareness); Organizational Security (OPSEC) | Confidentiality, Risk |
+| 5. Forged Summons | Human Security (Social Engineering, Awareness and Understanding, Cyber Hygiene); System Security (verification) | Adversarial Thinking, Integrity |
 | Capstone | Crosscutting: **Adversarial Thinking**, Systems Thinking | CIA triad, Defense in Depth |
 
 **NIST Cybersecurity Framework (CSF) 2.0 — Functions and Categories**
@@ -116,21 +121,23 @@ Cipherfell is designed as an *introduction-level* learning object: a hook that b
 | 2. Sealed Letter | Protect | PR.DS — Data Security (data-in-transit confidentiality) |
 | 3. Keyring | Protect / Identify | PR.AA-05 least privilege; ID.AM Asset Management; ID.RA Risk Assessment |
 | 4. Loose Lips | Identify / Protect / Govern | ID.RA threat intelligence; PR.AT Awareness and Training; GV privacy |
+| 5. Forged Summons | Protect / Detect | PR.AT Awareness and Training (social-engineering resistance); DE.CM monitoring/verification of anomalous requests |
 
 **Other mappings**
 
 | Act | NICE Framework (SP 800-181r1) | CISSP domain | CompTIA Security+ (SY0-701) |
 |---|---|---|---|
-| 1. Impostor | Identity Management; recognizing social engineering | D5 Identity and Access Management | 1.2 Zero Trust; 2.2 Social engineering; 4.6 IAM/MFA |
+| 1. Impostor | Identity Management; Authentication | D5 Identity and Access Management | 1.2 Zero Trust; 4.6 IAM/MFA |
 | 2. Sealed Letter | Data Security; Cryptography knowledge | D3 Security Architecture and Engineering | 1.4 Cryptographic solutions |
 | 3. Keyring | Access controls; Risk Management | D3 Security models; D7 Security Operations (need-to-know, privileged access) | 1.1 Least privilege; 4.6 Access control; 5.x Governance/Risk |
 | 4. Loose Lips | Threat Analysis; Privacy | D1 Security and Risk Management (OPSEC, privacy) | 2.1 Threat actors and OSINT recon; 5.x Privacy |
+| 5. Forged Summons | Recognizing social engineering; Security awareness | D1 Security and Risk Management (security awareness training); D5 (out-of-band verification) | 2.2 Social engineering (pretexting, phishing, urgency/authority); 5.6 Security awareness |
 
 **K-12 alignment**
 
-- **CYBER.ORG K-12 Cybersecurity Learning Standards** — Security principles (authentication and access control, least privilege, defense in depth), Data (encryption), Impacts (digital footprint and privacy).
-- **CSTA K-12 CS Standards** — 3A-NI-05 (recommend security measures), 3A-NI-06 (encryption to secure data), 3A-IC-29/30 (social, legal, ethical, privacy impacts).
-- **AP Computer Science Principles** — Big Idea 5, Impact of Computing (safe computing, security, privacy).
+- **CYBER.ORG K-12 Cybersecurity Learning Standards** — Security principles (authentication and access control, least privilege, defense in depth), Data (encryption), Impacts (digital footprint and privacy), and social-engineering / phishing awareness.
+- **CSTA K-12 CS Standards** — 3A-NI-05 (recommend security measures), 3A-NI-06 (encryption to secure data), 2-NI-05 / 3A-IC-29/30 (social engineering, safe practices, social/legal/ethical/privacy impacts).
+- **AP Computer Science Principles** — Big Idea 5, Impact of Computing (safe computing, security, privacy, phishing/social engineering).
 
 ### Learning objectives (Bloom's)
 
@@ -140,13 +147,14 @@ After playing, a learner can:
 - **Apply** a substitution cipher and **justify** why confidentiality depends on key secrecy and key handling, not on hiding the algorithm (Apply, Analyze).
 - **Design** a least-privilege access assignment and **reason** about blast radius and revocation when attributing an insider action (Create, Analyze).
 - **Infer** what an outside observer can deduce by aggregating public information, and **recommend** OPSEC mitigations (Analyze, Evaluate).
+- **Identify** the levers of a social-engineering pretext (authority, urgency, secrecy, protocol-breaking) and **decide** to verify a suspicious order through an independent channel (Analyze, Evaluate).
 - **Adopt** an adversarial, "verify, do not assume" mindset as a default stance (the affective goal).
 
 ### Suggested use
 
 - **Audience:** upper-elementary through high school, introductory undergraduate, and corporate security-awareness onboarding.
 - **Session:** roughly 20 minutes for a full play-through; suitable as a lesson hook, a flipped-classroom pre-activity, or an awareness-week installation.
-- **Debrief:** the epilogue restates each village lesson with its real security name. Pair it with a discussion that names the framework terms (MFA, Kerckhoffs, least privilege, OSINT/OPSEC, zero trust).
+- **Debrief:** the epilogue restates each village lesson with its real security name. Pair it with a discussion that names the framework terms (MFA, Kerckhoffs, least privilege, OSINT/OPSEC, social engineering / phishing, zero trust).
 
 ---
 
