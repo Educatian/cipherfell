@@ -152,10 +152,10 @@
   <h1>CIPHERFELL</h1>
   <div class="sub">The Warden's Eye</div>
   <p>A village mystery where you learn to <b>think like a guardian of secrets</b> —
-     no machines, no jargon. Walk the town, gather clues, solve four troubles, name the hand behind them.</p>
+     no machines, no jargon. Walk the town, gather clues, solve five troubles, name the hand behind them.</p>
   <div>
     <span class="tag">Who are you, really?</span><span class="tag">Secrets in plain sight</span>
-    <span class="tag">The wrong key</span><span class="tag">Loose lips</span>
+    <span class="tag">The wrong key</span><span class="tag">Loose lips</span><span class="tag">A summons unproven</span>
   </div>
   <div style="margin-top:14px"><button class="btn" id="startBtn">Enter Cipherfell</button>
     <button class="btn ghost" id="continueBtn" style="display:none">Continue</button></div>
@@ -227,11 +227,13 @@ const B=[
  {id:"study",  stamp:"house",   tx:31,ty:19,w:5,h:5, name:"Warden's Study", tint:"hue-rotate(40deg)"},
  {id:"granary",stamp:"granary", tx:14,ty:23,w:3,h:4, name:"Granary"},
  {id:"archive",stamp:"silo",    tx:21,ty:22,w:3,h:5, name:"Archive"},
+ {id:"watch",  stamp:"silo",    tx:8, ty:2, w:3,h:5, name:"North Watchtower", tint:"hue-rotate(330deg) brightness(.88) saturate(.85)"},
 ];
 // decor: solid props
 const DEC=[
  {stamp:"fountain",tx:18,ty:13,w:3,h:3,solid:1,id:"fountain"},
  {stamp:"monument",tx:22,ty:13,w:2,h:3,solid:1,id:"board",name:"Notice Board"},
+ {stamp:"monument",tx:27,ty:24,w:2,h:3,solid:1,id:"stone",name:"Founders' Stone"},
  {stamp:"stall",   tx:13,ty:14,w:4,h:3,solid:1},
  {stamp:"crate",tx:9,ty:21,w:2,h:2,solid:1},{stamp:"barrel",tx:8,ty:24,w:2,h:2,solid:1},
  {stamp:"chest",tx:34,ty:23,w:2,h:2,solid:1},
@@ -240,7 +242,7 @@ const DEC=[
 const TREES=[];
 (function(){ for(let x=0;x<MAPW;x+=2){TREES.push([x,0]);TREES.push([x,MAPH-1]);}
   for(let y=0;y<MAPH;y+=2){TREES.push([0,y]);TREES.push([MAPW-1,y]);}
-  const extra=[[10,5],[28,5],[12,9],[26,11],[9,16],[30,16],[24,20],[11,26],[27,27],[20,9],[36,12],[3,4],[37,26]];
+  const extra=[[13,4],[28,5],[12,9],[26,11],[9,16],[30,16],[24,20],[11,26],[20,9],[36,12],[3,7],[37,26]];
   extra.forEach(e=>TREES.push(e)); })();
 // dirt path rectangles (tile coords) connecting hubs
 const PATHS=[
@@ -253,6 +255,8 @@ const PATHS=[
  [32,17,2,8],[32,24,4,2], // study spur + forecourt
  [15,17,2,10],         // granary spur
  [22,17,2,10],         // archive spur
+ [9,7,2,9],            // north watchtower spur
+ [29,17,2,11],         // founders' stone spur (reaches the stone's foot)
 ];
 
 /* solids + ground grid built at load */
@@ -284,19 +288,22 @@ function thash(x,y){ let h=(x*73856093 ^ y*19349663)>>>0; return (h%10007)/10007
 const SAVEKEY="cipherfell_save_v2";
 const fresh=()=>({
   px:19.5*TS, py:18*TS, dir:"down",
-  act:1, seals:0,            // act in progress (1..4), seals earned (0..4)
+  act:1, seals:0,            // act in progress (1..5), seals earned (0..5)
   clues:{},                  // id -> {name,icon,emoji}
   flags:{},                  // misc quest flags & sub-steps
   q1:{know:false,have:false,are:false,solved:false},
   q2:{decoded:false,solved:false},
   q3:{assigned:false,solved:false,asked:{}},
   q4:{frag:{},solved:false},
+  q5:{spotted:false,solved:false},
   won:false, hints:0, wrong:0, t0:0, playMs:0,
 });
 let S=fresh();
 function save(){ try{ S.playMs=(S.playMs||0); localStorage.setItem(SAVEKEY,JSON.stringify(S)); }catch(e){} }
 function hasSave(){ try{return !!localStorage.getItem(SAVEKEY);}catch(e){return false;} }
-function loadSave(){ try{ const d=JSON.parse(localStorage.getItem(SAVEKEY)); if(d){S=Object.assign(fresh(),d);} }catch(e){} }
+function loadSave(){ try{ const d=JSON.parse(localStorage.getItem(SAVEKEY)); if(d){S=Object.assign(fresh(),d);
+  if(!S.q5)S.q5={spotted:false,solved:false};
+  if(S.q4&&S.q4.solved&&!S.q5.solved&&!S.won&&S.act<5)S.act=5; } }catch(e){} }
 
 function addClue(id,name,iconKey,emoji){
   if(S.clues[id])return; S.clues[id]={name,iconKey,emoji}; toast("Clue added: "+name); Audio_.sfx("clue"); spawnSparkle(S.px,S.py); save();
@@ -353,6 +360,11 @@ const NPCS=[
  {id:"peddler", name:"A Peddler",   icon:"🎒",port:null, hue:270, tx:24,ty:17, wander:1, see:()=>true},
  {id:"child",   name:"A Child",     icon:"🧒",port:null, hue:90,  tx:16,ty:12, wander:1, see:()=>true},
  {id:"sister",  name:"The Sister",  icon:"⛪",port:null, hue:175, tx:33,ty:11, see:()=>S.act>=4||S.q4.frag.chapel},
+ // Act 5 — the forged summons
+ {id:"tomas",   name:"Gate-Guard Tomas",icon:"🛡️",port:"captain",hue:330,tx:9.5,ty:7.5,see:()=>S.act>=5&&!S.q5.solved},
+ {id:"courier", name:"A Hooded Courier",icon:"🪶",port:null, hue:265, tx:15,ty:9, wander:1, see:()=>S.act>=5&&!S.q5.solved},
+ // worldview / lore
+ {id:"bard",    name:"Old Faro the Bard",icon:"🎻",port:null, hue:45, tx:8,ty:14, see:()=>true},
 ];
 NPCS.forEach(n=>{ n.x=n.tx*TS; n.y=n.ty*TS; n.dir="down"; n.wx=n.x; n.wy=n.y; n.wt=0; n.frame=0; n.at=0; });
 
@@ -400,7 +412,7 @@ function nearest(){
   let best=null,bd=TS*1.7;
   for(const n of NPCS){ if(!n.see())continue; const d=Math.hypot(n.x-S.px,n.y-S.py); if(d<bd){bd=d;best={kind:"npc",n,run:()=>talkNPC(n)};} }
   for(const dr of DOORS){ const d=Math.hypot(dr.dx-S.px,dr.dy-S.py); if(d<bd){bd=d;best={kind:"door",b:dr.b,run:()=>enter(dr.b)};} }
-  for(const dc of DEC){ if(dc.id!=="board")continue; const cx=(dc.tx+dc.w/2)*TS,cy=(dc.ty+dc.h)*TS; const d=Math.hypot(cx-S.px,cy-S.py); if(d<bd){bd=d;best={kind:"board",run:()=>boardOpen()};} }
+  for(const dc of DEC){ if(dc.id!=="board"&&dc.id!=="stone")continue; const cx=(dc.tx+dc.w/2)*TS,cy=(dc.ty+dc.h)*TS; const d=Math.hypot(cx-S.px,cy-S.py); if(d<bd){bd=d;best=dc.id==="stone"?{kind:"stone",run:()=>LORE()}:{kind:"board",run:()=>boardOpen()};} }
   return best;
 }
 
@@ -447,6 +459,7 @@ function render(){
   // npc name when near
   if(near&&near.kind==="npc") label(near.n.name, near.n.x-cam.x, near.n.y-cam.y-TS*2.2);
   if(near&&near.kind==="board") label("Notice / Case Board", (22+1)*TS-cam.x, 13*TS-cam.y-6);
+  if(near&&near.kind==="stone") label("Founders' Stone", (27+1)*TS-cam.x, 24*TS-cam.y-6);
   // interact prompt
   if(near){ const verb=near.kind==="npc"?"Talk":"Look"; promptBar("▶ "+(isTouch?verb:"E — "+verb));
     document.getElementById("actbtn").textContent=verb; }
@@ -490,6 +503,7 @@ function npcHot(n){ // show ! when this npc advances the current act
   if(S.act===2&&!S.q2.solved) return n.id==="captain";
   if(S.act===3&&!S.q3.solved) return n.id==="steward";
   if(S.act===4&&!S.q4.solved) return ["keeper","sister"].includes(n.id);
+  if(S.act===5&&!S.q5.solved) return clue("c_summons")?n.id==="tomas":n.id==="herald";
   return false;
 }
 function drawDecal(k,dx,dy){ const im=img(k); if(!im)return; const s=TS*0.8,o=(TS-s)/2; ctx.drawImage(im,dx+o,dy+o,s,s); }
@@ -521,11 +535,12 @@ function currentObjective(){
   if(S.won)return null;
   const bp=id=>{const b=B.find(x=>x.id===id);return b?{x:(b.tx+b.w/2)*TS,y:(b.ty+b.h)*TS,name:b.name}:null;};
   const board={x:23*TS,y:16*TS,name:"Notice Board"};
-  if(S.seals>=4&&!S.won)return board;
+  if(S.seals>=5&&!S.won)return board;
   if(S.act===1&&!S.q1.solved){ if(!S.q1.are)return bp("smithy"); if(!S.q1.know)return bp("tavern"); if(!S.q1.have)return bp("archive"); return bp("gate"); }
   if(S.act===2&&!S.q2.solved)return bp("study");
   if(S.act===3&&!S.q3.solved)return bp("granary");
   if(S.act===4&&!S.q4.solved){ if(!S.q4.frag.tavern)return bp("tavern"); if(!S.q4.frag.chapel)return bp("chapel"); return board; }
+  if(S.act===5&&!S.q5.solved){ if(!clue("c_summons"))return {x:20.5*TS,y:16*TS,name:"The Herald"}; return bp("watch"); }
   return null;
 }
 function drawWaypoint(){ const o=currentObjective(); if(!o)return; const sx=o.x-cam.x, sy=o.y-cam.y, bob=Math.sin((last||0)/250)*5;
@@ -538,7 +553,7 @@ function drawWaypoint(){ const o=currentObjective(); if(!o)return; const sx=o.x-
     ctx.fillStyle="rgba(20,14,8,.82)"; roundRect(ex-tw/2,ly-13,tw,18,6); ctx.fill(); ctx.fillStyle="#ffd98a"; ctx.fillText(o.name,ex,ly); ctx.restore(); }
 }
 function buildingDone(b){ if(b.id==="gate"||b.id==="smithy"||b.id==="archive")return S.q1.solved&&(b.id!=="archive"||S.q3.solved);
-  if(b.id==="study")return S.q2.solved; if(b.id==="granary")return S.q3.solved; if(b.id==="chapel"||b.id==="tavern")return S.q4.solved; return false; }
+  if(b.id==="study")return S.q2.solved; if(b.id==="granary")return S.q3.solved; if(b.id==="chapel"||b.id==="tavern")return S.q4.solved; if(b.id==="watch")return S.q5.solved; return false; }
 function drawMinimap(){ const o=currentObjective(), pad=10, mmW=126, sc=mmW/(MAPW*TS), mmH=MAPH*TS*sc, x0=VW-mmW-pad, y0=56;
   ctx.save(); ctx.fillStyle="rgba(20,14,8,.66)"; roundRect(x0-5,y0-5,mmW+10,mmH+10,8); ctx.fill();
   ctx.fillStyle="#5d7544"; ctx.fillRect(x0,y0,mmW,mmH);
@@ -682,11 +697,12 @@ function questText(){
    [2,"In the <b>Warden's Study</b>, make the Duke's order unreadable to the spy."],
    [3,"At the <b>Granary</b>, grain vanishes though it's locked. Fix who holds which key."],
    [4,"The Baron knows our plans. Gather talk at <b>Tankard</b> &amp; <b>Chapel</b>, piece it at the Board."],
+   [5,"A summons in the Duke's name orders the gate stripped. Ask the <b>Herald</b>, then judge it at the <b>North Watchtower</b>."],
   ];
-  const cur=L.find(l=>l[0]===S.act)||L[3];
-  return "<b>Act "+S.act+" / 4:</b> "+cur[1];
+  const cur=L.find(l=>l[0]===S.act)||L[4];
+  return "<b>Act "+S.act+" / 5:</b> "+cur[1];
 }
-function sealStr(){ let s=""; for(let i=0;i<4;i++)s+=i<S.seals?"🟡":"⚪"; return s; }
+function sealStr(){ let s=""; for(let i=0;i<5;i++)s+=i<S.seals?"🟡":"⚪"; return s; }
 function refreshHud(){ document.getElementById("questbar").innerHTML=questText()+"<div id='seals'>Warden's Seals: "+sealStr()+"</div>"; }
 document.getElementById("journalBtn").onclick=openJournal;
 document.getElementById("helpBtn").onclick=openHelp;
@@ -706,8 +722,8 @@ function openSettings(){ Audio_.init(); const v=Math.round((Audio_.vol||0.45)*10
 function openJournal(){ if(scene!=="play")return; boardOpen(); }
 function openHelp(){ showModal(`<h2>How to play</h2>
   <p><b>Move</b> WASD / arrows / joystick / gamepad. <b>Interact</b> with E / Space / Talk when something lights up (look for the <b>!</b>).</p>
-  <p>Four troubles grip Cipherfell, unlocked one act at a time. Each needs you to <b>walk the town and gather clues</b> before its puzzle opens. Earn a <b>Warden's Seal</b> for each, then name the culprit at the <b>Notice Board</b> by the fountain.</p>
-  <div class="takeaway"><b>The real lesson:</b> every puzzle is a security idea in disguise — proving identity, keeping secrets, limiting access, and noticing how small facts add up. You train the <i>mindset</i>, not tools.</div>
+  <p>Five troubles grip Cipherfell, unlocked one act at a time. Each needs you to <b>walk the town and gather clues</b> before its puzzle opens. Earn a <b>Warden's Seal</b> for each, then name the culprit at the <b>Notice Board</b> by the fountain.</p>
+  <div class="takeaway"><b>The real lesson:</b> every puzzle is a security idea in disguise — proving identity, keeping secrets, limiting access, noticing how small facts add up, and resisting a forged order. You train the <i>mindset</i>, not tools.</div>
   <p class="small">Progress saves automatically. Closed the tab? Press <b>Continue</b> on the title.</p>
   <div class="row"><button class="btn ghost" id="replayTut">↺ Replay tutorial</button></div>`);
   const rt=document.getElementById("replayTut"); if(rt)rt.onclick=()=>{ closeModal(); startTutorial(); }; }
@@ -716,6 +732,7 @@ function openHelp(){ showModal(`<h2>How to play</h2>
 function lockMsg(b){
   if(b.id==="study"&&S.seals<1)return "Earn the Warden's trust first (Act 1)";
   if(b.id==="granary"&&S.seals<2)return "Sealed by the Duke's order (Act 2)";
+  if(b.id==="watch"&&S.seals<4)return "Manned until the fourth Seal (Act 4)";
   return null;
 }
 function enter(b){
@@ -729,6 +746,7 @@ function enter(b){
     case "study": STUDY(); break;
     case "granary": GRANARY(); break;
     case "chapel": CHAPEL(); break;
+    case "watch": WATCH(); break;
   }
 }
 function talkNPC(n){
@@ -743,10 +761,16 @@ function talkNPC(n){
     case "peddler": say(null,"A Peddler","Trinkets! Ribbons! …You've a suspicious eye, Warden. I only sell buttons, I swear it.",[{t:"Carry on",f:closeDlg}]); break;
     case "child": say(null,"A Child","I saw a man climb the granary wall once! …Or maybe that was a dream. I dream a lot.",[{t:"Hm.",f:closeDlg}]); break;
     case "sister": say(null,"The Sister","Our bell rings early when the granary's full — a little blessing. Everyone knows our bells.",[{t:"Interesting…",f:()=>{ if(S.act>=4){q4Frag("chapel");q4Frag("laundry");} closeDlg(); }}]); break;
+    case "tomas": WATCH(); break;
+    case "courier": say(null,"A Hooded Courier", S.q5.solved?
+       "<i>(The courier is gone — slipped out the moment the post held firm.)</i>":
+       "A summons for the watch, Warden — straight from the Duke, on my honour. Best it's obeyed at once; <i>great</i> men dislike waiting. No need to trouble the Herald over it.",
+       [{t:"…We shall see.",f:closeDlg}]); break;
+    case "bard": BARD(); break;
   }
 }
-function gainSeal(act,nextToast){ S.seals=Math.max(S.seals,act); S.act=Math.min(4,act+1); save(); refreshHud(); Audio_.sfx("seal"); spawnSparkle(S.px,S.py,"255,220,120",30);
-  if(act>=4){ toast("All four seals earned — name the hand at the Notice Board."); }
+function gainSeal(act,nextToast){ S.seals=Math.max(S.seals,act); S.act=Math.min(5,act+1); save(); refreshHud(); Audio_.sfx("seal"); spawnSparkle(S.px,S.py,"255,220,120",30);
+  if(act>=5){ toast("All five seals earned — name the hand at the Notice Board."); }
   else { toast(nextToast||"Warden's Seal earned. A new door has opened."); pendingBeat=act; } }
 
 /* ============================================================ INTRO */
@@ -763,7 +787,7 @@ function openingCine(){
     {img:CINE.baron,      text:"The Baron asks one thing of them: <b>learn everything, and take it.</b>"},
     {img:CINE.commission, text:"So the Duke names <b>you</b> the new Warden of the Seal: a ring, a warrant, and one rule."},
     {img:CINE.commission, text:"<b>Trust nothing you cannot prove.</b>"},
-    {img:CINE.village,    text:"By dawn, four troubles wait. A stranger at the gate. A letter already read. Grain gone from a locked store. And the Baron, always a step ahead."},
+    {img:CINE.village,    text:"By dawn, five troubles wait. A stranger at the gate. A letter already read. Grain gone from a locked store. A summons in the Duke's name that is not his. And the Baron, always a step ahead."},
   ], ()=>{ enterPlay(); if(!maybeTutorial()) toast("Follow the gold marker. Press E / Talk to interact."); }, {bgm:"cine"}); });
 }
 /* act-transition narrative beats */
@@ -771,6 +795,7 @@ const BEATS={
  1:[{img:CINE.baron,   text:"One mask torn away. But a <b>forged seal</b> means someone inside helped him. The Baron's reach runs deeper than a single impostor."}],
  2:[{img:CINE.night,   text:"His letters are safe now. Yet grain still vanishes from a <b>locked</b> store. A key, where no key should be."}],
  3:[{img:CINE.baron,   text:"A stolen key. An old copy. Three threads, one hand. And the Baron always knew <b>when</b> to strike. Who keeps telling him?"}],
+ 4:[{img:CINE.night,   text:"Now a letter rides in under the <b>Duke's own name</b>, ordering the north gate stripped at midnight. If the watch obeys, Thornmoor walks in unopposed. But does a seal make an order <b>true</b>?"}],
 };
 let pendingBeat=0;
 function actBeat(act){ const sc=BEATS[act]; if(!sc){return;}
@@ -781,9 +806,16 @@ function endingCine(){ closeModal();
     {img:CINE.finale,     text:"The Baron's hand in Cipherfell is broken. The village wakes, and breathes."},
     {img:CINE.commission, text:"The Duke's commendation will come in time. But the village already knows: <b>the Warden's Eye watches.</b>"},
   ], ()=>{ scene="play"; Audio_.playBGM("town"); epilogue(); }, {bgm:"town"}); }); }
-function HERALD(){ say("herald","The Herald", S.won?
-   "Cipherfell is safe because of your Eye, Warden. The Duke shall hear of it.":
-   "Four troubles, one hand. Mend each thread — the town's trust (your Seals) opens the way.",[{t:"Onward",f:closeDlg}]); }
+function HERALD(){
+  if(S.won){ say("herald","The Herald","Cipherfell is safe because of your Eye, Warden. The Duke shall hear of it.",[{t:"Onward",f:closeDlg}]); return; }
+  if(S.act>=5&&!S.q5.solved){
+    if(!clue("c_summons")){ addClue("c_summons","A summons bearing the Duke's name","letter","📜"); save(); }
+    say("herald","The Herald",
+     "Warden, mark me well: I am the Duke's <b>only</b> true crier, and I carry <i>no</i> such order. Yet a sealed summons has reached Gate-Guard Tomas at the <b>North Watchtower</b>, commanding him to abandon the gate at midnight. "+
+     "<div class='takeaway'>A grand seal and a great name are not proof — they are exactly what a forger borrows. Go judge the letter at the <b>Watchtower</b>, and remember: an order can be confirmed only through a channel you already <b>trust</b>.</div>",
+     [{t:"To the Watchtower",f:closeDlg}]); return;
+  }
+  say("herald","The Herald","Five troubles, one hand. Mend each thread — the town's trust (your Seals) opens the way.",[{t:"Onward",f:closeDlg}]); }
 
 /* ============================================================ ACT 1 — IMPOSTOR (authentication) */
 function SMITHY(){
@@ -984,6 +1016,62 @@ function CHAPEL4(){
    "<div class='takeaway'>Two more harmless scraps. Combine everything at the <b>Notice Board</b> by the fountain.</div>",[{t:"Noted",f:closeDlg}]);
 }
 
+/* ============================================================ ACT 5 — FORGED SUMMONS (social engineering / phishing) */
+const SUMMONS=[
+ {red:true,  t:"“By the Duke's own hand and seal, obey at once.”"},
+ {red:true,  t:"“At the stroke of midnight — there is no time to confirm.”"},
+ {red:true,  t:"“Tell no one of this order.”"},
+ {red:true,  t:"“Abandon your post; leave the north gate unmanned.”"},
+ {red:false, t:"“Report to the Captain at dawn to draw your wages.”"},
+ {red:false, t:"“The harvest has been kind this year.”"},
+];
+function WATCH(){
+  if(S.q5.solved){ say("captain","Gate-Guard Tomas","I held the post on your word, Warden — parchment be damned. Come dawn the gate stood shut, and not a soul of Thornmoor slipped through."); return; }
+  if(!clue("c_summons")){ say("captain","Gate-Guard Tomas",
+     "A sealed order, Warden — from the Duke, it says, bidding me leave my post this very night. It <i>feels</i> wrong… but who am I to question the Duke's seal? Best ask the <b>Herald</b> what he knows of it first.",
+     [{t:"I'll find the Herald",f:closeDlg}]); return; }
+  watchSpot();
+}
+function watchSpot(){
+  const chosen=new Set();
+  let h=`<h2>The North Watchtower — judge the summons</h2>
+   ${A.letter?`<div style="text-align:center"><img src="${PROP.letter}" style="width:104px;border-radius:10px;border:2px solid #2c2114"></div>`:""}
+   <p>Tomas hands you the letter. It <i>looks</i> official — yet the Herald carries no such order. <b>Tap every line that is a manipulation tactic</b>, not an ordinary fact.</p>
+   <div class="grid" style="grid-template-columns:1fr">`;
+  SUMMONS.forEach((c,i)=>{ h+=`<div class="cell" data-i="${i}" style="text-align:left">${c.t}</div>`; });
+  h+=`</div><div id="m5"></div><div class="row"><button class="btn good" id="ck5">These are the red flags</button></div>`;
+  showModal(h);
+  modalBody.querySelectorAll(".cell[data-i]").forEach(c=>c.onclick=()=>{ const i=+c.dataset.i;
+    if(chosen.has(i)){chosen.delete(i);c.classList.remove("on");}else{chosen.add(i);c.classList.add("on");} });
+  document.getElementById("ck5").onclick=()=>{ const m=document.getElementById("m5");
+    let miss=0,over=0; SUMMONS.forEach((c,i)=>{ if(c.red&&!chosen.has(i))miss++; if(!c.red&&chosen.has(i))over++; });
+    if(miss===0&&over===0){ S.q5.spotted=true; addClue("c_pretext","The pretext tactics, named","gossip","🚩"); save();
+      m.innerHTML="<div class='takeaway fadein'><b>All four levers, named.</b> Borrowed <b>authority</b>, manufactured <b>urgency</b>, enforced <b>secrecy</b>, and a request that <b>breaks protocol</b> — the toolkit of every pretext, from a forged summons to a phishing letter. Now: what do you do?</div>"+watchActionHTML();
+      wireWatchAction(); }
+    else if(miss>0){ S.hints++; m.innerHTML="<div class='takeaway fadein'>One lever still unmarked. Look for pressure to act <i>now</i>, a claim of <i>authority</i>, a demand for <i>silence</i>, or an order that <i>breaks the rules</i>.</div>"; }
+    else { S.hints++; m.innerHTML="<div class='takeaway fadein'>You've flagged a harmless line. Not everything is a trick — wages and weather are ordinary. Flag only the <b>manipulation</b>.</div>"; }
+  };
+}
+function watchActionHTML(){ return `<h3>Your ruling</h3><div class="row">
+  <button class="btn" data-w="obey">Obey it — it bears the Duke's seal</button>
+  <button class="btn" data-w="tear">Tear it up, say nothing</button>
+  <button class="btn good" data-w="verify">Hold the post &amp; verify with the Herald</button></div><div id="m5b"></div>`; }
+function wireWatchAction(){ modalBody.querySelectorAll("[data-w]").forEach(b=>b.onclick=()=>{ const mb=document.getElementById("m5b");
+  if(b.dataset.w==="verify"){ S.q5.solved=true; addClue("c_verify","Out-of-band verification","letter","✅"); gainSeal(5);
+    mb.innerHTML="<div class='takeaway fadein'><b>Right.</b> You keep the gate manned and send to the <b>Herald</b> — a channel you already trust — who confirms the Duke gave no such order. The summons is unmasked as the Baron's forgery.<br><br><b>Security idea: Social engineering &amp; phishing.</b> Attackers forge authority and manufacture urgency to make you act before you think. <b>A message can never authenticate itself.</b> Any unexpected, high-pressure request must be confirmed through a <i>separate</i>, trusted channel — never the one that delivered it.</div>"+`<button class="btn good" id="w5">Hold the gate ▶</button>`;
+    document.getElementById("w5").onclick=()=>{ closeModal(); say("captain","Gate-Guard Tomas","The post stays manned, then — and the Herald will have the truth of it by dawn. A keen eye, Warden.",[{t:"Five threads mended — name the hand at the Board.",f:closeDlg}]); }; }
+  else if(b.dataset.w==="obey"){ S.wrong++; mb.innerHTML="<div class='takeaway fadein'>The seal is the very thing a forger copies — you proved exactly that at the gate in Act 1. Obeying because an order <i>claims</i> authority is the whole trap.</div>"; }
+  else { S.wrong++; mb.innerHTML="<div class='takeaway fadein'>Better than obeying — but you've confirmed nothing, and Tomas may still waver. The Baron will simply forge another. <b>Verify</b>, don't merely discard.</div>"; }
+}); }
+
+/* ============================================================ WORLDVIEW / LORE */
+function BARD(){ say(null,"Old Faro the Bard",
+  "Sit a moment, Warden, and hear how Cipherfell came to be.<br><br>Two houses raised this valley: the Duke's line, who sealed every bargain in honest wax, and the lords of <b>Thornmoor</b>, who preferred a blade to a handshake. When the old Baron lost the valley <i>at law</i>, he swore his heirs would take by cunning what they could not win by right.<br><br>So his grandson sends no army — only whispers, forgeries, and borrowed faces. The Duke answered the only way that holds: he named a <b>Warden of the Seal</b>, and bid them trust nothing they cannot prove. That, friend, is <b>you</b>.",
+  [{t:"A fine tale.",f:closeDlg}]); }
+function LORE(){ say(null,"The Founders' Stone",
+  "Worn letters, cut deep into the rock:<br><br><i>“Here stands Cipherfell, founded in the Year of the Open Hand. Let no gate open to a stranger's word, no letter be read by the wrong eye, no key be cut for idle hands, no secret be left in plain sight, and no summons be obeyed unproven. Guard these five vows, and the valley keeps itself.”</i><br><br><span class='small'>Five vows — one for each of the Warden's troubles.</span>",
+  [{t:"Step back",f:closeDlg}]); }
+
 /* ============================================================ NOTICE / CASE BOARD (journal + Q4 combine + capstone) */
 function boardOpen(){
   // ledger fragment available here in act4
@@ -992,7 +1080,7 @@ function boardOpen(){
   let chips=""; const list=Object.values(S.clues);
   if(!list.length)chips="<p class='small'>No clues yet. Follow the <b>!</b> markers and talk to people.</p>";
   for(const c of list){ const ic=A[c.iconKey]?`style="background:#cdbb8e url(${assetURL(c.iconKey)}) center/cover"`:""; chips+=`<span class="chip"><i ${ic}>${A[c.iconKey]?"":(c.emoji||"•")}</i>${c.name}</span>`; }
-  const prog=[["Impostor",S.q1.solved],["Sealed Letter",S.q2.solved],["Keyring",S.q3.solved],["Loose Lips",S.q4.solved]];
+  const prog=[["Impostor",S.q1.solved],["Sealed Letter",S.q2.solved],["Keyring",S.q3.solved],["Loose Lips",S.q4.solved],["Forged Summons",S.q5.solved]];
   let pr=prog.map(p=>`<span class="tag">${p[1]?"✔ ":""}${p[0]}</span>`).join("");
   let body=`<h2>The Notice &amp; Case Board</h2><div>${pr} &nbsp; Seals: ${sealStr()}</div><h3>Clues gathered</h3><div>${chips}</div>`;
   // act4 combine
@@ -1002,7 +1090,7 @@ function boardOpen(){
     else body+=`<p class="small" style="margin-top:10px">You've pinned <b>${have}/4</b> scraps. Visit the <b>Tankard</b> and <b>Chapel</b> to gather the rest.</p>`;
   }
   // capstone
-  if(S.seals>=4 && !S.won) body+=`<div class="row" style="margin-top:12px"><button class="btn good" id="capstone">⚖ Name the hand behind it all ▶</button></div>`;
+  if(S.seals>=5 && !S.won) body+=`<div class="row" style="margin-top:12px"><button class="btn good" id="capstone">⚖ Name the hand behind it all ▶</button></div>`;
   if(S.won) body+=`<div class="row" style="margin-top:12px"><button class="btn" id="epi">See the Warden's lessons ▶</button></div>`;
   showModal(body);
   const cb=document.getElementById("combine"); if(cb)cb.onclick=q4Combine;
@@ -1023,7 +1111,7 @@ function q4Combine(){
       m.innerHTML="<div class='takeaway fadein'><b>Exactly.</b> Shipment day + one wagon + captain away + full-granary bell = a precise, undefended target. <b>No one leaked a secret; the <i>sum</i> was the secret.</b><br><br>Now — how do you stop it?</div>"+
       `<div class="row"><button class="btn" data-f="people">Forbid the villagers from talking</button><button class="btn good" data-f="pattern">Vary the patterns &amp; compartmentalize</button></div><div id="m4b"></div>`;
       modalBody.querySelectorAll("[data-f]").forEach(x=>x.onclick=()=>{ const mb=document.getElementById("m4b");
-        if(x.dataset.f==="pattern"){ S.q4.solved=true; gainSeal(4);
+        if(x.dataset.f==="pattern"){ S.q4.solved=true; gainSeal(4,"Seal 4 earned — a forged summons now stirs the watch. Seek the Herald.");
           mb.innerHTML="<div class='takeaway fadein'><b>Right.</b> You can't gag a whole town. Move shipments about, hush the bell, don't post the captain's comings and goings — defend the <i>aggregate</i>.<br><br><b>Security idea: Information leakage, OSINT &amp; OPSEC.</b> Public + public + public can equal private. Attackers aggregate open scraps. Guard the <i>pattern</i>, not only the words.</div>"+`<button class="btn good" id="w4">Plug the leak ▶</button>`;
           document.getElementById("w4").onclick=()=>{closeModal(); say("tavernkeeper","Goodwife Esa","So we guard the pattern, not just the words. Clever.",[{t:"Four threads mended — name the hand at the Board.",f:closeDlg}]);}; }
         else { S.wrong++; mb.innerHTML="<div class='takeaway fadein'>Forbidding talk never works and isn't the point — the facts were already public. Defend the <i>aggregate</i> instead.</div>"; } });
@@ -1033,12 +1121,13 @@ function capstone(){
   showModal(`<h2>The Warden's Eye — name the hand</h2>
    <p>Four threads, one weave. The culprit must satisfy <b>every</b> clue at once:</p>
    <ul><li>Wore a <b>forged identity</b> to get inside.</li><li>Could <b>read the Duke's letters</b> — trusted near them.</li>
-   <li>Used an <b>old master-key copy</b> to reach the grain.</li><li><b>Aggregated tavern gossip</b> to time the raid.</li></ul>
+   <li>Used an <b>old master-key copy</b> to reach the grain.</li><li><b>Aggregated tavern gossip</b> to time the raid.</li>
+   <li>Forged a <b>summons in the Duke's name</b> to strip the gate.</li></ul>
    <div class="row"><button class="btn" data-s="steward">Steward Pell</button><button class="btn" data-s="impostor">The false "Aldric"</button>
    <button class="btn" data-s="captain">Captain Mara</button><button class="btn" data-s="peddler">The Peddler</button></div><div id="mc"></div>`);
   modalBody.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>{ const m=document.getElementById("mc");
     if(b.dataset.s==="impostor"){ S.won=true; save();
-      m.innerHTML="<div class='takeaway fadein'><b>The Warden's Eye sees true.</b> The false Aldric was the Baron's agent: a forged seal got him through the gate, a trusted 'merchant' lingered near the Duke's letters, an old master-key copy emptied the granary, and a week in the Tankard let him time the raid. Every other suspect fails at least one thread.</div>"+`<button class="btn good" id="cd">The Duke will hear of this ▶</button>`;
+      m.innerHTML="<div class='takeaway fadein'><b>The Warden's Eye sees true.</b> The false Aldric was the Baron of Thornmoor's agent: a forged seal got him through the gate, a trusted 'merchant' lingered near the Duke's letters, an old master-key copy emptied the granary, a week in the Tankard let him time the raid, and a summons in the Duke's name nearly stripped the watch. Every other suspect fails at least one thread.</div>"+`<button class="btn good" id="cd">The Duke will hear of this ▶</button>`;
       Audio_.sfx("seal"); document.getElementById("cd").onclick=()=>{refreshHud();endingCine();}; }
     else { S.wrong++; const why={steward:"careless with keys, but never forged an identity nor read the letters.",captain:"holds the armory and was provably <i>away</i> — can't be the inside reader and raider.",peddler:"a loud gossip, but passed no gate in disguise and copied no seal."}[b.dataset.s];
       m.innerHTML="<div class='takeaway fadein'>That one fails a thread: "+why+" The culprit must fit <b>all four</b>.</div>"; } });
@@ -1052,6 +1141,7 @@ function epilogue(){
    <div class="takeaway"><b>The Sealed Letter → Encryption &amp; key management.</b> Secrecy lives in the key, not in hiding the method.</div>
    <div class="takeaway"><b>The Keyring → Least privilege &amp; threat modeling.</b> Grant the minimum, revoke the stale, shrink the blast radius.</div>
    <div class="takeaway"><b>Loose Lips → Information leakage, OSINT &amp; OPSEC.</b> Public scraps, aggregated, become a secret. Defend the pattern.</div>
+   <div class="takeaway"><b>The Forged Summons → Social engineering &amp; phishing.</b> Authority and urgency are levers, not proof. A message can't authenticate itself — verify through a separate, trusted channel.</div>
    <h3 style="margin-top:14px">Your Warden's rating: ${rating()}</h3>
    <p class="small">Hints used: ${S.hints} · Missteps: ${S.wrong} · Time: ~${mins} min</p>
    <div class="row"><button class="btn good" id="rp">Play again</button></div>`);
