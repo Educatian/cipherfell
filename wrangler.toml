@@ -1,0 +1,10 @@
+# Cloudflare Pages config for cipherfell.
+# Declares the keyless Workers AI binding the AI tutor needs (env.AI in dist/_worker.js).
+# Deploy (config-driven, applies the binding):  wrangler pages deploy --branch main
+# Without this binding the game still works — the AI tutor falls back to scripted hints.
+name = "cipherfell"
+pages_build_output_dir = "dist"
+compatibility_date = "2025-01-01"
+
+[ai]
+binding = "AI"
