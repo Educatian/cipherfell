@@ -89,6 +89,31 @@
   .fadein{animation:fade .4s ease;}@keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
   .vignette{position:fixed;inset:0;pointer-events:none;z-index:5;box-shadow:inset 0 0 140px 36px rgba(15,10,4,.5);}
   #loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:40;background:#15120d;color:#d8a43e;font-size:1.1em;}
+
+  /* fade transition */
+  #fade{position:fixed;inset:0;background:#0a0805;z-index:45;opacity:0;pointer-events:none;transition:opacity .55s ease;}
+  #fade.on{opacity:1;pointer-events:all;}
+
+  /* cinematic */
+  #cine{position:fixed;inset:0;z-index:44;display:none;background:#08070a center/cover no-repeat;
+    align-items:flex-end;justify-content:center;overflow:hidden;}
+  #cine.show{display:flex;}
+  #cine .bars{position:absolute;inset:0;pointer-events:none;}
+  #cine .bars:before,#cine .bars:after{content:"";position:absolute;left:0;right:0;height:11vh;background:#000;}
+  #cine .bars:before{top:0;} #cine .bars:after{bottom:0;}
+  #cine .scene{position:absolute;inset:0;background:center/cover no-repeat;opacity:0;transition:opacity .9s ease;transform:scale(1.04);}
+  #cine .scene.vis{opacity:1;transform:scale(1.0);transition:opacity .9s ease, transform 7s ease;}
+  #cine .narr{position:relative;z-index:2;max-width:760px;margin:0 18px 13.5vh;
+    background:rgba(12,9,6,.74);border:2px solid rgba(216,164,62,.5);border-radius:12px;
+    padding:16px 20px;color:#f3e7c9;font-size:1.18em;line-height:1.55;text-align:center;
+    backdrop-filter:blur(2px);box-shadow:0 8px 30px rgba(0,0,0,.5);min-height:1.6em;}
+  #cine .narr b{color:#ffd98a;}
+  #cine .hint{position:absolute;right:16px;bottom:13vh;z-index:3;color:#e7d3a4;opacity:.8;font-size:.85em;
+    background:rgba(12,9,6,.6);padding:4px 10px;border-radius:8px;animation:pulse 1.6s infinite;}
+  #cine .skip{position:absolute;top:calc(11vh + 10px);right:16px;z-index:3;}
+  @keyframes pulse{0%,100%{opacity:.4;}50%{opacity:.95;}}
+
+  #soundBtn{font-size:.95em;}
 </style>
 </head>
 <body>
@@ -99,6 +124,7 @@
 <div id="hud">
   <div><div id="questbar">…</div></div>
   <div class="row" style="pointer-events:auto;gap:6px;align-items:flex-start;">
+    <button class="hudbtn" id="soundBtn" title="Sound on/off">🔊</button>
     <button class="hudbtn" id="journalBtn">Case</button>
     <button class="hudbtn" id="helpBtn">?</button>
   </div>
@@ -132,12 +158,23 @@
   <button class="close" id="modalClose">×</button><div id="modalBody"></div>
 </div></div>
 
+<div id="cine">
+  <div class="scene" id="cineScene"></div>
+  <div class="bars"></div>
+  <button class="btn ghost skip" id="cineSkip">Skip ⏭</button>
+  <div class="narr" id="cineNarr"></div>
+  <div class="hint" id="cineHint">▶ click / Space</div>
+</div>
+<div id="fade"></div>
+
 <script>
 "use strict";
 /* ============================================================ ASSETS */
 const PORT={ aldric:"assets/npc_aldric.webp", impostor:"assets/npc_impostor.webp",
   steward:"assets/npc_steward.webp", tavernkeeper:"assets/npc_tavernkeeper.webp",
-  captain:"assets/npc_captain.webp", herald:"assets/npc_herald.webp" };
+  captain:"assets/npc_captain.webp", herald:"assets/npc_herald.webp", baron:"assets/cine_baron.webp" };
+const CINE={ village:"assets/cover.webp", night:"assets/cine_night.webp",
+  commission:"assets/cine_commission.webp", baron:"assets/cine_baron.webp", finale:"assets/cine_finale.webp" };
 const PROP={ signet_real:"assets/prop_signet_real.webp", signet_forged:"assets/prop_signet_forged.webp",
   letter:"assets/prop_letter.webp", cipher:"assets/prop_cipher.webp",
   keyring:"assets/prop_keyring.webp", gossip:"assets/prop_gossip.webp", logo:"assets/logo.webp" };
@@ -152,6 +189,7 @@ function done(){ if(loadedN>=toLoad){ document.getElementById("loading").style.d
   document.getElementById("title").classList.add("show"); } }
 for(const k in PORT) load("port_"+k,PORT[k]);
 for(const k in PROP) load(k,PROP[k]);
+for(const k in CINE) load("cine_"+k,CINE[k]);
 for(const k of WORLD) load(k,"assets/world/"+k+".png");
 function img(k){return A[k];}
 
@@ -241,7 +279,7 @@ function hasSave(){ try{return !!localStorage.getItem(SAVEKEY);}catch(e){return 
 function loadSave(){ try{ const d=JSON.parse(localStorage.getItem(SAVEKEY)); if(d){S=Object.assign(fresh(),d);} }catch(e){} }
 
 function addClue(id,name,iconKey,emoji){
-  if(S.clues[id])return; S.clues[id]={name,iconKey,emoji}; toast("Clue added: "+name); save();
+  if(S.clues[id])return; S.clues[id]={name,iconKey,emoji}; toast("Clue added: "+name); Audio_.sfx("clue"); save();
 }
 function clue(id){return !!S.clues[id];}
 
@@ -458,12 +496,72 @@ function say(portKey,name,text,choices){
     b.className="btn"+(ch.cls?" "+ch.cls:"");b.innerHTML=ch.t;b.onclick=ch.f;c.appendChild(b);});
   dlg.classList.add("show");
 }
-function closeDlg(){dlg.classList.remove("show");}
+function closeDlg(){ dlg.classList.remove("show"); if(pendingBeat){ const a=pendingBeat; pendingBeat=0; setTimeout(()=>actBeat(a),220); } }
 const modal=document.getElementById("modal"),modalBody=document.getElementById("modalBody");
 function showModal(html){modalBody.innerHTML=html;modal.classList.add("show");}
 function closeModal(){modal.classList.remove("show");}
 document.getElementById("modalClose").onclick=closeModal;
-function closeTop(){ if(dlg.classList.contains("show"))closeDlg(); else if(modal.classList.contains("show"))closeModal(); }
+function closeTop(){ if(cineState){endCine();return;} if(dlg.classList.contains("show"))closeDlg(); else if(modal.classList.contains("show"))closeModal(); }
+
+/* ============================================================ AUDIO (CC0 bgm + synth sfx) */
+const Audio_={ ctx:null, cur:null, muted:false, els:{},
+  init(){ if(this.ctx)return; try{this.ctx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}
+    this.muted=localStorage.getItem("cf_mute")==="1"; updateSoundBtn(); },
+  resume(){ try{ if(this.ctx&&this.ctx.state==="suspended")this.ctx.resume(); }catch(e){} },
+  el(name){ if(!this.els[name]){ const a=new Audio("assets/audio/bgm_"+name+".ogg"); a.loop=true; a.volume=0; this.els[name]=a; } return this.els[name]; },
+  playBGM(name){ this.resume(); if(this.cur===name)return; const old=this.cur?this.els[this.cur]:null; this.cur=name;
+    const a=this.el(name); if(this.muted)return; a.play().catch(()=>{}); fadeVol(a,0,0.45,700);
+    if(old&&old!==a)fadeVol(old,old.volume,0,500,()=>old.pause()); },
+  setMuted(m){ this.muted=m; try{localStorage.setItem("cf_mute",m?"1":"0");}catch(e){}
+    if(m){ for(const k in this.els)this.els[k].pause(); }
+    else if(this.cur){ const a=this.el(this.cur); a.play().catch(()=>{}); fadeVol(a,0,0.45,400); } updateSoundBtn(); },
+  sfx(type){ if(this.muted||!this.ctx)return; const c=this.ctx,t=c.currentTime;
+    const beep=(f,dur,when,wave,gain)=>{ const o=c.createOscillator(),g=c.createGain(); o.type=wave||"sine"; o.frequency.value=f;
+      o.connect(g); g.connect(c.destination); g.gain.setValueAtTime(0.0001,t+when); g.gain.linearRampToValueAtTime(gain||0.16,t+when+0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001,t+when+dur); o.start(t+when); o.stop(t+when+dur+0.03); };
+    if(type==="select")beep(520,0.07,0,"triangle",0.10);
+    else if(type==="open")beep(300,0.12,0,"sine",0.10);
+    else if(type==="clue"){beep(660,0.1,0,"triangle",.12);beep(880,0.12,0.08,"triangle",.11);}
+    else if(type==="correct"){beep(523,0.11,0,"triangle",.13);beep(659,0.11,0.09,"triangle",.13);beep(784,0.16,0.18,"triangle",.13);}
+    else if(type==="wrong"){beep(196,0.18,0,"sawtooth",.10);beep(147,0.2,0.12,"sawtooth",.10);}
+    else if(type==="seal"){[523,659,784,1047].forEach((f,i)=>beep(f,0.2,i*0.085,"triangle",.14));}
+  }
+};
+function fadeVol(a,from,to,ms,done){ let i=0; const steps=14,dt=ms/steps; a.volume=Math.max(0,Math.min(1,from));
+  const iv=setInterval(()=>{ i++; a.volume=Math.max(0,Math.min(1,from+(to-from)*(i/steps))); if(i>=steps){clearInterval(iv);done&&done();} },dt); }
+function updateSoundBtn(){ const b=document.getElementById("soundBtn"); if(b)b.textContent=Audio_.muted?"🔇":"🔊"; }
+document.getElementById("soundBtn").onclick=()=>{ Audio_.init(); Audio_.setMuted(!Audio_.muted); Audio_.sfx("select"); };
+document.addEventListener("click",e=>{ Audio_.init(); Audio_.resume();
+  if(e.target&&e.target.classList&&e.target.classList.contains("btn"))Audio_.sfx("select"); });
+
+/* ============================================================ FADE + CINEMATIC */
+const fadeEl=document.getElementById("fade");
+function fadeOut(cb,ms){ fadeEl.style.transitionDuration=((ms||550)/1000)+"s"; fadeEl.classList.add("on"); setTimeout(()=>cb&&cb(),ms||560); }
+function fadeIn(ms){ fadeEl.style.transitionDuration=((ms||550)/1000)+"s"; requestAnimationFrame(()=>fadeEl.classList.remove("on")); }
+const cineEl=document.getElementById("cine"),cineScene=document.getElementById("cineScene"),
+      cineNarr=document.getElementById("cineNarr"),cineHint=document.getElementById("cineHint");
+let cineState=null, typeT=null, typing=false, fullText="";
+function playCine(scenes,onDone,opts){ opts=opts||{}; scene="cine"; cineState={scenes,i:-1,onDone,done:false};
+  cineEl.classList.add("show"); if(opts.bgm)Audio_.playBGM(opts.bgm); nextScene(); }
+function nextScene(){ if(!cineState)return; cineState.i++;
+  if(cineState.i>=cineState.scenes.length){ fadeOut(()=>endCine(),500); return; }
+  const s=cineState.scenes[cineState.i];
+  cineScene.classList.remove("vis");
+  setTimeout(()=>{ cineScene.style.backgroundImage=`url(${s.img})`; requestAnimationFrame(()=>cineScene.classList.add("vis")); },120);
+  typeNarr(s.text||""); Audio_.sfx("open"); }
+function typeNarr(txt){ clearInterval(typeT); fullText=txt; typing=true; cineHint.style.opacity=".25";
+  const words=txt.split(" "); let w=0; cineNarr.innerHTML="";
+  typeT=setInterval(()=>{ w++; cineNarr.innerHTML=words.slice(0,w).join(" ");
+    if(w>=words.length){ clearInterval(typeT); typing=false; cineHint.style.opacity=""; } },52); }
+function advanceCine(){ if(!cineState)return;
+  if(typing){ clearInterval(typeT); cineNarr.innerHTML=fullText; typing=false; cineHint.style.opacity=""; return; }
+  nextScene(); }
+function endCine(){ if(!cineState||cineState.done)return; cineState.done=true; const cb=cineState.onDone;
+  cineEl.classList.remove("show"); cineScene.classList.remove("vis"); cineScene.style.backgroundImage=""; cineState=null; if(cb)cb(); }
+cineEl.addEventListener("click",e=>{ if(e.target.id==="cineSkip")return; advanceCine(); });
+document.getElementById("cineSkip").onclick=()=>{ const cb=cineState&&cineState.onDone; cineState&&(cineState.done=true);
+  cineEl.classList.remove("show"); cineScene.style.backgroundImage=""; cineState=null; fadeEl.classList.remove("on"); if(cb)cb(); };
+addEventListener("keydown",e=>{ if(cineState&&(e.code==="Space"||e.code==="Enter")){e.preventDefault();advanceCine();} });
 
 /* ============================================================ HUD */
 function questText(){
@@ -521,22 +619,42 @@ function talkNPC(n){
     case "sister": say(null,"The Sister","Our bell rings early when the granary's full — a little blessing. Everyone knows our bells.",[{t:"Interesting…",f:()=>{ if(S.act>=4){q4Frag("chapel");q4Frag("laundry");} closeDlg(); }}]); break;
   }
 }
-function gainSeal(act,nextToast){ S.seals=Math.max(S.seals,act); S.act=Math.min(4,act+1); save(); refreshHud();
+function gainSeal(act,nextToast){ S.seals=Math.max(S.seals,act); S.act=Math.min(4,act+1); save(); refreshHud(); Audio_.sfx("seal");
   if(act>=4){ toast("All four seals earned — name the hand at the Notice Board."); }
-  else toast(nextToast||"Warden's Seal earned. A new door has opened."); }
+  else { toast(nextToast||"Warden's Seal earned. A new door has opened."); pendingBeat=act; } }
 
 /* ============================================================ INTRO */
-document.getElementById("startBtn").onclick=()=>{ S=fresh(); begin(true); };
-document.getElementById("continueBtn").onclick=()=>{ loadSave(); begin(false); };
-function begin(intro){
-  document.getElementById("title").classList.remove("show"); scene="play";
-  if(isTouch)pad.classList.add("show"); refreshHud(); buildSolids();
-  if(intro) say("herald","Herald of the Duke",
-    "Warden! Four troubles have struck Cipherfell at once, and I'd wager one cunning hand is behind them all. "+
-    "Start at the <b>Gatehouse</b> to the north — a stranger claims to be Aldric the merchant. "+
-    "<i>Look closely. Trust nothing you cannot prove.</i>",
-    [{t:"I'll begin.",f:()=>{closeDlg();toast("Follow the ! markers. Press E / Talk to interact.");}}]);
+document.getElementById("startBtn").onclick=()=>{ Audio_.init(); S=fresh();
+  document.getElementById("title").classList.remove("show"); openingCine(); };
+document.getElementById("continueBtn").onclick=()=>{ Audio_.init(); loadSave();
+  document.getElementById("title").classList.remove("show"); fadeOut(()=>enterPlay()); };
+function enterPlay(){ scene="play"; if(isTouch)pad.classList.add("show"); buildSolids(); refreshHud();
+  Audio_.playBGM("town"); fadeIn(); }
+function openingCine(){
+  fadeOut(()=>{ fadeIn(); playCine([
+    {img:CINE.village,    text:"<b>Cipherfell.</b> A quiet village under the Duke's seal, where everyone knows everyone, and trust is given on a handshake."},
+    {img:CINE.night,      text:"But the Baron of Thornmoor covets it. By night, his agents slip through the gate, unseen."},
+    {img:CINE.baron,      text:"The Baron asks one thing of them: <b>learn everything, and take it.</b>"},
+    {img:CINE.commission, text:"So the Duke names <b>you</b> the new Warden of the Seal: a ring, a warrant, and one rule."},
+    {img:CINE.commission, text:"<b>Trust nothing you cannot prove.</b>"},
+    {img:CINE.village,    text:"By dawn, four troubles wait. A stranger at the gate. A letter already read. Grain gone from a locked store. And the Baron, always a step ahead."},
+  ], ()=>{ enterPlay(); toast("Follow the ! markers. Press E / Talk to interact."); }, {bgm:"cine"}); });
 }
+/* act-transition narrative beats */
+const BEATS={
+ 1:[{img:CINE.baron,   text:"One mask torn away. But a <b>forged seal</b> means someone inside helped him. The Baron's reach runs deeper than a single impostor."}],
+ 2:[{img:CINE.night,   text:"His letters are safe now. Yet grain still vanishes from a <b>locked</b> store. A key, where no key should be."}],
+ 3:[{img:CINE.baron,   text:"A stolen key. An old copy. Three threads, one hand. And the Baron always knew <b>when</b> to strike. Who keeps telling him?"}],
+};
+let pendingBeat=0;
+function actBeat(act){ const sc=BEATS[act]; if(!sc){return;}
+  fadeOut(()=>{ fadeIn(); playCine(sc, ()=>{ scene="play"; Audio_.playBGM("town"); fadeIn(); }, {bgm:"tension"}); }); }
+function endingCine(){ closeModal();
+  fadeOut(()=>{ fadeIn(); playCine([
+    {img:CINE.finale,     text:"Dawn. The false Aldric, unmasked, is led away in rope past the fountain."},
+    {img:CINE.finale,     text:"The Baron's hand in Cipherfell is broken. The village wakes, and breathes."},
+    {img:CINE.commission, text:"The Duke's commendation will come in time. But the village already knows: <b>the Warden's Eye watches.</b>"},
+  ], ()=>{ scene="play"; Audio_.playBGM("town"); epilogue(); }, {bgm:"town"}); }); }
 function HERALD(){ say("herald","The Herald", S.won?
    "Cipherfell is safe because of your Eye, Warden. The Duke shall hear of it.":
    "Four troubles, one hand. Mend each thread — the town's trust (your Seals) opens the way.",[{t:"Onward",f:closeDlg}]); }
@@ -795,7 +913,7 @@ function capstone(){
   modalBody.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>{ const m=document.getElementById("mc");
     if(b.dataset.s==="impostor"){ S.won=true; save();
       m.innerHTML="<div class='takeaway fadein'><b>The Warden's Eye sees true.</b> The false Aldric was the Baron's agent: a forged seal got him through the gate, a trusted 'merchant' lingered near the Duke's letters, an old master-key copy emptied the granary, and a week in the Tankard let him time the raid. Every other suspect fails at least one thread.</div>"+`<button class="btn good" id="cd">The Duke will hear of this ▶</button>`;
-      document.getElementById("cd").onclick=()=>{refreshHud();epilogue();}; }
+      Audio_.sfx("seal"); document.getElementById("cd").onclick=()=>{refreshHud();endingCine();}; }
     else { S.wrong++; const why={steward:"careless with keys, but never forged an identity nor read the letters.",captain:"holds the armory and was provably <i>away</i> — can't be the inside reader and raider.",peddler:"a loud gossip, but passed no gate in disguise and copied no seal."}[b.dataset.s];
       m.innerHTML="<div class='takeaway fadein'>That one fails a thread: "+why+" The culprit must fit <b>all four</b>.</div>"; } });
 }

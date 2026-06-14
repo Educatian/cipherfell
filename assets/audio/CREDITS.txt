@@ -1,0 +1,5 @@
+Music: "Ninja Adventure" pack by Pixel-Boy & AAA (CC0 1.0, Public Domain)
+Source: https://pixel-boy.itch.io/ninja-adventure-asset-pack
+Tracks used (re-encoded to 96k ogg): theme_lost_village -> bgm_town,
+theme_dream -> bgm_cine, theme_swamp -> bgm_tension.
+Sound effects: synthesized in-browser via WebAudio (no external assets).
