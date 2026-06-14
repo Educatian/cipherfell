@@ -217,6 +217,60 @@ for(const k in CINE) load("cine_"+k,CINE[k]);
 for(const k of WORLD) load(k,"assets/world/"+k+".png");
 function img(k){return A[k];}
 
+/* ============================================================ I18N (EN base, KO overlay with English fallback) */
+let LANG="en"; try{ LANG=localStorage.getItem("cf_lang")||"en"; }catch(e){}
+function t(s){ return (LANG==="ko" && KO[s]!=null) ? KO[s] : s; }
+function setLang(l){ LANG=(l==="ko")?"ko":"en"; try{localStorage.setItem("cf_lang",LANG);}catch(e){} }
+const KO={
+ // --- UI / HUD ---
+ "Case":"사건부", "Warden's Seals: ":"감시자의 인장: ",
+ // --- objectives (questText) ---
+ "Find who the stranger at the <b>Gatehouse</b> really is. Ask around: Smithy, Tankard, Archive.":"<b>성문</b>의 낯선 자가 누구인지 밝혀라. 대장간·선술집·문서고에 물어보라.",
+ "In the <b>Warden's Study</b>, make the Duke's order unreadable to the spy.":"<b>감시자의 서재</b>에서 공작의 명령을 첩자가 못 읽게 만들어라.",
+ "At the <b>Granary</b>, grain vanishes though it's locked. Fix who holds which key.":"<b>곳간</b>이 잠겼는데도 곡물이 사라진다. 누가 어떤 열쇠를 갖는지 바로잡아라.",
+ "The Baron knows our plans. Gather talk at <b>Tankard</b> &amp; <b>Chapel</b>, piece it at the Board.":"남작이 우리 계획을 안다. <b>선술집</b>과 <b>예배당</b>에서 소문을 모아 게시판에서 맞춰라.",
+ "A summons in the Duke's name orders the gate stripped. Ask the <b>Herald</b>, then judge it at the <b>North Watchtower</b>.":"공작 명의의 소환장이 성문을 비우라 명한다. <b>전령</b>에게 묻고 <b>북쪽 망루</b>에서 판단하라.",
+ "The granary's loss is hidden in the books. Re-tally the sealed ledger at the <b>Counting House</b> to find the doctored page.":"곳간의 손실이 장부에 숨겨졌다. <b>회계소</b>에서 봉인된 장부를 다시 합산해 조작된 쪽을 찾아라.",
+ "<b>Case closed.</b> The Warden's Eye is open.":"<b>사건 종결.</b> 감시자의 눈이 뜨였다.",
+ // --- common choice buttons ---
+ "Continue":"계속", "Back":"뒤로", "Onward":"계속 나아가기", "Leave":"떠나기", "Noted":"알겠다",
+ "Very well":"좋다", "Aye":"예", "Carry on":"가던 길 가라", "Hm.":"흠.", "Interesting…":"흥미롭군…",
+ "Take the record":"기록을 챙긴다", "Make a ruling":"판결을 내린다", "Keep checking":"더 살펴본다",
+ "Reconsider":"다시 생각한다", "Step back":"물러난다", "A fine tale.":"좋은 이야기로군.",
+ // --- title screen (set via applyI18n) ---
+ "_sub":"감시자의 눈",
+ "_desc":"<b>비밀의 수호자처럼 사고하는</b> 법을 배우는 마을 미스터리 — 기계도, 전문용어도 없다. 마을을 걷고 단서를 모아 여섯 사건을 풀고, 그 배후를 지목하라.",
+ "_tagWho":"당신은 정말 누구인가?", "_tagSecret":"빤히 보이는 비밀", "_tagKey":"잘못된 열쇠",
+ "_tagLips":"새는 입", "_tagSummons":"증명되지 않은 소환장", "_tagLedger":"조작된 장부",
+ "_enter":"사이퍼펠로 들어가기", "_continue":"이어하기",
+ "_controls":"이동: WASD / 방향키 / 조이스틱 / 게임패드. 상호작용: E / Space / 대화 버튼. 진행은 자동 저장됩니다.",
+ // --- toasts ---
+ "Seal 1 earned — the Warden's Study now opens.":"인장 1 획득 — 감시자의 서재가 열렸다.",
+ "Seal 2 earned — the Granary now opens.":"인장 2 획득 — 곳간이 열렸다.",
+ "Seal 3 earned — only one trouble remains.":"인장 3 획득 — 사건이 하나 남았다.",
+ "Seal 4 earned — a forged summons now stirs the watch. Seek the Herald.":"인장 4 획득 — 위조 소환장이 망루를 흔든다. 전령을 찾아라.",
+ "Seal 5 earned — but the accounts themselves may lie. Seek the Counting House.":"인장 5 획득 — 허나 장부 자체가 거짓일 수 있다. 회계소로 가라.",
+ "All six seals earned — name the hand at the Notice Board.":"여섯 인장 모두 획득 — 게시판에서 배후를 지목하라.",
+ "Warden's Seal earned. A new door has opened.":"감시자의 인장 획득. 새 문이 열렸다.",
+ // --- cinematics: opening ---
+ "<b>Cipherfell.</b> A quiet village under the Duke's seal, where everyone knows everyone, and trust is given on a handshake.":"<b>사이퍼펠.</b> 공작의 인장 아래 조용한 마을. 모두가 서로를 알고, 신뢰는 악수 한 번으로 주어진다.",
+ "But the Baron of Thornmoor covets it. By night, his agents slip through the gate, unseen.":"허나 손모어의 남작이 이곳을 탐낸다. 밤이면 그의 첩자들이 성문을 몰래 넘는다.",
+ "The Baron asks one thing of them: <b>learn everything, and take it.</b>":"남작이 그들에게 명한 것은 하나: <b>모든 것을 알아내어, 빼앗아라.</b>",
+ "So the Duke names <b>you</b> the new Warden of the Seal: a ring, a warrant, and one rule.":"그리하여 공작이 <b>당신</b>을 새 인장 감시자로 임명한다: 반지 하나, 영장 하나, 그리고 규칙 하나.",
+ "<b>Trust nothing you cannot prove.</b>":"<b>증명할 수 없는 것은 무엇도 믿지 말라.</b>",
+ "By dawn, six troubles wait. A stranger at the gate. A letter already read. Grain gone from a locked store. A summons in the Duke's name that is not his. Figures that do not add up. And the Baron, always a step ahead.":"동이 트면 여섯 사건이 기다린다. 성문의 낯선 자. 이미 읽힌 편지. 잠긴 창고에서 사라진 곡물. 공작의 것이 아닌 공작 명의의 소환장. 맞지 않는 숫자들. 그리고 늘 한 발 앞선 남작.",
+ // --- cinematics: beats ---
+ "One mask torn away. But a <b>forged seal</b> means someone inside helped him. The Baron's reach runs deeper than a single impostor.":"가면 하나를 벗겼다. 허나 <b>위조된 인장</b>은 안에서 도운 자가 있다는 뜻. 남작의 손길은 사칭자 하나보다 깊다.",
+ "His letters are safe now. Yet grain still vanishes from a <b>locked</b> store. A key, where no key should be.":"이제 편지는 안전하다. 허나 <b>잠긴</b> 창고에서 곡물은 여전히 사라진다. 있어선 안 될 열쇠가 어딘가에 있다.",
+ "A stolen key. An old copy. Three threads, one hand. And the Baron always knew <b>when</b> to strike. Who keeps telling him?":"훔친 열쇠. 오래된 복제본. 세 가닥, 한 손. 그리고 남작은 늘 <b>언제</b> 칠지 알았다. 누가 그에게 일러주는가?",
+ "Now a letter rides in under the <b>Duke's own name</b>, ordering the north gate stripped at midnight. If the watch obeys, Thornmoor walks in unopposed. But does a seal make an order <b>true</b>?":"이제 <b>공작의 이름</b>으로 편지가 들어와, 자정에 북쪽 성문을 비우라 명한다. 망루가 따르면 손모어는 무혈입성한다. 허나 인장이 명령을 <b>참</b>으로 만드는가?",
+ "Five threads cut — yet the granary's loss never appears in the <b>accounts</b>. Someone altered the ledger itself to hide the theft. But a tampered figure leaves a <b>broken seal</b>. Find it, and the cover-up unravels.":"다섯 가닥을 끊었다 — 허나 곳간의 손실은 <b>장부</b>에 전혀 나타나지 않는다. 누군가 도둑질을 감추려 장부 자체를 고쳤다. 허나 조작된 숫자는 <b>깨진 봉인</b>을 남긴다. 그것을 찾으면 은폐가 풀린다.",
+ // --- cinematics: ending ---
+ "Dawn. The false Aldric, unmasked, is led away in rope past the fountain.":"동이 튼다. 정체가 드러난 가짜 알드릭이 분수를 지나 포승줄에 끌려간다.",
+ "The Baron's hand in Cipherfell is broken. The village wakes, and breathes.":"사이퍼펠에 뻗친 남작의 손이 꺾였다. 마을이 깨어나 숨을 쉰다.",
+ "The Duke's commendation will come in time. But the village already knows: <b>the Warden's Eye watches.</b>":"공작의 치하는 때가 되면 올 것이다. 허나 마을은 이미 안다: <b>감시자의 눈이 지켜본다.</b>",
+};
+
 /* ============================================================ CONFIG / MAP */
 const TILE=16, SCALE=3, TS=TILE*SCALE;            // 48px on-screen tiles
 const MAPW=40, MAPH=30;                            // tiles
@@ -585,15 +639,15 @@ function drawMinimap(){ const o=currentObjective(), pad=10, mmW=126, sc=mmW/(MAP
 let toastT=0;
 function toast(msg){ let el=document.getElementById("toast");
   if(!el){el=document.createElement("div");el.id="toast";el.style.cssText="position:fixed;left:50%;top:60px;transform:translateX(-50%);z-index:30;background:rgba(20,14,8,.9);color:#f3e7c9;padding:8px 15px;border-radius:10px;font-family:Georgia,serif;font-size:.92em;border:1px solid #d8a43e;transition:opacity .3s;max-width:80%;text-align:center;";document.body.appendChild(el);}
-  el.textContent=msg;el.style.opacity="1";clearTimeout(toastT);toastT=setTimeout(()=>el.style.opacity="0",2300); }
+  el.textContent=t(msg);el.style.opacity="1";clearTimeout(toastT);toastT=setTimeout(()=>el.style.opacity="0",2300); }
 const dlg=document.getElementById("dlg");
 function say(portKey,name,text,choices){
   document.getElementById("dlgPort").style.background = (portKey&&A["port_"+portKey])?`#cdbb8e url(${PORT[portKey]}) center/cover no-repeat`:"#bda";
-  document.getElementById("dlgName").textContent=name;
-  document.getElementById("dlgTxt").innerHTML=text;
+  document.getElementById("dlgName").textContent=t(name);
+  document.getElementById("dlgTxt").innerHTML=t(text);
   const c=document.getElementById("dlgChoices");c.innerHTML="";
   (choices||[{t:"Continue",f:closeDlg}]).forEach(ch=>{const b=document.createElement("button");
-    b.className="btn"+(ch.cls?" "+ch.cls:"");b.innerHTML=ch.t;b.onclick=ch.f;c.appendChild(b);});
+    b.className="btn"+(ch.cls?" "+ch.cls:"");b.innerHTML=t(ch.t);b.onclick=ch.f;c.appendChild(b);});
   dlg.classList.add("show");
 }
 function closeDlg(){ dlg.classList.remove("show"); if(pendingBeat){ const a=pendingBeat; pendingBeat=0; setTimeout(()=>actBeat(a),220); } }
@@ -650,7 +704,7 @@ function nextScene(){ if(!cineState)return; cineState.i++;
   cineScene.classList.remove("vis");
   setTimeout(()=>{ cineScene.style.backgroundImage=`url(${s.img})`; requestAnimationFrame(()=>cineScene.classList.add("vis")); },120);
   typeNarr(s.text||""); Audio_.sfx("open"); }
-function typeNarr(txt){ clearInterval(typeT); fullText=txt; typing=true; cineHint.style.opacity=".25";
+function typeNarr(txt){ txt=t(txt); clearInterval(typeT); fullText=txt; typing=true; cineHint.style.opacity=".25";
   const words=txt.split(" "); let w=0; cineNarr.innerHTML="";
   typeT=setInterval(()=>{ w++; cineNarr.innerHTML=words.slice(0,w).join(" ");
     if(w>=words.length){ clearInterval(typeT); typing=false; cineHint.style.opacity=""; } },52); }
@@ -708,7 +762,7 @@ function maybeTutorial(){ try{ if(localStorage.getItem("cf_tut_done"))return fal
 
 /* ============================================================ HUD */
 function questText(){
-  if(S.won)return "<b>Case closed.</b> The Warden's Eye is open.";
+  if(S.won)return t("<b>Case closed.</b> The Warden's Eye is open.");
   const L=[
    [1,"Find who the stranger at the <b>Gatehouse</b> really is. Ask around: Smithy, Tankard, Archive."],
    [2,"In the <b>Warden's Study</b>, make the Duke's order unreadable to the spy."],
@@ -718,37 +772,43 @@ function questText(){
    [6,"The granary's loss is hidden in the books. Re-tally the sealed ledger at the <b>Counting House</b> to find the doctored page."],
   ];
   const cur=L.find(l=>l[0]===S.act)||L[5];
-  return "<b>Act "+S.act+" / 6:</b> "+cur[1];
+  const pre = LANG==="ko" ? ("<b>"+S.act+"막 / 6:</b> ") : ("<b>Act "+S.act+" / 6:</b> ");
+  return pre+t(cur[1]);
 }
 function sealStr(){ let s=""; for(let i=0;i<6;i++)s+=i<S.seals?"🟡":"⚪"; return s; }
-function refreshHud(){ document.getElementById("questbar").innerHTML=questText()+"<div id='seals'>Warden's Seals: "+sealStr()+"</div>"; }
+function refreshHud(){ document.getElementById("questbar").innerHTML=questText()+"<div id='seals'>"+t("Warden's Seals: ")+sealStr()+"</div>"; }
 document.getElementById("journalBtn").onclick=openJournal;
 document.getElementById("helpBtn").onclick=openHelp;
 document.getElementById("setBtn").onclick=openSettings;
-function openSettings(){ Audio_.init(); const v=Math.round((Audio_.vol||0.45)*100);
-  showModal(`<h2>Settings</h2>
-    <p style="margin-bottom:4px">Music volume — <b id="volval">${v}</b></p>
+function openSettings(){ Audio_.init(); const v=Math.round((Audio_.vol||0.45)*100); const L=(k,e)=>LANG==="ko"?k:e;
+  showModal(`<h2>${L("설정","Settings")}</h2>
+    <p style="margin-bottom:6px"><b>${L("언어","Language")}</b> &nbsp;
+      <button class="btn ${LANG==="en"?"good":"ghost"}" id="langEn">English</button>
+      <button class="btn ${LANG==="ko"?"good":"ghost"}" id="langKo">한국어</button></p>
+    <p style="margin-bottom:4px">${L("음악 음량","Music volume")} — <b id="volval">${v}</b></p>
     <input type="range" id="volSld" min="0" max="100" value="${v}" style="width:100%;accent-color:#b5663b">
-    <p style="margin-top:14px"><button class="btn ghost" id="muteToggle">${Audio_.muted?"🔇 Sound: Off":"🔊 Sound: On"}</button></p>
-    <p style="margin-top:12px"><button class="btn ghost" id="expCsv">⤓ Export my data (CSV)</button>
-      <button class="btn ghost" id="wipeData">Wipe my data</button></p>
-    <p class="small">Research logging: <b>${S.consent==="yes"?"on":S.consent==="no"?"off":"not yet chosen"}</b>${S.pid?(" · ID "+S.pid):""} · events: ${(S.log||[]).length}</p>
-    <div class="takeaway" style="font-size:.84em"><b>Cipherfell</b> teaches security mindsets, no computers required.
-      World/character art &amp; music: CC0 (ArMM1998, Ninja-Adventure). Story art: hand-painted. Progress saves automatically.</div>`);
+    <p style="margin-top:14px"><button class="btn ghost" id="muteToggle">${Audio_.muted?L("🔇 소리: 끔","🔇 Sound: Off"):L("🔊 소리: 켬","🔊 Sound: On")}</button></p>
+    <p style="margin-top:12px"><button class="btn ghost" id="expCsv">${L("⤓ 내 데이터 내보내기 (CSV)","⤓ Export my data (CSV)")}</button>
+      <button class="btn ghost" id="wipeData">${L("내 데이터 삭제","Wipe my data")}</button></p>
+    <p class="small">${L("연구 로깅","Research logging")}: <b>${S.consent==="yes"?L("켬","on"):S.consent==="no"?L("끔","off"):L("미선택","not yet chosen")}</b>${S.pid?(" · ID "+S.pid):""} · ${L("이벤트","events")}: ${(S.log||[]).length}</p>
+    <div class="takeaway" style="font-size:.84em">${L("<b>사이퍼펠</b>은 컴퓨터 없이 보안 사고방식을 가르칩니다. 월드/캐릭터 아트·음악: CC0 (ArMM1998, Ninja-Adventure). 스토리 아트: 손그림. 진행은 자동 저장. <i>한국어는 핵심 화면 위주이며 미번역분은 영어로 표시됩니다.</i>","<b>Cipherfell</b> teaches security mindsets, no computers required. World/character art &amp; music: CC0 (ArMM1998, Ninja-Adventure). Story art: hand-painted. Progress saves automatically.")}</div>`);
+  const relang=l=>{ setLang(l); applyI18n(); refreshHud(); openSettings(); };
+  document.getElementById("langEn").onclick=()=>relang("en");
+  document.getElementById("langKo").onclick=()=>relang("ko");
   const sld=document.getElementById("volSld");
   sld.oninput=()=>{ document.getElementById("volval").textContent=sld.value; Audio_.init(); Audio_.setVol(sld.value/100); };
   document.getElementById("muteToggle").onclick=()=>{ Audio_.setMuted(!Audio_.muted);
-    document.getElementById("muteToggle").textContent=Audio_.muted?"🔇 Sound: Off":"🔊 Sound: On"; };
-  document.getElementById("expCsv").onclick=()=>{ if(S.consent!=="yes"){toast("No logged data — research logging is off.");return;} csvExport(); };
-  document.getElementById("wipeData").onclick=()=>{ if(confirm("Wipe all saved progress and logged data from this browser?")){ try{localStorage.removeItem(SAVEKEY);}catch(e){} location.reload(); } };
+    document.getElementById("muteToggle").textContent=Audio_.muted?L("🔇 소리: 끔","🔇 Sound: Off"):L("🔊 소리: 켬","🔊 Sound: On"); };
+  document.getElementById("expCsv").onclick=()=>{ if(S.consent!=="yes"){toast(L("기록된 데이터 없음 — 연구 로깅이 꺼져 있습니다.","No logged data — research logging is off."));return;} csvExport(); };
+  document.getElementById("wipeData").onclick=()=>{ if(confirm(L("이 브라우저의 저장 진행과 기록 데이터를 모두 삭제할까요?","Wipe all saved progress and logged data from this browser?"))){ try{localStorage.removeItem(SAVEKEY);}catch(e){} location.reload(); } };
 }
 function openJournal(){ if(scene!=="play")return; boardOpen(); }
-function openHelp(){ showModal(`<h2>How to play</h2>
-  <p><b>Move</b> WASD / arrows / joystick / gamepad. <b>Interact</b> with E / Space / Talk when something lights up (look for the <b>!</b>).</p>
-  <p>Six troubles grip Cipherfell, unlocked one act at a time. Each needs you to <b>walk the town and gather clues</b> before its puzzle opens. Earn a <b>Warden's Seal</b> for each, then name the culprit at the <b>Notice Board</b> by the fountain.</p>
-  <div class="takeaway"><b>The real lesson:</b> every puzzle is a security idea in disguise — proving identity, keeping secrets, limiting access, noticing how small facts add up, and resisting a forged order. You train the <i>mindset</i>, not tools.</div>
-  <p class="small">Progress saves automatically. Closed the tab? Press <b>Continue</b> on the title.</p>
-  <div class="row"><button class="btn ghost" id="replayTut">↺ Replay tutorial</button></div>`);
+function openHelp(){ const ko=LANG==="ko", L=(k,e)=>ko?k:e; showModal(`<h2>${L("플레이 방법","How to play")}</h2>
+  <p>${L("<b>이동</b> WASD / 방향키 / 조이스틱 / 게임패드. 무언가 빛나면(<b>!</b> 표시) E / Space / 대화 버튼으로 <b>상호작용</b>.","<b>Move</b> WASD / arrows / joystick / gamepad. <b>Interact</b> with E / Space / Talk when something lights up (look for the <b>!</b>).")}</p>
+  <p>${L("여섯 사건이 사이퍼펠을 덮친다. 한 막씩 풀린다. 각 사건은 퍼즐이 열리기 전에 <b>마을을 걸으며 단서를 모아야</b> 한다. 사건마다 <b>감시자의 인장</b>을 얻고, 분수 옆 <b>게시판</b>에서 범인을 지목하라.","Six troubles grip Cipherfell, unlocked one act at a time. Each needs you to <b>walk the town and gather clues</b> before its puzzle opens. Earn a <b>Warden's Seal</b> for each, then name the culprit at the <b>Notice Board</b> by the fountain.")}</p>
+  <div class="takeaway"><b>${L("진짜 교훈:","The real lesson:")}</b> ${L("모든 퍼즐은 보안 개념의 변장이다 — 신원 증명, 비밀 지키기, 접근 제한, 작은 사실들이 쌓이는 것 알아채기, 위조된 명령에 저항하기. 도구가 아니라 <i>사고방식</i>을 훈련한다.","every puzzle is a security idea in disguise — proving identity, keeping secrets, limiting access, noticing how small facts add up, and resisting a forged order. You train the <i>mindset</i>, not tools.")}</div>
+  <p class="small">${L("진행은 자동 저장됩니다. 탭을 닫았나요? 타이틀에서 <b>이어하기</b>를 누르세요.","Progress saves automatically. Closed the tab? Press <b>Continue</b> on the title.")}</p>
+  <div class="row"><button class="btn ghost" id="replayTut">${L("↺ 튜토리얼 다시 보기","↺ Replay tutorial")}</button></div>`);
   const rt=document.getElementById("replayTut"); if(rt)rt.onclick=()=>{ closeModal(); startTutorial(); }; }
 
 /* ============================================================ ENTER BUILDING / GATING */
@@ -1205,23 +1265,23 @@ function capstone(){
     else { S.wrong++; const why={steward:"careless with keys, but never forged an identity nor read the letters.",captain:"holds the armory and was provably <i>away</i> — can't be the inside reader and raider.",peddler:"a loud gossip, but passed no gate in disguise and copied no seal."}[b.dataset.s];
       m.innerHTML="<div class='takeaway fadein'>That one fails a thread: "+why+" The culprit must fit <b>all four</b>.</div>"; } });
 }
-function rating(){ const pen=S.hints+S.wrong; if(pen<=1)return "★★★ Master Warden"; if(pen<=4)return "★★ Sharp-eyed"; return "★ Warden-in-training"; }
+function rating(){ const ko=LANG==="ko", pen=S.hints+S.wrong; if(pen<=1)return ko?"★★★ 명감시자":"★★★ Master Warden"; if(pen<=4)return ko?"★★ 예리한 눈":"★★ Sharp-eyed"; return ko?"★ 수련 감시자":"★ Warden-in-training"; }
 function epilogue(){ if(S.consent==="yes" && !S.post.done){ kcRun("post", epilogueResults); } else epilogueResults(); }
-function epilogueResults(){
+function epilogueResults(){ const ko=LANG==="ko", L=(k,e)=>ko?k:e;
   const mins=Math.max(1,Math.round((S.playMs||0)/60000));
   const delta=S.post.score-S.pre.score, dstr=(delta>=0?"+":"")+delta;
-  showModal(`<h2>Epilogue — the Warden's lessons</h2>
-   <p>You never touched a machine. Yet what you practiced in Cipherfell <i>is</i> the craft of keeping people and secrets safe:</p>
-   <div class="takeaway"><b>The Impostor → Authentication &amp; MFA.</b> Prove identity with several independent factors — know, have, are.</div>
-   <div class="takeaway"><b>The Sealed Letter → Encryption &amp; key management.</b> Secrecy lives in the key, not in hiding the method.</div>
-   <div class="takeaway"><b>The Keyring → Least privilege &amp; threat modeling.</b> Grant the minimum, revoke the stale, shrink the blast radius.</div>
-   <div class="takeaway"><b>Loose Lips → Information leakage, OSINT &amp; OPSEC.</b> Public scraps, aggregated, become a secret. Defend the pattern.</div>
-   <div class="takeaway"><b>The Forged Summons → Social engineering &amp; phishing.</b> Authority and urgency are levers, not proof. A message can't authenticate itself — verify through a separate, trusted channel.</div>
-   <div class="takeaway"><b>The Tampered Ledger → Integrity, checksums &amp; hashing.</b> Don't just hide data — make tampering detectable. Recompute the seal (hash) and compare; one changed figure breaks the match.</div>
-   ${S.consent==="yes"&&S.post.done?`<div class="takeaway" style="border-style:solid"><b>Your knowledge check:</b> before <b>${S.pre.score}/6</b> → after <b>${S.post.score}/6</b> &nbsp;(<b>${dstr}</b>).</div>`:""}
-   <h3 style="margin-top:14px">Your Warden's rating: ${rating()}</h3>
-   <p class="small">Hints used: ${S.hints} · Missteps: ${S.wrong} · Time: ~${mins} min</p>
-   <div class="row"><button class="btn good" id="rp">Play again</button>${S.consent==="yes"?`<button class="btn ghost" id="csv">⤓ Export my data (CSV)</button>`:""}</div>`);
+  showModal(`<h2>${L("에필로그 — 감시자의 교훈","Epilogue — the Warden's lessons")}</h2>
+   <p>${L("당신은 기계 한 번 만지지 않았다. 허나 사이퍼펠에서 익힌 것이야말로 사람과 비밀을 지키는 기술이다:","You never touched a machine. Yet what you practiced in Cipherfell <i>is</i> the craft of keeping people and secrets safe:")}</p>
+   <div class="takeaway"><b>${L("사칭자 → 인증 &amp; MFA.","The Impostor → Authentication &amp; MFA.")}</b> ${L("독립적인 여러 요소로 신원을 증명하라 — 아는 것, 가진 것, 그 자체인 것.","Prove identity with several independent factors — know, have, are.")}</div>
+   <div class="takeaway"><b>${L("봉인된 편지 → 암호화 &amp; 키 관리.","The Sealed Letter → Encryption &amp; key management.")}</b> ${L("비밀은 방법을 숨기는 데가 아니라 열쇠에 있다.","Secrecy lives in the key, not in hiding the method.")}</div>
+   <div class="takeaway"><b>${L("열쇠꾸러미 → 최소 권한 &amp; 위협 모델링.","The Keyring → Least privilege &amp; threat modeling.")}</b> ${L("최소한만 부여하고, 묵은 권한은 회수하고, 피해 범위를 줄여라.","Grant the minimum, revoke the stale, shrink the blast radius.")}</div>
+   <div class="takeaway"><b>${L("새는 입 → 정보 누출, OSINT &amp; OPSEC.","Loose Lips → Information leakage, OSINT &amp; OPSEC.")}</b> ${L("공개된 조각도 모이면 비밀이 된다. 패턴을 지켜라.","Public scraps, aggregated, become a secret. Defend the pattern.")}</div>
+   <div class="takeaway"><b>${L("위조 소환장 → 사회공학 &amp; 피싱.","The Forged Summons → Social engineering &amp; phishing.")}</b> ${L("권위와 긴급함은 지렛대일 뿐 증거가 아니다. 메시지는 스스로를 증명하지 못한다 — 별도의 신뢰 경로로 확인하라.","Authority and urgency are levers, not proof. A message can't authenticate itself — verify through a separate, trusted channel.")}</div>
+   <div class="takeaway"><b>${L("조작된 장부 → 무결성, 체크섬 &amp; 해싱.","The Tampered Ledger → Integrity, checksums &amp; hashing.")}</b> ${L("데이터를 숨기지만 말고 변조를 탐지 가능하게 하라. 봉인(해시)을 다시 계산해 비교하라 — 숫자 하나만 바뀌어도 일치가 깨진다.","Don't just hide data — make tampering detectable. Recompute the seal (hash) and compare; one changed figure breaks the match.")}</div>
+   ${S.consent==="yes"&&S.post.done?`<div class="takeaway" style="border-style:solid"><b>${L("지식 점검","Your knowledge check")}:</b> ${L("이전","before")} <b>${S.pre.score}/6</b> → ${L("이후","after")} <b>${S.post.score}/6</b> &nbsp;(<b>${dstr}</b>).</div>`:""}
+   <h3 style="margin-top:14px">${L("감시자 등급","Your Warden's rating")}: ${rating()}</h3>
+   <p class="small">${L("힌트 사용","Hints used")}: ${S.hints} · ${L("실책","Missteps")}: ${S.wrong} · ${L("시간","Time")}: ~${mins}${L("분","min")}</p>
+   <div class="row"><button class="btn good" id="rp">${L("다시 하기","Play again")}</button>${S.consent==="yes"?`<button class="btn ghost" id="csv">${L("⤓ 내 데이터 내보내기 (CSV)","⤓ Export my data (CSV)")}</button>`:""}</div>`);
   document.getElementById("rp").onclick=()=>{ try{localStorage.removeItem(SAVEKEY);}catch(e){} location.reload(); };
   const cx=document.getElementById("csv"); if(cx)cx.onclick=csvExport;
 }
@@ -1229,50 +1289,62 @@ function epilogueResults(){
 /* ============================================================ RESEARCH LAYER (consent · pre/post knowledge check · CSV) */
 const KC=[
  {c:"Authentication / MFA", q:"Why does requiring a password AND a physical token AND a fingerprint resist impersonation better than any one alone?",
-  o:["Each added factor is one more independent thing an attacker must defeat at once.","A long enough password is effectively unbreakable on its own.","Fingerprints can never be copied or faked.","Three checks are slower, which discourages attackers."], a:0},
+  o:["Each added factor is one more independent thing an attacker must defeat at once.","A long enough password is effectively unbreakable on its own.","Fingerprints can never be copied or faked.","Three checks are slower, which discourages attackers."], a:0,
+  ck:"인증 / 다중요소(MFA)", qk:"비밀번호 AND 실물 토큰 AND 지문을 모두 요구하면, 어느 하나만 쓸 때보다 사칭에 더 강한 이유는?",
+  ok:["요소가 하나 늘 때마다 공격자가 동시에 뚫어야 할 독립적 관문이 하나 더 늘기 때문.","비밀번호가 충분히 길면 그 자체로 사실상 뚫리지 않기 때문.","지문은 절대 복제·위조될 수 없기 때문.","검사가 세 번이라 느려져 공격자가 단념하기 때문."]},
  {c:"Encryption / key management", q:"An encrypted message is intercepted by an enemy. When is its secret still safe?",
-  o:["When the key is kept separate and only the intended reader holds it.","When the method used to lock it is kept secret.","When the message is sent quickly enough.","When no one knows a message was sent at all."], a:0},
+  o:["When the key is kept separate and only the intended reader holds it.","When the method used to lock it is kept secret.","When the message is sent quickly enough.","When no one knows a message was sent at all."], a:0,
+  ck:"암호화 / 키 관리", qk:"암호화된 메시지를 적이 가로챘다. 그 비밀이 여전히 안전한 경우는?",
+  ok:["열쇠(키)를 따로 보관하고 의도된 수신자만 가지고 있을 때.","잠그는 데 쓴 방법을 비밀로 할 때.","메시지를 충분히 빨리 보냈을 때.","메시지를 보냈다는 사실을 아무도 모를 때."]},
  {c:"Least privilege", q:"Everyone is given the master key 'for convenience.' What is the main security problem?",
-  o:["One stolen key now opens everything, and you cannot reason about who could have done it.","The locks wear out faster from extra use.","People get confused about which key is which.","It becomes harder to cut new copies."], a:0},
+  o:["One stolen key now opens everything, and you cannot reason about who could have done it.","The locks wear out faster from extra use.","People get confused about which key is which.","It becomes harder to cut new copies."], a:0,
+  ck:"최소 권한", qk:"'편의를 위해' 모두에게 마스터 키를 줬다. 가장 큰 보안 문제는?",
+  ok:["열쇠 하나만 도난당해도 전부 열리고, 누가 저질렀는지 추론조차 불가능해진다.","열쇠를 더 자주 써서 자물쇠가 빨리 닳는다.","어느 열쇠가 어느 것인지 사람들이 헷갈린다.","새 복제본을 만들기가 더 어려워진다."]},
  {c:"OSINT / OPSEC", q:"Several separate, harmless public facts are posted. How can they become a secret?",
-  o:["Combined, they can reveal something none of them showed on its own.","They cannot — anything public is by definition not sensitive.","Only if one of the facts was actually secret to begin with.","Only if they were all posted on the same day."], a:0},
+  o:["Combined, they can reveal something none of them showed on its own.","They cannot — anything public is by definition not sensitive.","Only if one of the facts was actually secret to begin with.","Only if they were all posted on the same day."], a:0,
+  ck:"OSINT / OPSEC", qk:"무해한 공개 사실 여러 개가 따로따로 게시됐다. 이것이 어떻게 비밀이 될 수 있나?",
+  ok:["합치면, 각각으로는 드러나지 않던 것을 드러낼 수 있다.","될 수 없다 — 공개된 것은 정의상 민감하지 않다.","그 사실 중 하나가 애초에 비밀이었을 때만.","전부 같은 날 게시됐을 때만."]},
  {c:"Social engineering", q:"An urgent message bearing your superior's name says 'act now, tell no one.' Best response?",
-  o:["Confirm it through a separate, trusted channel before acting.","Obey at once — it carries the right authority.","Delete it and do nothing further.","Reply to that message asking the sender to confirm they are genuine."], a:0},
+  o:["Confirm it through a separate, trusted channel before acting.","Obey at once — it carries the right authority.","Delete it and do nothing further.","Reply to that message asking the sender to confirm they are genuine."], a:0,
+  ck:"사회공학", qk:"상관의 이름으로 온 긴급 메시지가 '지금 당장 하라, 아무에게도 말하지 말라'고 한다. 최선의 대응은?",
+  ok:["행동하기 전에 별도의 신뢰할 수 있는 경로로 확인한다.","즉시 따른다 — 올바른 권위를 지녔으니까.","삭제하고 더는 아무것도 하지 않는다.","그 메시지에 답장해 발신자에게 진짜인지 확인을 요청한다."]},
  {c:"Integrity / hashing", q:"How can you tell a document was not secretly altered?",
-  o:["Recompute a checksum / fingerprint of its contents and compare it to a trusted value.","Check that the file still opens without an error.","Make sure the document is encrypted.","Confirm the file size looks about right."], a:0},
+  o:["Recompute a checksum / fingerprint of its contents and compare it to a trusted value.","Check that the file still opens without an error.","Make sure the document is encrypted.","Confirm the file size looks about right."], a:0,
+  ck:"무결성 / 해싱", qk:"문서가 몰래 변조되지 않았는지 어떻게 알 수 있나?",
+  ok:["내용의 체크섬/지문을 다시 계산해 신뢰할 수 있는 값과 비교한다.","파일이 오류 없이 열리는지 확인한다.","문서가 암호화되어 있는지 확인한다.","파일 크기가 대략 맞아 보이는지 확인한다."]},
 ];
-function kcShuffle(opts,a){ const idx=opts.map((_,i)=>i); for(let i=idx.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));const t=idx[i];idx[i]=idx[j];idx[j]=t;}
-  return {opts:idx.map(i=>opts[i]), correct:idx.indexOf(a)}; }
+function kcShuffle(n){ const idx=[]; for(let i=0;i<n;i++)idx.push(i); for(let i=idx.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));const t=idx[i];idx[i]=idx[j];idx[j]=t;} return idx; }
 function kcRun(phase,onDone){
-  const fb = phase==="post"; const shuf=KC.map(k=>kcShuffle(k.o,k.a));
-  let h=`<h2>${fb?"One last check — what stuck":"Before you begin — a quick check"}</h2>
-   <p class="small">${fb?"The same six ideas. See how your thinking shifted.":"Six quick questions. Answer as best you can — there is no penalty; this just helps us learn what the game teaches."}</p>`;
-  KC.forEach((k,qi)=>{ h+=`<div style="margin-top:12px"><div><b>${qi+1}.</b> ${k.q} <span class="small">(${k.c})</span></div>`;
-    shuf[qi].opts.forEach((opt,oi)=>{ h+=`<label class="cell" style="display:block;text-align:left;margin-top:5px;cursor:pointer"><input type="radio" name="kc${qi}" value="${oi}" style="margin-right:8px">${opt}</label>`; });
+  const fb=phase==="post", ko=LANG==="ko", L=(k,e)=>ko?k:e; const ord=KC.map(()=>kcShuffle(4));
+  let h=`<h2>${fb?L("마지막 점검 — 무엇이 남았나","One last check — what stuck"):L("시작 전 — 간단한 점검","Before you begin — a quick check")}</h2>
+   <p class="small">${fb?L("같은 여섯 개념입니다. 당신의 생각이 어떻게 바뀌었는지 보세요.","The same six ideas. See how your thinking shifted."):L("여섯 개의 간단한 문항입니다. 최선껏 답해 주세요 — 벌점은 없으며, 게임이 무엇을 가르치는지 알아보기 위함입니다.","Six quick questions. Answer as best you can — there is no penalty; this just helps us learn what the game teaches.")}</p>`;
+  KC.forEach((k,qi)=>{ const q=ko?k.qk:k.q, opts=ko?k.ok:k.o, c=ko?k.ck:k.c;
+    h+=`<div style="margin-top:12px"><div><b>${qi+1}.</b> ${q} <span class="small">(${c})</span></div>`;
+    ord[qi].forEach((origIdx,oi)=>{ h+=`<label class="cell" style="display:block;text-align:left;margin-top:5px;cursor:pointer"><input type="radio" name="kc${qi}" value="${oi}" style="margin-right:8px">${opts[origIdx]}</label>`; });
     h+=`<div class="kcfb" data-fb="${qi}"></div></div>`; });
-  h+=`<div id="kcm" class="small" style="margin-top:10px;color:#b5391f"></div><div class="row"><button class="btn good" id="kcSub">${fb?"See my results":"Begin the mystery ▶"}</button></div>`;
+  h+=`<div id="kcm" class="small" style="margin-top:10px;color:#b5391f"></div><div class="row"><button class="btn good" id="kcSub">${fb?L("내 결과 보기","See my results"):L("미스터리 시작 ▶","Begin the mystery ▶")}</button></div>`;
   showModal(h); document.getElementById("modalClose").style.display="none";
   document.getElementById("kcSub").onclick=()=>{
-    for(let qi=0;qi<KC.length;qi++){ if(!modalBody.querySelector(`input[name="kc${qi}"]:checked`)){ document.getElementById("kcm").textContent="Please answer every question."; return; } }
+    for(let qi=0;qi<KC.length;qi++){ if(!modalBody.querySelector(`input[name="kc${qi}"]:checked`)){ document.getElementById("kcm").textContent=L("모든 문항에 답해 주세요.","Please answer every question."); return; } }
     let score=0; const ans=[];
     KC.forEach((k,qi)=>{ const sel=+modalBody.querySelector(`input[name="kc${qi}"]:checked`).value;
-      const picked=k.o.indexOf(shuf[qi].opts[sel]), ok=sel===shuf[qi].correct; if(ok)score++;
+      const picked=ord[qi][sel], ok=picked===k.a; if(ok)score++;
       ans.push({q:qi,picked:picked,correct:ok}); logEv("kc_"+phase,{q:qi,picked:picked,correct:ok?1:0});
-      if(fb){ modalBody.querySelector(`.kcfb[data-fb="${qi}"]`).innerHTML=`<div class="takeaway" style="margin-top:6px">${ok?"<b>Correct.</b> ":"<b>Not quite.</b> "}${k.o[k.a]}</div>`; } });
+      if(fb){ const expl=ko?k.ok[k.a]:k.o[k.a]; modalBody.querySelector(`.kcfb[data-fb="${qi}"]`).innerHTML=`<div class="takeaway" style="margin-top:6px">${ok?L("<b>정답.</b> ","<b>Correct.</b> "):L("<b>아쉽네요.</b> ","<b>Not quite.</b> ")}${expl}</div>`; } });
     S[phase]={done:true,ans:ans,score:score}; save();
     document.getElementById("modalClose").style.display="";
-    if(fb){ document.getElementById("kcm").style.color="#46562f"; document.getElementById("kcm").innerHTML=`<b>Post-check: ${score} / ${KC.length}.</b>`;
-      const b=document.getElementById("kcSub"); b.textContent="Continue ▶"; b.onclick=onDone; }
+    if(fb){ document.getElementById("kcm").style.color="#46562f"; document.getElementById("kcm").innerHTML=`<b>${L("사후 점검","Post-check")}: ${score} / ${KC.length}.</b>`;
+      const b=document.getElementById("kcSub"); b.textContent=L("계속 ▶","Continue ▶"); b.onclick=onDone; }
     else onDone();
   };
 }
-function consentScreen(onDone){
-  showModal(`<h2>A note before you play</h2>
-   <p>Cipherfell is a <b>research prototype</b> for teaching security thinking. With your permission we'd log your in-game choices (clues found, hints, time) and two short quizzes, to study how well it teaches. <b>No names, no accounts</b> — data stays in your browser unless <i>you</i> export it.</p>
-   <p class="small">Optional study ID: <input id="pidIn" maxlength="40" style="font-family:inherit;padding:4px 8px;border:2px solid #b79b63;border-radius:6px;width:150px"></p>
-   <div class="row"><button class="btn good" id="cYes">Yes — log my session &amp; quizzes</button>
-   <button class="btn ghost" id="cNo">No — just let me play</button></div>
-   <p class="small" style="margin-top:8px">The game plays the same either way. Export or wipe your data anytime from ⚙ Settings.</p>`);
+function consentScreen(onDone){ const ko=LANG==="ko", L=(k,e)=>ko?k:e;
+  showModal(`<h2>${L("플레이 전 안내","A note before you play")}</h2>
+   <p>${L("사이퍼펠은 보안적 사고를 가르치는 <b>연구 프로토타입</b>입니다. 동의하시면, 게임 내 선택(찾은 단서·힌트·시간)과 짧은 퀴즈 두 개를 기록해 교육 효과를 연구합니다. <b>이름도, 계정도 없습니다</b> — 데이터는 <i>당신이</i> 내보내지 않는 한 브라우저에만 남습니다.","Cipherfell is a <b>research prototype</b> for teaching security thinking. With your permission we'd log your in-game choices (clues found, hints, time) and two short quizzes, to study how well it teaches. <b>No names, no accounts</b> — data stays in your browser unless <i>you</i> export it.")}</p>
+   <p class="small">${L("선택 연구 ID","Optional study ID")}: <input id="pidIn" maxlength="40" style="font-family:inherit;padding:4px 8px;border:2px solid #b79b63;border-radius:6px;width:150px"></p>
+   <div class="row"><button class="btn good" id="cYes">${L("예 — 세션과 퀴즈를 기록","Yes — log my session &amp; quizzes")}</button>
+   <button class="btn ghost" id="cNo">${L("아니요 — 그냥 플레이","No — just let me play")}</button></div>
+   <p class="small" style="margin-top:8px">${L("어느 쪽이든 게임 진행은 같습니다. ⚙ 설정에서 언제든 데이터를 내보내거나 삭제할 수 있습니다.","The game plays the same either way. Export or wipe your data anytime from ⚙ Settings.")}</p>`);
   document.getElementById("modalClose").style.display="none";
   const fin=c=>{ S.consent=c; S.pid=(document.getElementById("pidIn").value||"").slice(0,40); logEv("consent",{c:c}); save();
     document.getElementById("modalClose").style.display=""; closeModal(); onDone(); };
@@ -1294,7 +1366,27 @@ function csvExport(){
 
 /* ============================================================ BOOT */
 if(hasSave()) document.getElementById("continueBtn").style.display="inline-block";
-refreshHud(); buildSolids();
+function applyI18n(){
+  const ko=LANG==="ko";
+  const set=(el,k,e,html)=>{ if(!el)return; const v=ko?k:e; if(html)el.innerHTML=v; else el.textContent=v; };
+  const card=document.querySelector("#title .card");
+  if(card){
+    set(card.querySelector(".sub"),"감시자의 눈","The Warden's Eye");
+    const ps=card.querySelectorAll("p");
+    set(ps[0],"<b>비밀의 수호자처럼 사고하는</b> 법을 배우는 마을 미스터리 — 기계도, 전문용어도 없다. 마을을 걷고 단서를 모아 여섯 사건을 풀고, 그 배후를 지목하라.",
+      'A village mystery where you learn to <b>think like a guardian of secrets</b> —\n     no machines, no jargon. Walk the town, gather clues, solve six troubles, name the hand behind them.',true);
+    set(ps[ps.length-1],"이동: WASD / 방향키 / 조이스틱 / 게임패드. 상호작용: E / Space / 대화 버튼. 진행은 자동 저장됩니다.",
+      'Move: WASD / arrows / joystick / gamepad. Interact: E / Space / Talk button. Your progress saves automatically.',true);
+    const tags=card.querySelectorAll(".tag");
+    const kt=["당신은 정말 누구인가?","빤히 보이는 비밀","잘못된 열쇠","새는 입","증명되지 않은 소환장","조작된 장부"];
+    const et=["Who are you, really?","Secrets in plain sight","The wrong key","Loose lips","A summons unproven","The doctored ledger"];
+    tags.forEach((el,i)=>set(el,kt[i],et[i]));
+    set(document.getElementById("startBtn"),"사이퍼펠로 들어가기","Enter Cipherfell");
+    set(document.getElementById("continueBtn"),"이어하기","Continue");
+  }
+  set(document.getElementById("journalBtn"),"사건부","Case");
+}
+refreshHud(); buildSolids(); applyI18n();
 setInterval(()=>{ if(scene==="play"){refreshHud();save();} },1500);
 requestAnimationFrame(loop);
 </script>
