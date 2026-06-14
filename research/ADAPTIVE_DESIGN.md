@@ -40,9 +40,18 @@ The design draws on the research frontier for adaptive educational games:
 A 4,000-learner simulation across ability cohorts (and replays) was used to validate the engine:
 
 - The **binary** outcome removes θ drift (|θ̂ − θ| stays ~0.5 across replays vs. diverging to >1.1 with a continuous outcome).
-- With four tiers, achieved clean-solve P sits in a healthy ZPD band — roughly **weak ≈ 0.57, average ≈ 0.70, strong ≈ 0.78** — i.e., the four-tier range lifts weak learners off the floor and centers the average on the target.
+- With four tiers, achieved clean-solve P sits in a healthy ZPD band — roughly **weak ≈ 0.57, average ≈ 0.70, strong ≈ 0.78** — i.e., the four-tier range lifts weak learners off the floor and centers the average on the target. (The design success target is `P = σ(ZPD_OFF) = σ(1.0) ≈ 0.73`.)
 
-Re-run with `research/analyze_sessions.py` on real exports to check the model holds with participants.
+## 5a. Empirical re-anchoring (simulation → data)
+
+The tier difficulties above are author-set anchors validated by simulation. `research/analyze_sessions.py` closes the loop with real exports, reading the per-item `adapt` event log (`tier`, concept, `clean`, predicted `pPred`) and producing a **calibration block**:
+
+- **Per-tier placement health** — each tier's achieved clean-solve rate (Wilson 95% CI) vs. the σ(ZPD_OFF) target, with a first-order suggested anchor `δ_new = δ + (logit(achieved P) − logit(target))`.
+- **Per-concept difficulty** — observed clean-solve minus the game's own predicted P, **centered** by the grand-mean residual; this isolates content that runs harder/easier than its siblings and flags items to re-author.
+
+**A subtlety we surface rather than hide.** Cipherfell *adaptively selects* the tier a learner sees, and Elo is self-correcting: when a tier is mis-anchored, the engine absorbs the error into the ability estimate (a learner who keeps failing a too-hard tier simply gets routed down), so per-tier success rates partly self-heal and a single-step anchor does **not** have the true item difficulty as its fixed point. Per-tier re-anchoring is therefore reported as an *iterative* suggestion (re-anchor → redeploy → re-collect), and the **pre/post knowledge check is the external ability anchor** that separates ability from difficulty. The per-concept diagnostic, by contrast, is orthogonal to the selection variable and recovers the relative difficulty structure cleanly.
+
+**Validated before participants.** `research/simulate_calibration.py` generates synthetic exports from a planted ground truth (one tier harder than its authored anchor; concept `osint` harder, `auth` easier) by mirroring the in-game adaptive loop exactly. Running the analyzer on that folder recovers the planted concept ranking (e.g. flags `osint` at suggested `b_c ≈ +0.5` against a planted +0.6) and surfaces the under-target tier — confirming the instrument works end-to-end. Feeding a suggested anchor back as the operating tiers (`--tiers`) demonstrates the adaptive-selection coupling that makes the per-tier step iterative.
 
 ## 6. Measurement & data
 
@@ -54,12 +63,14 @@ Re-run with `research/analyze_sessions.py` on real exports to check the model ho
 ### Suggested analyses
 - Pre→post gain (paired *t*, Cohen's *d*); per-item and per-concept gains.
 - Learning-curve: θ trajectory across acts/replays.
-- Calibration: mean predicted P vs. actual clean-solve rate vs. 0.7 target.
+- Calibration: mean predicted P vs. actual clean-solve rate vs. the σ(ZPD_OFF) ≈ 0.73 target.
+- Empirical re-anchoring of tier/concept difficulty (§5a), run via `analyze_sessions.py`.
 - Support use vs. outcome (hints/auto-hints, AI-tutor) as covariates.
 
 ## 7. Limitations
 - Single-play within-game adaptation spans only seven items; cross-play persistence is where adaptation compounds.
-- Tier difficulties are author-set anchors, not empirically calibrated item parameters — the calibration export is the path to data-driven re-anchoring.
+- Tier difficulties are author-set anchors; §5a re-anchors them from data, but unbiased *item-level* difficulty in a self-correcting adaptive system needs the external KC ability anchor and an iterative re-collect, not a single export pass.
+- The pre/post knowledge check is **one item per concept**; it is a transfer probe, not a reliable per-concept scale (no internal-consistency estimate). A 2–3-item bank per concept would let it carry stronger psychometric weight.
 - Korean localization currently covers comprehension-/research-critical surfaces; some in-world dialogue falls back to English.
 
 ## References (frontier, indicative)

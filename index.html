@@ -1598,14 +1598,14 @@ function consentScreen(onDone){ const ko=LANG==="ko", L=(k,e)=>ko?k:e;
 }
 function csvEsc(v){ return '"'+String(v).replace(/"/g,'""')+'"'; }
 function csvExport(){
-  const th=S.theta||{}; const tiers=[1,2,3,4,5,6].map(a=>tierOf(a)).join("|");
+  const th=S.theta||{}; const tiers=[1,2,3,4,5,6,7].map(a=>tierOf(a)).join("|");
   const meta=[["pid",S.pid||""],["consent",S.consent||""],["won",S.won?1:0],["pre_score",S.pre.score],["post_score",S.post.score],
     ["delta",S.post.score-S.pre.score],["seals",S.seals],["hints",S.hints],["wrong",S.wrong],["play_ms",Math.round(S.playMs||0)],["rating",rating()],
-    ["seed",S.seed||""],["tiers_act1to6",tiers],["thetaG",(S.thetaG||0).toFixed(3)],
+    ["seed",S.seed||""],["tiers_act1to7",tiers],["thetaG",(S.thetaG||0).toFixed(3)],
     ["calib_n",(S.calib&&S.calib.n)||0],["mean_predP",S.calib&&S.calib.n?(S.calib.sp/S.calib.n).toFixed(3):""],
     ["clean_solve_rate",S.calib&&S.calib.n?(S.calib.sc/S.calib.n).toFixed(3):""],["zpd_target","0.670"],
     ["theta_auth",(th.auth||0).toFixed(3)],["theta_crypto",(th.crypto||0).toFixed(3)],["theta_lp",(th.lp||0).toFixed(3)],
-    ["theta_osint",(th.osint||0).toFixed(3)],["theta_social",(th.social||0).toFixed(3)],["theta_integ",(th.integ||0).toFixed(3)]];
+    ["theta_osint",(th.osint||0).toFixed(3)],["theta_social",(th.social||0).toFixed(3)],["theta_integ",(th.integ||0).toFixed(3)],["theta_avail",(th.avail||0).toFixed(3)]];
   let out="# session\nfield,value\n"+meta.map(r=>r[0]+","+csvEsc(r[1])).join("\n")+"\n\n# pre_answers\nq,concept,picked,correct\n";
   S.pre.ans.forEach(a=>out+=`${a.q+1},${csvEsc(KC[a.q].c)},${a.picked},${a.correct?1:0}\n`);
   out+="\n# post_answers\nq,concept,picked,correct\n";
