@@ -3,7 +3,9 @@
 // Backends tried in order: (1) Cloudflare Workers AI binding `AI` (free tier),
 // (2) HuggingFace Inference (free token in secret `HF_TOKEN`). If neither is
 // configured, /api/tutor returns empty text and the game falls back to scripted hints.
-const HF_MODEL = "Qwen/Qwen2.5-7B-Instruct"; // non-gated, served on HF free router
+const CF_MODEL_EN = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"; // strong English instruct
+const CF_MODEL_KO = "@cf/mistralai/mistral-small-3.1-24b-instruct"; // clean Korean output
+const HF_MODEL = "Qwen/Qwen2.5-7B-Instruct"; // non-gated HF free-router fallback
 
 export default {
   async fetch(request, env) {
@@ -25,7 +27,7 @@ export default {
         // (1) Cloudflare Workers AI binding
         if (env.AI) {
           try {
-            const out = await env.AI.run("@cf/meta/llama-3.1-8b-instruct", { messages, max_tokens: 110 });
+            const out = await env.AI.run(ko ? CF_MODEL_KO : CF_MODEL_EN, { messages, max_tokens: 110 });
             const text = (out && (out.response || out.result || "")) || "";
             if (String(text).trim()) return json({ text: String(text).trim(), via: "workers-ai" });
           } catch (e) {}
