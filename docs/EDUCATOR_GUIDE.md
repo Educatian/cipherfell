@@ -241,6 +241,12 @@ transfer. Cipherfell gives you that without any backend.
 - *A student is stuck.* Let the timed scaffolding work; if still stuck, the in-game hints escalate to a near-answer. Save the teaching for the debrief.
 - *Do I need to know security to teach this?* No — Part A is your whole prep.
 
+## Facilitator slide deck
+A ready-to-present slide deck (self-contained, keyboard-navigable, no install) is at
+[`docs/facilitator_deck.html`](facilitator_deck.html) — open it in any browser and use
+←/→ (or click) to advance, **F** for fullscreen. It condenses this guide for a staff PD
+session or a class intro.
+
 ## One-page quick reference
 Seven acts → seven ideas (auth · encryption · least privilege · OSINT · social engineering · integrity · availability) → the CIA triad. Each lesson: **pre-brief → play → debrief → check → extend**. Optional consent → pre/post → CSV → `analyze_sessions.py`. Two tracks: **[K-12]** single acts/short unit; **[HE]** full unit/semester + research instrument.
 

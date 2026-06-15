@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cipherfell — Facilitator Deck</title>
+<style>
+  :root{--ink:#2c2114;--panel:#f7eed5;--gold:#d8a43e;--green:#6b7f4e;--rust:#b5663b;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:Georgia,'Times New Roman',serif;color:var(--ink);
+    background:#1a140c;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  #stage{width:min(96vw,1180px);height:min(92vh,720px);position:relative}
+  .slide{position:absolute;inset:0;background:linear-gradient(180deg,#f9f1da,#ecd9ac);
+    border:3px solid var(--ink);border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.6);
+    padding:44px 54px;display:none;flex-direction:column;overflow:auto}
+  .slide.on{display:flex;animation:f .35s ease}
+  @keyframes f{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  h1{font-size:46px;line-height:1.1;margin-bottom:10px}
+  h2{font-size:32px;color:var(--rust);margin-bottom:16px}
+  .sub{font-size:20px;color:#6b5836;margin-bottom:18px}
+  p,li{font-size:21px;line-height:1.5;margin-bottom:10px}
+  ul{margin-left:26px}
+  .big{font-size:25px}
+  .tag{display:inline-block;background:var(--green);color:#fff;font-size:14px;
+    padding:3px 10px;border-radius:20px;margin-right:6px;vertical-align:middle}
+  .k{background:#3a6ea5}.h{background:#8a5a2b}
+  .row{display:flex;gap:26px;align-items:center}
+  .row>div{flex:1}
+  img{max-width:100%;max-height:46vh;border-radius:10px;border:2px solid var(--ink);display:block;margin:auto}
+  .grid7{display:grid;grid-template-columns:1fr 1fr;gap:8px 26px;margin-top:6px}
+  .grid7 div{font-size:19px;padding:6px 0;border-bottom:1px solid #d8c69a}
+  .loop{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+  .loop span{background:var(--panel);border:2px solid var(--ink);border-radius:10px;
+    padding:8px 16px;font-size:20px;font-weight:bold}
+  .foot{position:absolute;bottom:14px;right:22px;font-size:14px;color:#7a6648}
+  .foot2{position:absolute;bottom:14px;left:22px;font-size:14px;color:#7a6648}
+  .ctr{margin:auto;text-align:center}
+  .pill{font-size:17px;color:#6b5836}
+  table{border-collapse:collapse;width:100%;margin-top:8px}
+  td{border-bottom:1px solid #d8c69a;padding:7px 8px;font-size:18px;vertical-align:top}
+  td:first-child{font-weight:bold;white-space:nowrap;color:var(--rust)}
+  .hint{position:fixed;bottom:8px;left:50%;transform:translateX(-50%);color:#8a7a5c;font-size:13px;font-family:system-ui}
+  .eye{width:54px;height:54px;border-radius:50%;border:3px solid var(--gold);
+    display:inline-flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:14px}
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <section class="slide ctr">
+    <div class="ctr">
+      <div class="eye">👁️</div>
+      <h1>Cipherfell — The Warden's Eye</h1>
+      <p class="sub">Facilitator deck · teaching cybersecurity mental models &amp; AI literacy with a browser RPG</p>
+      <p class="big"><b>cipherfell.pages.dev</b> — free, no install, no accounts</p>
+      <p class="pill" style="margin-top:18px">For K-12 (middle/high) and higher-ed instructors · no security background needed</p>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2>What it is</h2>
+    <div class="row">
+      <div>
+        <p>A medieval-village mystery where players learn to <b>think like a guardian of secrets</b> — no machines, no jargon.</p>
+        <p>Seven "troubles" each teach one <b>security mental model</b>. Solve all seven, name the culprit.</p>
+        <p class="pill">~8-12 min per act · ~60-90 min for all seven · EN / KO · saves locally</p>
+      </div>
+      <div><img src="media/02_town.webp" alt="the village"></div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2>Seven models → the CIA triad</h2>
+    <div class="grid7">
+      <div>1 · <b>Authentication / MFA</b></div><div>5 · <b>Social engineering</b></div>
+      <div>2 · <b>Encryption / keys</b></div><div>6 · <b>Integrity / hashing</b></div>
+      <div>3 · <b>Least privilege</b></div><div>7 · <b>Availability / backups</b></div>
+      <div>4 · <b>OSINT / OPSEC</b></div><div><i>Capstone · synthesis</i></div>
+    </div>
+    <p style="margin-top:18px">Together they complete the <b>CIA triad</b>: confidentiality (encryption), integrity (hashing), availability (backups).</p>
+  </section>
+
+  <section class="slide">
+    <h2>Why it's AI literacy, not just security</h2>
+    <p>The same mental models are what students need to reason about modern AI risks. This is AI4K12 <b>Big Idea 5</b>, EDUCAUSE <b>Ethical Considerations</b>, UNESCO <b>human-centered values</b>.</p>
+    <table>
+      <tr><td>Act 1 Auth</td><td>AI face/voice <b>spoofing</b> of biometrics (Korshunov &amp; Marcel 2018)</td></tr>
+      <tr><td>Act 4 OSINT</td><td>AI <b>inference</b> + training-data leakage (Shokri 2017, membership inference)</td></tr>
+      <tr><td>Act 5 Social eng</td><td><b>LLM-written</b> phishing &amp; voice clones (Heiding 2024)</td></tr>
+      <tr><td>Act 6 Integrity</td><td>detecting <b>deepfaked</b> media (Tolosana 2020)</td></tr>
+      <tr><td>Act 7 Availability</td><td>AI-accelerated <b>ransomware</b> (Razaulla 2023)</td></tr>
+    </table>
+  </section>
+
+  <section class="slide">
+    <h2>The learning is in the debrief</h2>
+    <p>Serious-game research: debriefing is <i>"processing the game experience to turn it into learning."</i> Every lesson card runs the same loop:</p>
+    <div class="loop"><span>Pre-brief</span><span>→ Play</span><span>→ <b>Debrief</b></span><span>→ Check</span><span>→ Extend</span></div>
+    <p>Your value isn't solving the puzzle — the game scaffolds that. Your value is the <b>debrief</b>: surface the misconception, then the real-world (and AI-era) transfer.</p>
+  </section>
+
+  <section class="slide">
+    <h2>A lesson card in action — Act 1</h2>
+    <div class="row">
+      <div>
+        <p><b>Pre-brief:</b> "A stranger claims to be the lord's man. How would you <i>know</i>?"</p>
+        <p><b>Play:</b> cross-examine on what he <i>knows / has / is</i>. The impostor passes the stealable factors, fails the unforgeable one.</p>
+        <p><b>Debrief:</b> identity = independent factors; the weakest single one is the target. <b>AI bridge:</b> AI can spoof a face/voice — so liveness + multiple factors matter more.</p>
+      </div>
+      <div><img src="media/09_act1_auth.webp" alt="act 1 gate"></div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2>Every act is a real interactive loop</h2>
+    <div class="row">
+      <div><img src="media/11_act6_integrity.webp" alt="ledger"></div>
+      <div>
+        <p>Not a quiz bolted onto a game — <b>succeeding requires the construct</b>.</p>
+        <p>Act 6: re-tally each page's checksum and find the seal that no longer matches — the doctored entry. That <i>is</i> integrity reasoning.</p>
+        <p class="pill">Evidence per act: research/EVIDENCE_MAP.md (every mechanic → a verified citation).</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2>Dosing — pick your dose</h2>
+    <table>
+      <tr><td>Single act</td><td>1 period (45-50 min): one pre-brief + one act + debrief + exit ticket. Drop one idea into an existing unit.</td></tr>
+      <tr><td>7-act unit</td><td>1-2 weeks: one act per session, capstone last. Turn on pre/post around it.</td></tr>
+      <tr><td>Semester module</td><td>unit + AI-literacy bridge expanded into discussion/assignments + a graded reflection.</td></tr>
+    </table>
+    <p style="margin-top:16px"><span class="tag k">K-12</span> single acts / one-week unit, lean on the tutorial &amp; hints. <span class="tag h">HE</span> full unit or semester + written transfer task.</p>
+  </section>
+
+  <section class="slide">
+    <h2>Your teacher console: data, no backend</h2>
+    <div class="row">
+      <div>
+        <p>Optional consent → a <b>pre/post knowledge check</b> (21-item bank, parallel forms) + a one-click <b>CSV export</b>.</p>
+        <p>Run <b>research/analyze_sessions.py</b> on the class folder: pre→post gain (paired <i>t</i>, dz), per-concept mastery, item difficulty, calibration.</p>
+        <p>Use the <b>mastery profile</b> to form re-teaching groups.</p>
+        <p class="pill">Anonymous &amp; local by default · FERPA-friendly · no accounts.</p>
+      </div>
+      <div><img src="media/13_results_mastery.webp" alt="mastery profile"></div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2>Equity, access &amp; responsible use</h2>
+    <ul>
+      <li><b>Access:</b> keyboard-navigable, ARIA, reduced-motion; runs on low-end Chromebooks/tablets; offline after load; free &amp; keyless.</li>
+      <li><b>Language:</b> English + Korean (comprehension-critical surfaces).</li>
+      <li><b>Reading load:</b> text-forward — strongest upper-middle-school → undergrad; pair-read for emerging readers.</li>
+      <li><b>Responsible use:</b> Acts 4-5 teach offensive techniques <b>defensively</b>. Set the norm: we study attacks to defend, not to use them. Discuss responsible disclosure.</li>
+    </ul>
+  </section>
+
+  <section class="slide ctr">
+    <div class="ctr">
+      <h1>Get started in 3 steps</h1>
+      <p class="big" style="margin-top:18px">1 · Open <b>cipherfell.pages.dev</b> on any browser</p>
+      <p class="big">2 · Play one act yourself, then run it with the <b>pre-brief → play → debrief</b> loop</p>
+      <p class="big">3 · Read the full <b>docs/EDUCATOR_GUIDE.md</b> for lesson cards, the standards crosswalk, and the data walkthrough</p>
+      <p class="pill" style="margin-top:22px">Evidence base: research/EVIDENCE_MAP.md · research/ADAPTIVE_DESIGN.md</p>
+    </div>
+  </section>
+
+</div>
+<div class="foot2" id="title"></div>
+<div class="foot"><span id="num"></span></div>
+<div class="hint">← → / Space to navigate · F fullscreen</div>
+<script>
+  const slides=[...document.querySelectorAll('.slide')]; let i=0;
+  const titles=["Title","What it is","Seven models","AI literacy","The debrief","Act 1 card","Real loops","Dosing","Data console","Equity","Get started"];
+  function show(n){ i=Math.max(0,Math.min(slides.length-1,n));
+    slides.forEach((s,k)=>s.classList.toggle('on',k===i));
+    document.getElementById('num').textContent=(i+1)+" / "+slides.length;
+    document.getElementById('title').textContent=titles[i]||""; }
+  function next(){show(i+1)} function prev(){show(i-1)}
+  document.addEventListener('keydown',e=>{
+    if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();next();}
+    else if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();prev();}
+    else if(e.key==='Home')show(0); else if(e.key==='End')show(slides.length-1);
+    else if(e.key.toLowerCase()==='f'){ if(!document.fullscreenElement)document.documentElement.requestFullscreen(); else document.exitFullscreen(); }
+  });
+  document.getElementById('stage').addEventListener('click',e=>{ if(e.clientX < window.innerWidth/2) prev(); else next(); });
+  show(0);
+</script>
+</body>
+</html>
