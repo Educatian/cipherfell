@@ -187,6 +187,7 @@ After playing, a learner can:
 - **Session:** roughly 20 minutes for a full play-through; suitable as a lesson hook, a flipped-classroom pre-activity, or an awareness-week installation.
 - **Debrief:** the epilogue restates each village lesson with its real security name. Pair it with a discussion that names the framework terms (MFA, Kerckhoffs, least privilege, OSINT/OPSEC, social engineering / phishing, integrity / hashing, availability / backups, the CIA triad, zero trust).
 - **Research use:** an optional consent gate enables a built-in pre/post knowledge check (seven items) and anonymous telemetry, exportable as CSV — usable as a self-contained usability/learning-effect study instrument.
+- **Educator guide:** a full PD guide for K-12 and higher-ed instructors (lesson cards, debrief prompts, standards crosswalk, an AI-literacy bridge, and a data/assessment walkthrough) is in **[docs/EDUCATOR_GUIDE.md](docs/EDUCATOR_GUIDE.md)**.
 
 ---
 
